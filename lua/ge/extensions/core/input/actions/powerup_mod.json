@@ -1,0 +1,11 @@
+{
+    "activate_powerup": {
+        "cat": "powerup_mod",
+        "order": 0,
+        "ctx": "tlua",
+        "onDown": "if onPowerUpActivateHotkey then onPowerUpActivateHotkey() end",
+        "isBasic": true,
+        "title": "Activate Powerup",
+        "desc": "Activates the powerup"
+    }
+}
