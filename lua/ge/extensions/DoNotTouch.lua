@@ -15,7 +15,7 @@
 	So i think this rather should load everything as a module that runs on its own.
 	Where you, like with any game own module, you just have it load and then you never "require" it but just do eg TimedTrigger.new() and that module has its own onUpdate hook etc.
 	
-	Then we never unload it ourselfs and have every module handle its own unload. eg then when map is unloaded. Dunno how exactly the extensions system work at his moment and when what loads/unloads/reloads without full on testing that i tho didnt have time for.
+	Then we never unload it ourselfs and have every module handle its own unload. eg then when map is unloaded. Dunno how exactly the extensions system work at this moment and when what loads/unloads/reloads without full on testing that i tho didnt have time for.
 ]]
 
 -- unload what otherwise would leak to mem

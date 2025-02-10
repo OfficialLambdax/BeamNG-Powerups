@@ -10,7 +10,7 @@ New
 -- -------------------------------------------------------------------------------------------------
 -- Libs
 PowerupExtender
-	- Add has TraitButNot
+	- Add has TraitButNot(target_id, {has}, {butnot})
 
 PowerupsLib
 	- Delay target_info and target_hit exec to simulate beammp sync behaviour (would make powerup dev easier, as were already going to work with a behaviour that is otherwise only going to be true in multiplayer scenarios)
