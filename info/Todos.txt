@@ -13,6 +13,8 @@ New
 -- Libs
 PowerupExtender
 	- Add hasTraitButNot(target_id, has, butnot) variants for multi targets, hastraits and butnottraits
+	- Add getAllVehicles() function that only returns enabled vehicles and fully integrate it everywhere
+		This would fix any kind of wrong targeting and hitting on vehicles that are disabled (eg traffic vehicles)
 
 PowerupsLib
 	- Delay target_info and target_hit exec to simulate beammp sync behaviour (would make powerup dev easier, as were already going to work with a behaviour that is otherwise only going to be true in multiplayer scenarios)

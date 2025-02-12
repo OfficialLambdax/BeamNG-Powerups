@@ -144,7 +144,7 @@ local function Error(reason)
 end
 
 -- ------------------------------------------------------------------------------------------------
--- Very basic powerup display
+-- Very basic powerup display. Shows powerup info depending on which vehicle the player is spectating
 local function simplePowerUpDisplay()
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		local powerup = vehicle.powerup
@@ -167,14 +167,28 @@ local function simplePowerUpDisplay()
 	end
 end
 
-local function simpleDisplayActivatedPowerup(clear_name, type)
+local function simpleDisplayActivatedPowerup(game_vehicle_id, clear_name, type)
+	if not Extender.isSpectating(game_vehicle_id) then return end
+	
 	local symbol = "success"
-	local str = 'Activated '
+	local str = ""
+	
+	local is_player, is_traffic = Extender.isPlayerVehicle(game_vehicle_id)
+	if is_player then
+		str = 'You '
+	elseif is_traffic then
+		str = 'Traffic '
+	else
+		str = VEHICLES[game_vehicle_id].player_name .. ' '
+	end
+		
 	if type == 3 then
 		symbol = "info"
-		str = 'Picked up '
+		str = str .. 'picked up '
 	elseif type == 4 then
 		symbol = "warning"
+	else
+		str = str .. 'activated '
 	end
 	
 	guihooks.trigger('toastrMsg', {
@@ -549,9 +563,7 @@ local function activatePowerup(game_vehicle_id, vehicle, type, charge_overwrite)
 	vehicle.powerup_data = r
 	
 	print("Powerup: " .. game_vehicle_id .. " activated " .. powerup_active.internal_name)
-	if Extender.isSpectating(game_vehicle_id) then
-		simpleDisplayActivatedPowerup(powerup_active.clear_name, type)
-	end
+	simpleDisplayActivatedPowerup(game_vehicle_id, powerup_active.clear_name, type)
 end
 
 local function takePowerup(location, trigger_data)
@@ -606,7 +618,7 @@ local function takePowerup(location, trigger_data)
 	
 	elseif r == 3 then
 		print("PowerUp: " .. game_vehicle_id .. " picked a charge")
-		simpleDisplayActivatedPowerup("Charge", 3)
+		simpleDisplayActivatedPowerup(game_vehicle_id, "Charge", 3)
 	
 	elseif r == 4 then -- immediate execute - for negative powerups
 		-- check currrent powerup
