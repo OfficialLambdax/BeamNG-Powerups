@@ -4,7 +4,7 @@
 ]]
 
 --[[
-	For detailed describtions of this mod please see the readme folder
+	For detailed describtions of this mod please see the info folder
 ]]
 
 --[[
@@ -89,14 +89,18 @@ end
 -- Runtime
 M.onUpdate = function(dt_real, dt_sim, dt_raw)
 	if not INITIALIZED then return end
-
+	
 	TimedTrigger.tick()
 	CollisionsLib.tick()
 end
 
 M.onPreRender = function(dt_real, dt_sim, dt_raw)
 	if not INITIALIZED then return end
-	
+	--for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
+	--	if name:find("BeamNGTrigger_") then
+	--		scenetree.findObject(name):setField("debug", 0, "false")
+	--	end
+	--end
 	ForceField.tick() -- unfortunately doesnt help with the marker rendering
 	PowerUps.tick(dt_real, dt_sim, dt_raw)
 end

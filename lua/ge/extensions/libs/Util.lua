@@ -91,6 +91,12 @@ M.tableArrayMerge = function(into, from)
 	end
 end
 
+M.tableReset = function(table)
+	for k, _ in pairs(table) do
+		table[k] = nil
+	end
+end
+
 M.dist3d = function(p1, p2)
 	return math.sqrt((p2.x - p1.x)^2 + (p2.y - p1.y)^2 + (p2.z - p1.z)^2)
 end

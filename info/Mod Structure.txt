@@ -6,10 +6,10 @@
 		
 	/mp_libs/*
 		colors.lua
-			Essentially a converter to display beammp chat color codes colored in a CUI (eg a beammp server cui)
+			Essentially a converter to display beammp chat color codes colored for a CUI (eg a beammp server cui)
 		
 		PauseTimer.lua
-			A compatibility library that makes the hptimer()/HighPerfTimer() interface available in the beammp server. Wraps around either hptimer()/HighPerfTimer() or MP.CreateTimer()-
+			A compatibility library that makes the hptimer()/HighPerfTimer() interface available in the beammp server. Wraps around either hptimer()/HighPerfTimer() or MP.CreateTimer()
 			When a library imports this it will be able to use stop()/stopAndReset()/start() no matter if in the games environment or a beammp server
 			
 /lua/ge/extensions/*

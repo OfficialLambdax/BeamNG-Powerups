@@ -51,7 +51,7 @@ end
 -- When the powerup is activated
 M.onActivate = function(vehicle)
 	local set = Sets.getSet(M.set_name)
-	if not set then return nil, "Boost set not available" end
+	if not set then return nil, "Teleport set not available" end
 	
 	local veh_id = vehicle:getId()
 	set:VETarget(veh_id)

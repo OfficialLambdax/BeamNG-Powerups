@@ -161,6 +161,13 @@ M.isSpectating = function(game_vehicle_id)
 	return getPlayerVehicle(0):getId() == game_vehicle_id
 end
 
+M.isActive = function(...)
+	for _, vehicle_id in pairs({...}) do
+		if not be:getObjectByID(vehicle_id):getActive() then return false end
+	end
+	return true
+end
+
 M.updatePowerUpsLib = function(this)
 	PowerUps = this
 end

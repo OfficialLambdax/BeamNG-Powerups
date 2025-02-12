@@ -6,11 +6,13 @@ General
 -- Powerups
 New
 	- Add shield 4 that is charge based
+	- Negative that activates current powerup in the vehicle inv immediatly
+	- Add funny sounds to negatives
 
 -- -------------------------------------------------------------------------------------------------
 -- Libs
 PowerupExtender
-	- Add has TraitButNot(target_id, {has}, {butnot})
+	- Add hasTraitButNot(target_id, has, butnot) variants for multi targets, hastraits and butnottraits
 
 PowerupsLib
 	- Delay target_info and target_hit exec to simulate beammp sync behaviour (would make powerup dev easier, as were already going to work with a behaviour that is otherwise only going to be true in multiplayer scenarios)
@@ -51,6 +53,21 @@ PowerupsLib
 		
 		- "targets_info_describtor"
 			Necessary for the server to verify incoming "targets_info" for their correct data type structure and types. Since this info is synced to other clients it needs to be verified.
+	
+	- Add location powerup rotation. Where if a location owns a powerup for X time then swap it out
+		This could be defined by groups
+	
+	- For more variety in traffic "combat", a routine could run that checks if anyone is close to a traffic car and if so run a chance on whichs success it would grant a random powerup.
+		This could go further by adding a new var into the group definitions where groups can implement logic that decides if this powerup should be chosen.
+	
+	- Add "type" to group definitions that describes the kind of powerup. This would be used for location definitions.
+		Type.Offensive
+		Type.Defensive
+		Type.Negative
+		Type.Charge
+		Type.Utility
+		Type.Handicapping
+		Type.Undefined
 
 SetsLib
 	- Add setting for Sets to only exec triggers if vehicle is own (mp)

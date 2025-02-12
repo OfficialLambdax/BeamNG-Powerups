@@ -11,7 +11,7 @@ local M = {
 	-- eg {"ForwardShot1", "ForwardShot2", "ForwardShot3"}
 	-- Resolves to the file names in the group folder. Where
 	-- eg ForwardShot1 is level 1, ForwardShot2 is level 2 .. etc
-	leveling = {"barrelroll", "jinxed"},
+	leveling = {"barrelroll", "jinxed", "rem1charge"},
 	
 	-- The powerup stays visible at default
 	-- If the spectator is to far away from it it will not render except this is true

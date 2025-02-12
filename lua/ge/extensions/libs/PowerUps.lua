@@ -2,8 +2,8 @@
 	License: None
 	Author: Neverless (discord: neverless.)
 ]]
-local PowerUpsExtender = require("libs/PowerUpsExtender")
-local Traits = PowerUpsExtender.Traits
+local Extender = require("libs/PowerUpsExtender")
+local Traits = Extender.Traits
 local TimedTrigger = require("TimedTrigger")
 local TriggerLoad = require("libs/TriggerLoad")
 local Util = require("libs/Util")
@@ -19,9 +19,13 @@ local M = {
 }
 local VEC3 = vec3 or function(x, y, z) return {x = x, y = y, z = z} end -- server compat
 local RESPAWN_TIME = 5000
+local ROTATION_TIME = 120000
 local RENDER_DISTANCE = 500
 local MAX_CHARGE = 0 -- updated based on the loaded set
-local ROUTINE_POWERUPS_RESTOCK = 1000
+
+local ROUTINE_LOCATIONS_RESTOCK = 5000
+local ROUTINE_LOCATIONS_ROTATION = 5000
+
 local ROUTINE_POWERUPS_CHECK_RENDER_DISTANCE = 1000
 local ROUTINE_POWERUPS_CHECK_TRAFFIC = 10000
 local ROUTINE_POWERUPS_BASIC_DISPLAY_REFRESH = 5000
@@ -73,6 +77,7 @@ local POWERUP_DEFS = {}
 		[data] = nil/Whatever the onCreate function returns us
 		[is_rendered] = bool
 		[respawn_timer] = hptimer
+		[rotation_timer] = hptimer
 
 ]]
 local LOCATIONS = {}
@@ -143,15 +148,15 @@ end
 local function simplePowerUpDisplay()
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		local powerup = vehicle.powerup
-		if PowerUpsExtender.isSpectating(game_vehicle_id) and powerup then
+		if Extender.isSpectating(game_vehicle_id) and powerup then
 			local clear_name = powerup.powerups[math.min(vehicle.charge, powerup.max_levels)].clear_name
-			local str = 'Powerup\n\n' .. clear_name
+			local str = clear_name
 			
 			guihooks.trigger('toastrMsg', {
 				type = "success",
 				--label = "", -- ??
 				--context = "", -- ??
-				title = "Powerup",
+				title = "",
 				msg = str,
 				config = {
 					timeOut = ROUTINE_POWERUPS_BASIC_DISPLAY_REFRESH - 500,
@@ -162,17 +167,27 @@ local function simplePowerUpDisplay()
 	end
 end
 
--- ------------------------------------------------------------------------------------------------
--- Traffic vehicle check routine
-local function checkIfTraffic()
-	local traffic_list = Util.tableVToK(gameplay_traffic.getTrafficList())
-	for game_vehicle_id, vehicle in pairs(VEHICLES) do
-		if traffic_list[game_vehicle_id] then
-			vehicle.player_name = SUBJECT_TRAFFIC
-		else
-			vehicle.player_name = SUBJECT_SINGLEPLAYER -- or mp name todo
-		end
+local function simpleDisplayActivatedPowerup(clear_name, type)
+	local symbol = "success"
+	local str = 'Activated '
+	if type == 3 then
+		symbol = "info"
+		str = 'Picked up '
+	elseif type == 4 then
+		symbol = "warning"
 	end
+	
+	guihooks.trigger('toastrMsg', {
+		type = symbol,
+		--label = "", -- ??
+		--context = "", -- ??
+		title = "",
+		msg = str .. clear_name,
+		config = {
+			timeOut = ROUTINE_POWERUPS_BASIC_DISPLAY_REFRESH - 500,
+			--extendedTimeOut = 0, -- ??
+		},
+	})	
 end
 
 -- ------------------------------------------------------------------------------------------------
@@ -216,7 +231,7 @@ end
 
 local function tickTargetHitQue()
 	for random_name, exec in pairs(TARGET_HIT_WAIT) do
-		if exec.execute then
+		if exec.execute and Extender.isActive(exec.origin_id, target_id) then
 			for _, target_id in pairs(exec.targets) do
 				exec.powerup_active.onTargetHit(exec.powerup_data, exec.origin_id, target_id)
 				exec.powerup_active.onHit(exec.powerup_data, exec.origin_id, target_id)
@@ -240,7 +255,7 @@ local function tickRenderQue(dt)
 	end
 	
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
-		if vehicle.is_rendered then
+		if vehicle.is_rendered and Extender.isActive(game_vehicle_id) then
 			if vehicle.powerup then
 				vehicle.powerup.whilePickup(vehicle.data, game_vehicle_id, dt)
 			end
@@ -318,7 +333,7 @@ local function checkRenderDistance()
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		if (vehicle.powerup and not vehicle.powerup.do_not_unload) or (vehicle.powerup_active and not vehicle.powerup_active.do_not_unload) then
 			
-			if dist3d(be:getObjectByID(game_vehicle_id):getPosition(), camera_position) < RENDER_DISTANCE then
+			if dist3d(be:getObjectByID(game_vehicle_id):getPosition(), camera_position) < RENDER_DISTANCE or not Extender.isActive(game_vehicle_id) then
 				if not vehicle.is_rendered then
 					vehicle.is_rendered = true
 					if vehicle.powerup then vehicle.powerup.onLoad(vehicle.data) end
@@ -384,6 +399,19 @@ M.onVehicleDestroyed = function(game_vehicle_id)
 end
 
 -- ------------------------------------------------------------------------------------------------
+-- Traffic vehicle check routine
+local function checkIfTraffic()
+	local traffic_list = Util.tableVToK(gameplay_traffic.getTrafficList())
+	for game_vehicle_id, vehicle in pairs(VEHICLES) do
+		if traffic_list[game_vehicle_id] then
+			vehicle.player_name = SUBJECT_TRAFFIC
+		else
+			vehicle.player_name = SUBJECT_SINGLEPLAYER -- or mp name todo
+		end
+	end
+end
+
+-- ------------------------------------------------------------------------------------------------
 -- Powerups
 local function loadPowerups(set_path, group_path, group)
 	if POWERUP_DEFS[group.name] then 
@@ -416,7 +444,7 @@ local function loadPowerups(set_path, group_path, group)
 				
 			else
 				for _, trait in ipairs(powerup.traits or {}) do
-					local trait_name = PowerUpsExtender.getTraitName(trait)
+					local trait_name = Extender.getTraitName(trait)
 					if trait_name == nil then
 						Error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" lists an unknown "' .. trait .. '" trait')
 					elseif type(powerup[trait]) ~= "function" then
@@ -426,7 +454,7 @@ local function loadPowerups(set_path, group_path, group)
 				end
 				
 				for _, trait in ipairs(powerup.respects_traits or {}) do
-					local trait_name = PowerUpsExtender.getTraitName(trait)
+					local trait_name = Extender.getTraitName(trait)
 					if trait_name == nil then
 						Error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" is listing to respect the "' .. trait .. '" trait, but this trait is unknown')
 					end
@@ -473,8 +501,7 @@ local function selectPowerup()
 	return POWERUP_DEFS[random_group]
 end
 
-
-local function activatePowerup(game_vehicle_id, vehicle, charge_overwrite)
+local function activatePowerup(game_vehicle_id, vehicle, type, charge_overwrite)
 	local vehicle = vehicle or VEHICLES[game_vehicle_id]
 	if vehicle.powerup == nil then
 		Error('Vehicle owns no powerup')
@@ -522,8 +549,10 @@ local function activatePowerup(game_vehicle_id, vehicle, charge_overwrite)
 	vehicle.powerup_data = r
 	
 	print("Powerup: " .. game_vehicle_id .. " activated " .. powerup_active.internal_name)
+	if Extender.isSpectating(game_vehicle_id) then
+		simpleDisplayActivatedPowerup(powerup_active.clear_name, type)
+	end
 end
-
 
 local function takePowerup(location, trigger_data)
 	--[[
@@ -538,8 +567,10 @@ local function takePowerup(location, trigger_data)
 	local game_vehicle_id = trigger_data.subjectID
 	local vehicle = VEHICLES[game_vehicle_id] or M.onVehicleSpawned(game_vehicle_id) -- reload fix
 	
+	--dump(VEHICLES)
+	
 	-- see if the vehicle owner bothers us or not
-	local is_own, is_traffic = PowerUpsExtender.isPlayerVehicle(game_vehicle_id)
+	local is_own, is_traffic = Extender.isPlayerVehicle(game_vehicle_id)
 	if not is_own and not is_traffic then return end -- we dont care
 	
 	-- now ask beammp server first for if we are allowed to pick this powerup up
@@ -549,7 +580,7 @@ local function takePowerup(location, trigger_data)
 	-- call event
 	local r, variable = location.powerup.onPickup(location.data, be:getObjectByID(game_vehicle_id))
 	if r == nil then -- error. wont pickup new and wont drop current
-		Error('Powerup "' .. location.powerup.name .. '" cannot pickup vehicle "' .. tostring(variable) .. '"')
+		Error('Vehicle cannot pickup "' .. location.powerup.name .. '" - "' .. tostring(variable) .. '"')
 		return nil
 		
 	elseif r == 1 then -- success
@@ -575,6 +606,7 @@ local function takePowerup(location, trigger_data)
 	
 	elseif r == 3 then
 		print("PowerUp: " .. game_vehicle_id .. " picked a charge")
+		simpleDisplayActivatedPowerup("Charge", 3)
 	
 	elseif r == 4 then -- immediate execute - for negative powerups
 		-- check currrent powerup
@@ -589,7 +621,11 @@ local function takePowerup(location, trigger_data)
 		
 		print("PowerUp: " .. game_vehicle_id .. " picked up negative " .. vehicle.powerup.name)
 		
-		activatePowerup(game_vehicle_id, vehicle, variable)
+		activatePowerup(game_vehicle_id, vehicle, r, variable)
+		
+	else
+		Error('Unknown return type from powerup action of "' .. location.powerup.name .. '"')
+		return
 	end
 	
 	location.powerup = nil
@@ -601,11 +637,11 @@ local function takePowerup(location, trigger_data)
 	-- if traffic
 	if is_traffic and vehicle.powerup then
 		vehicle.charge = math.random(1, MAX_CHARGE)
-		activatePowerup(game_vehicle_id, vehicle)
+		activatePowerup(game_vehicle_id, vehicle, r)
 		
-	elseif is_own and PowerUpsExtender.isSpectating(game_vehicle_id) then
+	elseif is_own and Extender.isSpectating(game_vehicle_id) then
 		-- temp. the pickup sound will be on the group
-		Engine.Audio.playOnce('AudioGui', "/lua/ge/extensions/powerups/default_powerup_pick_sound.ogg", {volume = 15, channel = 'Music'})
+		Engine.Audio.playOnce('AudioGui', "/lua/ge/extensions/powerups/default_powerup_pick_sound.ogg", {volume = 3, channel = 'Music'})
 	end
 end
 
@@ -643,7 +679,8 @@ local function loadLocations(triggers)
 				powerup = nil,
 				data = nil,
 				is_rendered = true,
-				respawn_timer = hptimer()
+				respawn_timer = hptimer(),
+				rotation_timer = hptimer()
 			}
 		end
 	end
@@ -655,6 +692,22 @@ local function restockPowerups(instant)
 			location.powerup = selectPowerup()
 			if location.powerup ~= nil then
 				location.data = location.powerup.onCreate(location.obj)
+				location.rotation_timer:stopAndReset()
+			end
+		end
+	end
+end
+
+-- ------------------------------------------------------------------------------------------------
+-- Location rotation check routine
+local function checkLocationRotation()
+	for location_name, location in pairs(LOCATIONS) do
+		if location.powerup and location.rotation_timer:stop() > ROTATION_TIME then
+			location.powerup.onDespawn(location.data)
+			location.powerup = selectPowerup()
+			if location.powerup ~= nil then
+				location.data = location.powerup.onCreate(location.obj)
+				location.rotation_timer:stopAndReset()
 			end
 		end
 	end
@@ -759,15 +812,26 @@ M.loadLocationPrefab = function(path)
 end
 
 M.init = function()
-	PowerUpsExtender.updatePowerUpsLib(M)
+	Extender.updatePowerUpsLib(M)
 
-	-- if multiplayer then dont set the "PowerUps_restock"
+	-- if multiplayer then dont set some of these if not none of them
 	-- todo
+	
 	local r = TimedTrigger.new(
 		"PowerUps_restock",
-		ROUTINE_POWERUPS_RESTOCK,
+		ROUTINE_LOCATIONS_RESTOCK,
 		0,
 		restockPowerups
+	)
+	if r == nil then
+		Error('Cannot initialize restock routine')
+	end
+	
+	local r = TimedTrigger.new(
+		"PowerUps_rotation",
+		ROUTINE_LOCATIONS_ROTATION,
+		0,
+		checkLocationRotation
 	)
 	if r == nil then
 		Error('Cannot initialize restock routine')
@@ -801,7 +865,7 @@ M.init = function()
 	)
 	if r == nil then
 		Error('Cannot initialize traffic check routine')
-	end	
+	end
 	
 	for _, vehicle in pairs(getAllVehicles()) do
 		M.onVehicleSpawned(vehicle:getId())
@@ -828,13 +892,15 @@ M.unload = function()
 	
 	-- remove timed triggers
 	TimedTrigger.remove("PowerUps_restock")
+	TimedTrigger.remove("PowerUps_rotation")
 	TimedTrigger.remove("PowerUps_checkRenderDist")
 	TimedTrigger.remove("PowerUps_checkTrafficlist")
 	TimedTrigger.remove("PowerUps_simpleDisplayRefresh")
 	
-	LOCATIONS = {}
-	VEHICLES = {}
-	POWERUP_DEFS = {}
+	-- wiping the ref clean instead of just var = {} as that would unhook these tables from anything that references them. eg M.vehicles ~= VEHICLES
+	Util.tableReset(LOCATIONS)
+	Util.tableReset(VEHICLES)
+	Util.tableReset(POWERUP_DEFS)
 end
 
 M.onBeamNGTrigger = function(data)
@@ -849,7 +915,7 @@ M.onBeamNGTrigger = function(data)
 end
 
 M.tick = function(dt)
-	-- the render que order matters
+	-- the order matters
 	tickTargetQue()
 	tickRenderQue(dt)
 	tickTargetHitQue()

@@ -61,7 +61,7 @@ local set = {
 	{"", {spectate = true}, "GE", 100, 1, initScreenFade},
 	{"", {spectate = false}, "GE", 1500, 1, throwUp, 've_target'},
 	{"tp", {spectate = false}, "GE", 2000, 1, tpSafe, 've_target'},
-	{"", {spectate = true}, "GE", 2000, 1, remScreenFade, ''},
+	{"", {spectate = true}, "GE", 2000, 1, remScreenFade},
 }
 
 return set

@@ -6,7 +6,7 @@ local Trait = Extender.Traits
 
 local M = {
 	-- Clear name of the powerup
-	clear_name = "Push II",
+	clear_name = "Shockwave II",
 	
 	-- If the camera is to far away from this powerups owner it will not render except this is true
 	-- Will prevent whileActive calls
