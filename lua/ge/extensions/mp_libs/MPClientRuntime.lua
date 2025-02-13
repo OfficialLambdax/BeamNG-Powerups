@@ -12,6 +12,7 @@ local M = {}
 -- ------------------------------------------------------------------------------------------------
 -- To server
 M.tryTakePowerup = function(location_name, game_vehicle_id)
+	if not MPUtil.isOwn(game_vehicle_id) then return end
 	TriggerServerEvent("tryTakePowerup", jsonEncode({
 		location_name = location_name,
 		server_vehicle_id = MPUtil.gameVehicleIDToServerVehicleID(game_vehicle_id)
@@ -19,14 +20,17 @@ M.tryTakePowerup = function(location_name, game_vehicle_id)
 end
 
 M.tryActivatePowerup = function(game_vehicle_id)
+	if not MPUtil.isOwn(game_vehicle_id) then return end
 	TriggerServerEvent("tryActivatePowerup", MPUtil.gameVehicleIDToServerVehicleID(game_vehicle_id))
 end
 
 M.tryDisableActivePowerup = function(game_vehicle_id)
+	if not MPUtil.isOwn(game_vehicle_id) then return end
 	TriggerServerEvent("tryDisableActivePowerup", MPUtil.gameVehicleIDToServerVehicleID(game_vehicle_id))
 end
 
 M.tryTargetInfo = function(game_vehicle_id, target_info)
+	if not MPUtil.isOwn(game_vehicle_id) then return end
 	TriggerServerEvent("tryTargetInfo", jsonEncode({
 		server_vehicle_id = MPUtil.gameVehicleIDToServerVehicleID(game_vehicle_id),
 		target_info = target_info
@@ -34,6 +38,7 @@ M.tryTargetInfo = function(game_vehicle_id, target_info)
 end
 
 M.tryTargetHit = function(game_vehicle_id, targets, deactivate)
+	if not MPUtil.isOwn(game_vehicle_id) then return end
 	local converted_targets = {}
 	for index, target_id in ipairs(targets) do
 		converted_targets[index] = MPUtil.gameVehicleIDToServerVehicleID(target_id)

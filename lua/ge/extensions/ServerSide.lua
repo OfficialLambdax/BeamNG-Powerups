@@ -24,5 +24,5 @@ local MPServerRuntime = require("mp_libs/MPServerRuntime")
 
 
 function onInit()
-	MPServerRuntime.init("west_coast_usa.prefab.json", "open")
+	MPServerRuntime.init("utah.prefab.json", "open")
 end

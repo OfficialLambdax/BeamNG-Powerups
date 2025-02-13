@@ -164,7 +164,9 @@ M.isPlayerVehicle = function(game_vehicle_id)
 end
 
 M.isSpectating = function(game_vehicle_id)
-	return getPlayerVehicle(0):getId() == game_vehicle_id
+	local vehicle = getPlayerVehicle(0)
+	if vehicle == nil then return end
+	return vehicle:getId() == game_vehicle_id
 end
 
 M.isActive = function(...)
