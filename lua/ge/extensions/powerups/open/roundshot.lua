@@ -2,11 +2,14 @@
 local PowerUps = require("libs/PowerUps")
 local Util = require("libs/Util")
 local Extender = require("libs/PowerUpsExtender")
+local Type = Extender.Types
 
 local M = {
 	-- Any name eg "ForwardShot". No duplicates with others of this Set.
 	-- Create folder of the same name in this directory containing all the powerups
 	name = "roundshot",
+	
+	type = Type.Offensive,
 	
 	-- eg {"ForwardShot1", "ForwardShot2", "ForwardShot3"}
 	-- Resolves to the file names in the group folder. Where
@@ -20,7 +23,7 @@ local M = {
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "init",
+	lib_version = "mp_init",
 	
 	-- Max levels. autofilled
 	max_levels = 0,

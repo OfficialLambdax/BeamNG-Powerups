@@ -12,6 +12,9 @@ local M = {
 	-- Will prevent whileActive calls
 	do_not_unload = false,
 	
+	max_len = 1000,
+	target_info_descriptor = nil,
+	
 	--[[
 		eg. {Trait.Consuming, Trait.Reflective}
 	]]
@@ -24,7 +27,7 @@ local M = {
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "init",
+	lib_version = "mp_init",
 	
 	-- autofilled
 	file_path = "",

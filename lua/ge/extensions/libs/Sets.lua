@@ -57,7 +57,7 @@
 ]]
 
 local Util = require("libs/Util")
-local TimedTrigger = require("TimedTrigger")
+local TimedTrigger = require("libs/TimedTrigger")
 
 -- BeamMP server only requirement
 -- Only loaded in init if this library has been loaded on the BeamMP Server where no log() is present
@@ -74,12 +74,14 @@ local UNPACK = unpack or table.unpack
 local ADAPTER
 local LOCKS = {} -- game_vehicle_id = true
 
--- not sure why this doesnt work
---core_input_actionFilter.setGroup("setlib_limiter", core_input_actionFilter.createActionTemplate({"vehicleTeleporting", "vehicleMenues", "physicsControls"}))
+if core_input_actionFilter then
+	-- not sure why this doesnt work
+	--core_input_actionFilter.setGroup("setlib_limiter", core_input_actionFilter.createActionTemplate({"vehicleTeleporting", "vehicleMenues", "physicsControls"}))
 
--- so lets use this for the moment
-core_input_actionFilter.setGroup("setlib_limiter", {"reset_physics","recover_vehicle","recover_vehicle_alt","nodegrabberAction","nodegrabberGrab","nodegrabberRender","editorToggle","editorSafeModeToggle","toggleWalkingMode","dropPlayerAtCamera","dropPlayerAtCameraNoReset","loadHome","reload_all_vehicles","recover_to_last_road","forceField","funBoom","funBreak","funExtinguish","funFire","funHinges","funTires","funRandomTire","toggleBigMap","couplersLock","couplersToggle","couplersUnlock","pause","slower_motion","faster_motion","toggle_slow_motion","toggleTraffic","toggleAITraffic","reset_all_physics","reload_vehicle","vehicle_selector","parts_selector"})
-core_input_actionFilter.addAction(0, "setlib_limiter", false)
+	-- so lets use this for the moment
+	core_input_actionFilter.setGroup("setlib_limiter", {"reset_physics","recover_vehicle","recover_vehicle_alt","nodegrabberAction","nodegrabberGrab","nodegrabberRender","editorToggle","editorSafeModeToggle","toggleWalkingMode","dropPlayerAtCamera","dropPlayerAtCameraNoReset","loadHome","reload_all_vehicles","recover_to_last_road","forceField","funBoom","funBreak","funExtinguish","funFire","funHinges","funTires","funRandomTire","toggleBigMap","couplersLock","couplersToggle","couplersUnlock","pause","slower_motion","faster_motion","toggle_slow_motion","toggleTraffic","toggleAITraffic","reset_all_physics","reload_vehicle","vehicle_selector","parts_selector"})
+	core_input_actionFilter.addAction(0, "setlib_limiter", false)
+end
 
 -- ------------------------------------------------------------------------------------------------
 -- Basics

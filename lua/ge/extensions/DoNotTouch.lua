@@ -4,6 +4,8 @@
 ]]
 
 --[[
+	-- Game side only
+	
 	For detailed describtions of this mod please see the info folder
 ]]
 
@@ -24,21 +26,28 @@ require("libs/PowerUps").unload()
 require("libs/TriggerLoad").unload()
 
 -- force reload of these
-package.loaded["TimedTrigger"] = nil
+package.loaded["libs/TimedTrigger"] = nil
 package.loaded["libs/CollisionsLib"] = nil
 package.loaded["libs/Sets"] = nil
 package.loaded["libs/ForceField"] = nil
 package.loaded["libs/PowerUps"] = nil
 package.loaded["libs/PowerUpsExtender"] = nil
+package.loaded["libs/PowerUpsTraits"] = nil
+package.loaded["libs/PowerUpsTypes"] = nil
 package.loaded["libs/TriggerLoad"] = nil
 package.loaded["libs/MathUtil"] = nil
 package.loaded["libs/Util"] = nil
+package.loaded["mp_libs/MPUtil"] = nil
+package.loaded["mp_libs/MPClientRuntime"] = nil
 
-local TimedTrigger = require("TimedTrigger")
+local TimedTrigger = require("libs/TimedTrigger")
 local CollisionsLib = require("libs/CollisionsLib")
 local Sets = require("libs/Sets")
 local ForceField = require("libs/ForceField")
 local PowerUps = require("libs/PowerUps")
+local MPUtil = require("mp_libs/MPUtil")
+
+if MPUtil.isBeamMPServer() then return end
 
 local M = {}
 local INITIALIZED = false
@@ -77,7 +86,7 @@ local function onInit()
 	local level_name = core_levels.getLevelName(getMissionFilename())
 	local prefab_name = 'lua/ge/extensions/prefabs/' .. level_name .. '.prefab.json'
 	
-	if FS:fileExists(prefab_name) then
+	if not MPUtil.isBeamMPSession() and FS:fileExists(prefab_name) then
 		PowerUps.loadLocationPrefab(prefab_name)
 		PowerUps.loadPowerUpDefs("lua/ge/extensions/powerups/open")
 	end

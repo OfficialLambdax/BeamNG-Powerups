@@ -2,6 +2,9 @@
 	License: None
 	Author: Neverless (discord: neverless.)
 ]]
+
+local MPUtil = require("mp_libs/MPUtil")
+
 local M = {
 	_VERSION = "0.1" -- 06.02.2025 DD.MM.YYYY
 }
@@ -44,7 +47,7 @@ M.loadTriggerPrefab = function(prefab_path, debug)
 	
 	local triggers = {}
 	for _, v in pairs(splitByNewline(trigger_list)) do
-		local decode = jsonDecode(v)
+		local decode = MPUtil.jsonDecode(v)
 		if decode.class == "BeamNGTrigger" then
 			
 			local pos = decode.position
@@ -54,7 +57,7 @@ M.loadTriggerPrefab = function(prefab_path, debug)
 			if TRACKER[name] then TRACKER[name]:delete() end
 			local trigger
 			
-			if createObject then -- game
+			if not MPUtil.isBeamMPServer() then -- game
 				local matrix = MatrixF()
 				matrix:setColumn(0, vec3(rot[1], rot[2], rot[3]))
 				matrix:setColumn(1, vec3(rot[4], rot[5], rot[6]))
@@ -111,6 +114,20 @@ M.loadTriggerPrefab = function(prefab_path, debug)
 				
 				function trigger:setScale(vec)
 					self.int.scale = vec
+				end
+				
+				function trigger:setPosRot(px, py, pz, rx, ry, rz, rw)
+					self.int.pos = {
+						x = px,
+						y = py,
+						z = pz
+					}
+					self.int.rot = {
+						x = rx,
+						y = ry,
+						z = rz,
+						w = rw
+					}
 				end
 				
 				function trigger:setField() end -- does nothing

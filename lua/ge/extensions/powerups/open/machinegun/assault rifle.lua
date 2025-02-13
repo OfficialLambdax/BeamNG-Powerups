@@ -13,6 +13,9 @@ local M = {
 	-- Will prevent whileActive calls
 	do_not_unload = false,
 	
+	max_len = 8000,
+	target_info_descriptor = nil,
+	
 	--[[
 		eg. {Trait.Consuming, Trait.Reflective}
 	]]
@@ -25,7 +28,7 @@ local M = {
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "init",
+	lib_version = "mp_init",
 	
 	-- autofilled
 	file_path = "",
@@ -140,6 +143,7 @@ end
 -- In a multiplayer scenario once the server confirms the targets.
 M.onTargetSelect = function(data, target_info)
 	target_info.life_time = hptimer()
+	target_info.target_dir = vec3(target_info.target_dir)
 	
 	-- spawn projectile
 	local marker = createObject("TSStatic")
