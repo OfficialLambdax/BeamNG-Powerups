@@ -17,9 +17,14 @@ M.isBeamMPSession = function()
 end
 
 M.getMyPlayerName = function()
-	if not M.isBeamMPServer() then return nil end
-	return MPCoreNetwork.getAuthResult().User -- untested
+	if not M.isBeamMPSession() then return nil end
+	return MPCoreNetwork.getAuthResult().username
 end
+
+--M.getOwner = function(game_vehicle_id)
+--	if not M.isBeamMPSession() then return nil end
+--	return MPVehicleGE.getVehicleByGameID(game_vehicle_id).ownerName
+--end
 
 M.isOwn = function(game_vehicle_id)
 	if not M.isBeamMPSession() then return nil end
@@ -29,7 +34,7 @@ end
 if not M.isBeamMPServer() then
 	M.getPlayerName = function(game_vehicle_id)
 		if not M.isBeamMPSession() then return nil end
-		return (MPVehicleGE.getVehicleByGameID(game_vehicle_id) or{}).name
+		return (MPVehicleGE.getVehicleByGameID(game_vehicle_id) or{}).ownerName
 	end
 	
 	M.jsonDecode = jsonDecode

@@ -89,10 +89,10 @@ M.syncLocationUpdate = function(location_name)
 	}})
 end
 
-M.syncVehicleUpdate = function(server_vehicle_id, location_name)
+M.syncVehicleUpdate = function(server_vehicle_id, location_name, overwrite)
 	TriggerClientEvent:send(-1, "onVehiclesPowerupUpdate", {{
 		server_vehicle_id = server_vehicle_id,
-		powerup_group = (VEHICLES[server_vehicle_id].powerup or {}).name,
+		powerup_group = overwrite or (VEHICLES[server_vehicle_id].powerup or {}).name,
 		charge = VEHICLES[server_vehicle_id].charge,
 		location_name = location_name -- can be nil
 	}})
@@ -101,12 +101,46 @@ end
 -- ------------------------------------------------------------------------------------------------
 -- From client
 function tryTargetInfo(player_id, target_info)
-	-- todo
+	local decode = ServerUtil.JsonDecode(target_info)
+	local player_id2, vehicle_id = table.unpack(Util.split(decode.server_vehicle_id, '-', 1))
+	if player_id ~= player_id2 then
+		Error('TryTargetInfo: Got unexpected data form ' .. MP.GetPlayerName(player_id))
+		return
+	end
+	
+	local vehicle = VEHICLES[decode.server_vehicle_id]
+	if vehicle == nil then
+		Error('TryTargetInfo: Unknown vehicle of ' .. MP.GetPlayerName(player_id))
+		return
+	end
+	
+	if not vehicle.powerup_active then
+		Error('tryTargetInfo: No active powerup from ' .. MP.GetPlayerName(player_id))
+		return
+	end
+	
 	TriggerClientEvent:send(-1, "onTargetInfo", target_info)
 end
 
 function tryTargetHit(player_id, targets)
-	-- todo
+	local decode = ServerUtil.JsonDecode(targets)
+	local player_id2, vehicle_id = table.unpack(Util.split(decode.server_vehicle_id, '-', 1))
+	if player_id ~= player_id2 then
+		Error('TryTargetInfo: Got unexpected data form ' .. MP.GetPlayerName(player_id))
+		return
+	end
+	
+	local vehicle = VEHICLES[decode.server_vehicle_id]
+	if vehicle == nil then
+		Error('TryTargetInfo: Unknown vehicle of ' .. MP.GetPlayerName(player_id))
+		return
+	end
+	
+	if not vehicle.powerup_active then
+		Error('tryTargetInfo: No active powerup from ' .. MP.GetPlayerName(player_id))
+		return
+	end
+	
 	print(targets)
 	TriggerClientEvent:send(-1, "onTargetHit", targets)
 end
@@ -158,9 +192,21 @@ function tryActivatePowerup(player_id, server_vehicle_id)
 		return
 	end
 	
+	local is_negative = vehicle.powerup.type == Types.Negative
+	
 	-- select powerup
+	--local powerup_active
+	--if is_negative then
+	--	powerup_active = vehicle.powerup.powerups[math.random(1, vehicle.powerup.max_levels)]
+	--else
+		
+	--	local charge = math.min(vehicle.charge, vehicle.powerup.max_levels)
+	--	powerup_active = vehicle.powerup.powerups[charge]
+	--end
 	local charge = math.min(vehicle.charge, vehicle.powerup.max_levels)
 	local powerup_active = vehicle.powerup.powerups[charge]
+	
+	-- select powerup
 	if powerup_active == nil then
 		Error('TryActivate: Powerup group has no powerups')
 		return
@@ -169,7 +215,7 @@ function tryActivatePowerup(player_id, server_vehicle_id)
 	vehicle.powerup_active = powerup_active
 	vehicle.powerup_active.max_len_timer = PauseTimer.new()
 	vehicle.powerup = nil
-	vehicle.charge = 1
+	if not is_negative then vehicle.charge = 1 end
 	
 	TriggerClientEvent:send(-1, "onPowerupActivate", server_vehicle_id)
 end
@@ -211,24 +257,29 @@ function tryTakePowerup(player_id, data)
 		return
 	end
 	
-	-- swap ownership
-	vehicle.powerup = location.powerup
-	location.powerup = nil
-	location.respawn_timer:stopAndReset()
-	
-	
-	-- accept take
-	M.syncVehicleUpdate(server_vehicle_id, location_name)
-	-- no need to sync location update as the vehicle sync already consume the location on everyones client
-	--M.syncLocationUpdate(
-	
-	-- special behaviour
-	if vehicle.powerup.type == Types.Charge then
+	local type = location.powerup.type
+	if type == Types.Charge then
 		vehicle.charge = vehicle.charge + 1
+		M.syncVehicleUpdate(server_vehicle_id, location_name, location.powerup.name)
+		location.powerup = nil
+		location.respawn_timer:stopAndReset()
 		
-	elseif vehicle.powerup.type == Types.Negative then
-		-- immediate exec
+	elseif type == Types.Negative then
+		-- swap ownership
+		vehicle.powerup = location.powerup
+		location.powerup = nil
+		location.respawn_timer:stopAndReset()
+		
+		M.syncVehicleUpdate(server_vehicle_id, location_name)
 		tryActivatePowerup(player_id, server_vehicle_id)
+		
+	else
+		-- swap ownership
+		vehicle.powerup = location.powerup
+		location.powerup = nil
+		location.respawn_timer:stopAndReset()
+		
+		M.syncVehicleUpdate(server_vehicle_id, location_name)
 	end
 end
 
@@ -250,7 +301,7 @@ function onPlayerReady(player_id) -- called by the client side mod
 	--if TriggerClientEvent:is_synced(player_id) then return end
 	TriggerClientEvent:set_synced(player_id)
 	
-	print("is ready")
+	print(MP.GetPlayerName(player_id) .. " is ready")
 	
 	-- send location prefab
 	TriggerClientEvent:send(player_id, "onLoadLocationPrefab", LOCATION_PREFAB_NAME)

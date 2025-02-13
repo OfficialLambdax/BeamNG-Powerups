@@ -515,6 +515,10 @@ local function activatePowerup(game_vehicle_id, from_server)
 	vehicle.powerup_active = powerup_active
 	vehicle.powerup_data = r
 	
+	if MPUtil.isOwn(game_vehicle_id) and not from_server then
+		MPClientRuntime.tryActivatePowerup(game_vehicle_id)
+	end
+
 	if target_info then
 		if not MPUtil.isBeamMPSession() then
 			targetInfoExec(vehicle, target_info)
@@ -525,10 +529,6 @@ local function activatePowerup(game_vehicle_id, from_server)
 	
 	print("Powerup: " .. game_vehicle_id .. " activated " .. powerup_active.internal_name)
 	simpleDisplayActivatedPowerup(game_vehicle_id, powerup_active.clear_name, powerup_type)
-	
-	if MPUtil.isOwn(game_vehicle_id) and not from_server then
-		MPClientRuntime.tryActivatePowerup(game_vehicle_id)
-	end
 end
 
 local function vehicleAddPowerup(game_vehicle_id, powerup, location)
