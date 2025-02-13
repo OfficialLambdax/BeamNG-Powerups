@@ -13,6 +13,9 @@ local M = {
 	-- Will prevent whileActive calls
 	do_not_unload = false,
 	
+	max_len = 3000,
+	target_info_descriptor = nil,
+	
 	--[[
 		eg. {Trait.Consuming, Trait.Reflective}
 	]]
@@ -25,7 +28,7 @@ local M = {
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "init",
+	lib_version = "mp_init",
 	
 	-- autofilled
 	file_path = "",
@@ -130,6 +133,7 @@ end
 -- In a multiplayer scenario once the server confirms the targets.
 M.onTargetSelect = function(data, target_info)
 	Util.tableMerge(data, target_info)
+	data.target_dir = vec3(data.target_dir)
 	data.life_time = hptimer()
 	
 	-- spawn projectile

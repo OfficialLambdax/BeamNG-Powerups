@@ -3,13 +3,17 @@
 	Author: Neverless (discord: neverless.)
 ]]
 local PowerUps
+local ServerUtil = Util -- only exists on server
 local Util = require("libs/Util")
+local MPUtil = require("mp_libs/MPUtil")
 local PowerUpsTraits = require("libs/PowerUpsTraits")
+local PowerUpsTypes = require("libs/PowerUpsTypes")
 
 local M = {}
 M.Traits = PowerUpsTraits.Traits
 M.TraitsLookup = Util.tableVToK(M.Traits)
 --M.TraitBounds = PowerUpsTraits.TraitBounds
+M.Types = PowerUpsTypes.Types
 
 local SUBJECT_SINGLEPLAYER = "!singleplayer"
 local SUBJECT_TRAFFIC = "!traffic"
@@ -52,6 +56,12 @@ end
 
 M.getTraitName = function(value)
 	for name, event in pairs(M.Traits) do
+		if value == event then return name end
+	end
+end
+
+M.getTypeName = function(value)
+	for name, event in pairs(M.Types) do
 		if value == event then return name end
 	end
 end
@@ -168,8 +178,50 @@ M.isActive = function(...)
 	return true
 end
 
+if not MPUtil.isBeamMPServer() then
+	M.getAllVehicles = function(also_disabled)
+		local vehicles = {}
+		for _, vehicle in ipairs(getAllVehicles()) do
+			if vehicle:getActive() or also_disabled then table.insert(vehicles, vehicle) end
+		end
+		return vehicles
+	end
+
+else
+	-- we may want to refactor this later to rather track existing vehicles and just return that table to not create new objects every time this is called. but for now its oke, the server isnt as runtime dependent as the game is.
+	M.getAllVehicles = function()
+		local vehicles = {}
+		for player_id, _ in pairs(MP.GetPlayers()) do
+			for vehicle_id, _ in pairs(MP.GetPlayerVehicles(player_id) or {}) do
+				
+				local vehicle = {int = {
+						player_id = player_id,
+						vehicle_id = vehicle_id
+					}
+				}
+				function vehicle:getId()
+					return self.int.player_id .. '-' .. self.int.vehicle_id
+				end
+				
+				function vehicle:getPosition()
+					local raw_pos_packet = MP.GetPositionRaw(self.int.player_id, self.int.vehicle_id)
+					if not raw_pos_packet then return nil end
+					
+					local decode = ServerUtil.JsonDecode(raw_pos_packet)
+					
+					return {x = decode.pos[1], y = decode.pos[2], z = decode.pos[3]}
+				end
+				
+				table.insert(vehicles, vehicle)
+			end
+		end
+		return vehicles
+	end
+end
+
 M.updatePowerUpsLib = function(this)
 	PowerUps = this
 end
+
 
 return M
