@@ -34,9 +34,14 @@ M.tryTargetInfo = function(game_vehicle_id, target_info)
 end
 
 M.tryTargetHit = function(game_vehicle_id, targets, deactivate)
+	local converted_targets = {}
+	for index, target_id in ipairs(targets) do
+		converted_targets[index] = MPUtil.gameVehicleIDToServerVehicleID(target_id)
+	end
+
 	TriggerServerEvent("tryTargetHit", jsonEncode({
 		server_vehicle_id = MPUtil.gameVehicleIDToServerVehicleID(game_vehicle_id),
-		targets = targets,
+		targets = converted_targets,
 		deactivate = deactivate
 	}))
 end
@@ -66,7 +71,12 @@ local function onTargetHit(data)
 	if vehicle == nil then return end
 	if vehicle.powerup_active == nil then return end
 	
-	PowerUps.targetHitExec(game_vehicle_id, vehicle, data.targets, data.deactivate)
+	local targets = {}
+	for index, server_vehicle_id in ipairs(data.targets) do
+		targets[index] = MPUtil.serverVehicleIDToGameVehicleID(server_vehicle_id)
+	end
+	
+	PowerUps.targetHitExec(game_vehicle_id, vehicle, targets, data.deactivate)
 end
 
 local function onActivePowerupDisable(server_vehicle_id)
@@ -86,7 +96,7 @@ end
 local function onPowerupActivate(server_vehicle_id)
 	local game_vehicle_id = MPUtil.serverVehicleIDToGameVehicleID(server_vehicle_id)
 	if game_vehicle_id == nil then return end
-	PowerUps.activatePowerup(game_vehicle_id)
+	PowerUps.activatePowerup(game_vehicle_id, true)
 end
 
 local function onLoadPowerupDefs(set_name)
@@ -124,22 +134,23 @@ local function onVehiclesPowerupUpdate(vehicles)
 		
 		if game_vehicle_id then
 			local vehicle = VEHICLES[game_vehicle_id]
-			vehicle.charge = vehicle_update.charge
-		
-			if vehicle_update.powerup_group == nil then
-				if vehicle.powerup then
-					vehicle.powerup.onDrop(vehicle.powerup.data)
-					vehicle.powerup = nil
-				end
-				
-			else
-				PowerUps.vehicleAddPowerup(
-					game_vehicle_id,
-					POWERUP_DEFS[vehicle_update.powerup_group],
-					LOCATIONS[vehicle_update.location_name] -- can be nil
-				)
-			end
+			if vehicle then -- can be the case for disabled traffic vehicles
+				vehicle.charge = vehicle_update.charge
 			
+				if vehicle_update.powerup_group == nil then
+					if vehicle.powerup then
+						vehicle.powerup.onDrop(vehicle.powerup.data)
+						vehicle.powerup = nil
+					end
+					
+				else
+					PowerUps.vehicleAddPowerup(
+						game_vehicle_id,
+						POWERUP_DEFS[vehicle_update.powerup_group],
+						LOCATIONS[vehicle_update.location_name] -- can be nil
+					)
+				end
+			end
 		else
 			-- error
 		end

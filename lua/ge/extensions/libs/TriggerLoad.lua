@@ -131,6 +131,8 @@ M.loadTriggerPrefab = function(prefab_path, debug)
 				end
 				
 				function trigger:setField() end -- does nothing
+				
+				function trigger:delete() end -- no na nanana nuthing
 			end
 			
 			triggers[name] = trigger

@@ -20,6 +20,11 @@
 	Then we never unload it ourselfs and have every module handle its own unload. eg then when map is unloaded. Dunno how exactly the extensions system work at this moment and when what loads/unloads/reloads without full on testing that i tho didnt have time for.
 ]]
 
+-- prevent this from loading server side
+if MP and MP.TriggerClientEvent then
+	return
+end
+
 -- unload what otherwise would leak to mem
 require("libs/ForceField").unload() -- markers will otherwise leak to mem
 require("libs/PowerUps").unload()
@@ -46,8 +51,6 @@ local Sets = require("libs/Sets")
 local ForceField = require("libs/ForceField")
 local PowerUps = require("libs/PowerUps")
 local MPUtil = require("mp_libs/MPUtil")
-
-if MPUtil.isBeamMPServer() then return end
 
 local M = {}
 local INITIALIZED = false
