@@ -161,10 +161,10 @@ local function simpleDisplayActivatedPowerup(game_vehicle_id, clear_name, type)
 	local str = ""
 	
 	local is_player, is_traffic = Extender.isPlayerVehicle(game_vehicle_id)
-	if is_player then
-		str = 'You '
-	elseif is_traffic then
+	if is_traffic then
 		str = 'Traffic '
+	elseif is_player then
+		str = 'You '
 	else
 		str = VEHICLES[game_vehicle_id].player_name .. ' '
 	end
@@ -476,7 +476,7 @@ local function selectPowerup()
 	return POWERUP_DEFS[random_group]
 end
 
-local function activatePowerup(game_vehicle_id)
+local function activatePowerup(game_vehicle_id, from_server)
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle.powerup == nil then
 		Error('Vehicle owns no powerup')
@@ -526,7 +526,7 @@ local function activatePowerup(game_vehicle_id)
 	print("Powerup: " .. game_vehicle_id .. " activated " .. powerup_active.internal_name)
 	simpleDisplayActivatedPowerup(game_vehicle_id, powerup_active.clear_name, powerup_type)
 	
-	if MPUtil.isBeamMPSession() then
+	if MPUtil.isOwn(game_vehicle_id) and not from_server then
 		MPClientRuntime.tryActivatePowerup(game_vehicle_id)
 	end
 end
@@ -602,7 +602,11 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 		
 		print("PowerUp: " .. game_vehicle_id .. " picked up negative " .. vehicle.powerup.name)
 		
-		activatePowerup(game_vehicle_id)
+		if not MPUtil.isBeamMPSession() then
+			activatePowerup(game_vehicle_id)
+		--else
+			--MPClientRuntime.tryActivatePowerup(game_vehicle_id) -- server does this already
+		end
 	else
 		Error('Unknown return type from powerup action of "' .. location.powerup.name .. '"')
 		
@@ -617,11 +621,16 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 	simplePowerUpDisplay()
 	
 	-- if traffic
+	local is_own, is_traffic = Extender.isPlayerVehicle(game_vehicle_id)
 	if is_traffic and vehicle.powerup then
-		vehicle.charge = math.random(1, MAX_CHARGE)
-		activatePowerup(game_vehicle_id)
-		
-	elseif Extender.isSpectating(game_vehicle_id) then
+		if not MPUtil.isBeamMPSession() then
+			vehicle.charge = math.random(1, MAX_CHARGE)
+			activatePowerup(game_vehicle_id)
+		else
+			MPClientRuntime.tryActivatePowerup(game_vehicle_id)
+		end
+	end
+	if Extender.isSpectating(game_vehicle_id) then
 		-- temp. the pickup sound will be on the group
 		Engine.Audio.playOnce('AudioGui', "/lua/ge/extensions/powerups/default_powerup_pick_sound.ogg", {volume = 3, channel = 'Music'})
 	end

@@ -171,7 +171,7 @@ function tryActivatePowerup(player_id, server_vehicle_id)
 	vehicle.powerup = nil
 	vehicle.charge = 1
 	
-	TriggerClientEvent:broadcastExcept(player_id, "onPowerupActivate", server_vehicle_id)
+	TriggerClientEvent:send(-1, "onPowerupActivate", server_vehicle_id)
 end
 
 function tryTakePowerup(player_id, data)

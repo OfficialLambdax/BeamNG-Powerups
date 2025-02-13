@@ -159,11 +159,7 @@ M.isPlayerVehicle = function(game_vehicle_id)
 		if vehicle.player_name == SUBJECT_SINGLEPLAYER then return true, false end
 		local is_traffic = vehicle.player_name == SUBJECT_TRAFFIC
 		
-		
-		-- check if mp
-		-- todo
-		
-		return false, is_traffic
+		return MPUtil.isOwn(game_vehicle_id) == true, is_traffic
 	end
 end
 
