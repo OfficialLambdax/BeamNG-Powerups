@@ -42,6 +42,7 @@ package.loaded["libs/PowerUpsTypes"] = nil
 package.loaded["libs/TriggerLoad"] = nil
 package.loaded["libs/MathUtil"] = nil
 package.loaded["libs/Util"] = nil
+package.loaded["libs/Log"] = nil
 package.loaded["mp_libs/MPUtil"] = nil
 package.loaded["mp_libs/MPClientRuntime"] = nil
 

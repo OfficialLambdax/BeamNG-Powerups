@@ -83,7 +83,7 @@
 local PrecisionTimer = hptimer or HighPerfTimer or require("mp_libs/PauseTimer").new
 -- BeamMP server only requirement
 -- Only loaded in init if this library has been loaded on the BeamMP Server where no log() is present
-local Colors = -1
+local Log = require("libs/Log")
 
 
 local M = {
@@ -164,38 +164,8 @@ local function fileName(string)
 end
 
 -- ------------------------------------------------------------------------------------------------
--- Verbose Error propagation
-local function Error(reason)
-	local insert = function(display_reason, debug_info)
-		if debug_info == nil or debug_info.name == nil then return display_reason end
-		return display_reason .. fileName(debug_info.source) .. '@' .. debug_info.name .. ':' .. debug_info.linedefined .. ' <- '
-	end
-	
-	local display_reason = insert('[', debug.getinfo(2))
-	
-	local index = 3;
-	while debug.getinfo(index) and (debug.getinfo(1).source == debug.getinfo(index).source) do
-		display_reason = insert(display_reason, debug.getinfo(index))
-		index = index + 1
-	end
-	display_reason = insert(display_reason, debug.getinfo(index))
-	display_reason = display_reason:sub(1, display_reason:len() - 4) .. '] THROWS\n' .. reason
-
-	if log then -- if game
-		log("E", "TimedTriggers", display_reason)
-		
-	else -- if beammp server
-		Colors.print(Colors.bold("TimedTriggers") .. ' - ' .. display_reason, Colors.lightRed("ERROR"))
-	end
-end
-
--- ------------------------------------------------------------------------------------------------
 -- Init
 local function init()
-	if not log then
-		Colors = require("mp_libs/colors")
-	end
-	
 	local is_game_ge_vm = false
 	if core_vehicles then
 		is_game_ge_vm = true
@@ -203,7 +173,7 @@ local function init()
 	
 	if not is_game_ge_vm then
 		local from_wrong_env_call = function()
-			Error("This function is not available in this environment")
+			Log.error("This function is not available in this environment")
 		end
 		
 		M.newVE = from_wrong_env_call
@@ -332,7 +302,7 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 		elseif self.int.target_env == 1 then
 			local veh = be:getObjectByID(self.int.ve_target)
 			if not veh then
-				Error("Vehicle target doesnt exist")
+				Log.error("Vehicle target doesnt exist")
 				return
 			end
 			
@@ -350,14 +320,14 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 	function trigger:compileAndRun()
 		local func, err = load(self.int.exec)
 		if err ~= nil then
-			Error(err)
+			Log.error(err)
 			return
 		end
 		
 		local args = UNPACK(self.int.args)
 		local success, r = pcall(func, args)
 		if not success then
-			Error(r)
+			Log.error(r)
 			return
 		end
 		
@@ -490,7 +460,7 @@ local function new(name, trigger_every, trigger_for, exec, ...)
 	
 	if not trigger then
 		-- display error
-		Error(err)
+		Log.error(err)
 		
 		return nil
 	end
@@ -514,7 +484,7 @@ local function newVE(name, ve_target, trigger_every, trigger_for, exec, ...)
 	
 	if not trigger then
 		-- display error
-		Error(err)
+		Log.error(err)
 		
 		return nil
 	end
@@ -537,7 +507,7 @@ local function newVEAll(name, trigger_every, trigger_for, exec, ...)
 	
 	if not trigger then
 		-- display error
-		Error(err)
+		Log.error(err)
 		
 		return nil
 	end
@@ -561,7 +531,7 @@ local function newVEAllExcept(name, except, trigger_every, trigger_for, exec, ..
 	
 	if not trigger then
 		-- display error
-		Error(err)
+		Log.error(err)
 		
 		return nil
 	end

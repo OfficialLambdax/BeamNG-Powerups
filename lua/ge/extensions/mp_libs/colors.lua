@@ -105,6 +105,13 @@ M.SendChatMessage = function(player_id, message)
 	end
 end
 
+M.ifServer = function(string, func)
+	if MP and MP.TriggerClientEvent then
+		return func(string)
+	end
+	return string
+end
+
 -- -----------------------------------------------------------------------------------------------
 -- Internal
 M.convertToConsole = function(string)

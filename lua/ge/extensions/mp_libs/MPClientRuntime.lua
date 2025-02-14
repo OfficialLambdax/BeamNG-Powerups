@@ -1,4 +1,5 @@
 local MPUtil = require("mp_libs/MPUtil")
+local Log = require("libs/Log")
 
 local PowerUps
 local Error
@@ -54,7 +55,7 @@ end
 -- ------------------------------------------------------------------------------------------------
 -- From server
 local function onCompleteReset()
-	print("Multiplayer complete reset")
+	Log.info("Multiplayer complete reset")
 	PowerUps.unload()
 	PowerUps.init()
 end
@@ -98,19 +99,20 @@ local function onActivePowerupDisable(server_vehicle_id)
 	vehicle.powerup_data = nil
 end
 
-local function onPowerupActivate(server_vehicle_id)
-	local game_vehicle_id = MPUtil.serverVehicleIDToGameVehicleID(server_vehicle_id)
+local function onPowerupActivate(data)
+	local data = jsonDecode(data)
+	local game_vehicle_id = MPUtil.serverVehicleIDToGameVehicleID(data.server_vehicle_id)
 	if game_vehicle_id == nil then return end
-	PowerUps.activatePowerup(game_vehicle_id, true)
+	PowerUps.activatePowerup(game_vehicle_id, true, data.charge_overwrite)
 end
 
 local function onLoadPowerupDefs(set_name)
-	print('Multiplayer powerup defs: lua/ge/extensions/powerups/' .. set_name)
+	Log.info('Multiplayer powerup defs: lua/ge/extensions/powerups/' .. set_name)
 	PowerUps.loadPowerUpDefs('lua/ge/extensions/powerups/' .. set_name)
 end
 
 local function onLoadLocationPrefab(prefab_name)
-	print('Multiplayer location prefab: lua/ge/extensions/prefabs/' .. prefab_name)
+	Log.info('Multiplayer location prefab: lua/ge/extensions/prefabs/' .. prefab_name)
 	PowerUps.loadLocationPrefab('lua/ge/extensions/prefabs/' .. prefab_name)
 end
 

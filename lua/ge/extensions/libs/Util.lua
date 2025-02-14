@@ -46,6 +46,10 @@ M.randomName = function()
 	--return tostring({}):sub(8)
 end
 
+M.mathRound = function(number, decimals)
+	return tonumber(string.format("%." .. (decimals or 2) .. "f", number))
+end
+
 M.tableVToK = function(table)
 	local new_table = {}
 	for _, v in pairs(table) do

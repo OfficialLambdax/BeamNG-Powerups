@@ -12,10 +12,7 @@ local MPUtil = require("mp_libs/MPUtil")
 local MPClientRuntime = require("mp_libs/MPClientRuntime")
 local MPServerRuntime -- filled only if loaded on server
 local PauseTimer = require("mp_libs/PauseTimer")
-local Colors = -1
-if not log then
-	Colors = require("mp_libs/colors")
-end
+local Log = require("libs/Log")
 
 local M = {
 	_VERSION = 0.3, -- 13.02.2025 DD.MM.YYYY
@@ -105,32 +102,6 @@ local LOCATIONS = {}
 local VEHICLES = {}
 
 -- ------------------------------------------------------------------------------------------------
--- Verbose Error propagation
-local function Error(reason)
-	local insert = function(display_reason, debug_info)
-		if debug_info == nil or debug_info.name == nil then return display_reason end
-		return display_reason .. Util.fileName(debug_info.source or "") .. '@' .. debug_info.name .. ':' .. debug_info.linedefined .. ' <- '
-	end
-	
-	local display_reason = insert('[', debug.getinfo(2))
-	
-	local index = 3;
-	while debug.getinfo(index) and (debug.getinfo(1).source == debug.getinfo(index).source) do
-		display_reason = insert(display_reason, debug.getinfo(index))
-		index = index + 1
-	end
-	display_reason = insert(display_reason, debug.getinfo(index))
-	display_reason = display_reason:sub(1, display_reason:len() - 4) .. '] THROWS\n' .. reason
-
-	if log then -- if game
-		log("E", "PowerUps", display_reason)
-		
-	else -- if beammp server
-		Colors.print(Colors.bold("PowerUps") .. ' - ' .. display_reason, Colors.lightRed("ERROR"))
-	end
-end
-
--- ------------------------------------------------------------------------------------------------
 -- Very basic powerup display. Shows powerup info depending on which vehicle the player is spectating
 local function simplePowerUpDisplay()
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
@@ -207,6 +178,8 @@ local function targetHitExec(game_vehicle_id, vehicle, targets, deactivate)
 		vehicle.powerup_active.onDeactivate(vehicle.powerup_data, game_vehicle_id)
 		vehicle.powerup_active = nil
 		vehicle.powerup_data = nil
+		
+		MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
 	end
 end
 
@@ -236,6 +209,8 @@ local function tickRenderQue(dt)
 						vehicle.powerup_active.onDeactivate(vehicle.powerup_data, game_vehicle_id)
 						vehicle.powerup_active = nil
 						vehicle.powerup_data = nil
+						
+						MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
 						
 					else
 						if target_info then
@@ -349,6 +324,7 @@ local function onVehicleDestroyed(game_vehicle_id)
 	
 	if vehicle.powerup_active then
 		vehicle.powerup_active.onDeactivate(vehicle.data, game_vehicle_id)
+		MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
 	end
 
 	VEHICLES[game_vehicle_id] = nil
@@ -371,24 +347,24 @@ end
 -- Powerups
 local function loadPowerups(set_path, group_path, group)
 	if POWERUP_DEFS[group.name] then 
-		Error('"' .. group.name .. '" from "' .. Util.fileName(group_path) .. '" already exists. Aborting load')
+		Log.error('"' .. group.name .. '" from "' .. Util.fileName(group_path) .. '" already exists. Aborting load')
 		return
 	end
 	
 	-- check version
 	if group.lib_version ~= M._NAME then
-		Error('"' .. group.name .. '" from "' .. Util.fileName(group_path) .. '" is out of date. Aborting load')
+		Log.error('"' .. group.name .. '" from "' .. Util.fileName(group_path) .. '" is out of date. Aborting load')
 		return
 	end
 	
 	if #group.powerups > 0 then
-		Error('Group "' .. group.name .. '" has invalid definitions for entry "powerups". Keep it empty. Aborting load')
+		Log.error('Group "' .. group.name .. '" has invalid definitions for entry "powerups". Keep it empty. Aborting load')
 		return
 	end
 	
 	local group_type = Extender.getTypeName(group.type)
 	if group_type == nil then
-		Error('Group "' .. group.name .. '" has unknown type "' .. tostring(group.type) .. '". Aborting load')
+		Log.error('Group "' .. group.name .. '" has unknown type "' .. tostring(group.type) .. '". Aborting load')
 		return
 	end
 
@@ -398,13 +374,13 @@ local function loadPowerups(set_path, group_path, group)
 		local file_path = set_path .. '/' .. group.name .. '/' .. powerup_name .. '.lua'
 		local powerup, err = Util.compileLua(file_path)
 		if powerup == nil then
-			Error('Cannot compile "' .. powerup_name .. '" because of "' .. err .. '". Skipping.')
+			Log.error('Cannot compile "' .. powerup_name .. '" because of "' .. err .. '". Skipping.')
 			--return -- abort
 		else
 			local is_invalid = false
 			
 			if powerup.lib_version ~= M._NAME then
-				Error('"' .. powerup_name .. '" of group "' .. group.name .. '" is out of date. Rejecting owerup')
+				Log.error('"' .. powerup_name .. '" of group "' .. group.name .. '" is out of date. Rejecting owerup')
 				
 				is_invalid = true
 			end
@@ -412,11 +388,11 @@ local function loadPowerups(set_path, group_path, group)
 			for _, trait in ipairs(powerup.traits or {}) do
 				local trait_name = Extender.getTraitName(trait)
 				if trait_name == nil then
-					Error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" lists an unknown "' .. trait .. '" trait')
+					Log.error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" lists an unknown "' .. trait .. '" trait')
 					is_invalid = true
 					
 				elseif type(powerup[trait]) ~= "function" then
-					Error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" lists the "' .. trait_name .. '" trait but doesnt have a callback for it. Skipping.')
+					Log.error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" lists the "' .. trait_name .. '" trait but doesnt have a callback for it. Skipping.')
 					is_invalid = true
 				end
 			end
@@ -424,13 +400,13 @@ local function loadPowerups(set_path, group_path, group)
 			for _, trait in ipairs(powerup.respects_traits or {}) do
 				local trait_name = Extender.getTraitName(trait)
 				if trait_name == nil then
-					Error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" is listing to respect the "' .. trait .. '" trait, but this trait is unknown')
+					Log.error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" is listing to respect the "' .. trait .. '" trait, but this trait is unknown')
 					is_invalid = true
 				end
 			end
 			
 			if powerup.max_len == 0 then
-				Error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" has no max_len.')
+				Log.error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" has no max_len.')
 				is_invalid = true
 			end
 			
@@ -476,22 +452,22 @@ local function selectPowerup()
 	return POWERUP_DEFS[random_group]
 end
 
-local function activatePowerup(game_vehicle_id, from_server)
+local function activatePowerup(game_vehicle_id, from_server, charge_overwrite) -- charge overwrite is given by negatives
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle.powerup == nil then
-		Error('Vehicle owns no powerup')
+		Log.error('Vehicle owns no powerup')
 		return
 	end
 	if vehicle.powerup_active then
-		Error('Another powerup is active at this moment')
+		Log.error('Another powerup is active at this moment')
 		return
 	end
 	
 	-- select active powerup
-	local charge = math.min(vehicle.charge, vehicle.powerup.max_levels)
+	local charge = charge_overwrite or math.min(vehicle.charge, vehicle.powerup.max_levels)
 	local powerup_active = vehicle.powerup.powerups[charge]
 	if powerup_active == nil then
-		Error('Group "' .. vehicle.powerup.name .. '" has no powerups')
+		Log.error('Group "' .. vehicle.powerup.name .. '" has no powerups')
 		return
 	end
 	
@@ -501,14 +477,14 @@ local function activatePowerup(game_vehicle_id, from_server)
 	vehicle.powerup.onDrop(vehicle.data)
 	
 	-- consume powerup and charge
-	vehicle.charge = 1
+	if charge_overwrite == nil then vehicle.charge = 1 end
 	vehicle.powerup = nil
 	vehicle.data = nil
 	
 	-- add active powerup
 	local r, target_info = powerup_active.onActivate(be:getObjectByID(game_vehicle_id))
 	if r == nil then
-		Error('Powerup "' .. powerup_active.internal_name .. '" failed to activate "' .. tostring(target_info) .. '"')
+		Log.error('Powerup "' .. powerup_active.internal_name .. '" failed to activate "' .. tostring(target_info) .. '"')
 		return
 	end
 	
@@ -527,7 +503,7 @@ local function activatePowerup(game_vehicle_id, from_server)
 		end
 	end
 	
-	print("Powerup: " .. game_vehicle_id .. " activated " .. powerup_active.internal_name)
+	Log.info("Powerup: " .. game_vehicle_id .. " activated " .. powerup_active.internal_name)
 	simpleDisplayActivatedPowerup(game_vehicle_id, powerup_active.clear_name, powerup_type)
 end
 
@@ -560,12 +536,12 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 	
 	local r, variable = powerup.onPickup(location.data, origin_vehicle)
 	if r == nil then
-		Error('Vehicle cannot pickup "' .. location.powerup.name .. '" - "' .. tostring(variable) .. '"')
+		Log.error('Vehicle cannot pickup "' .. location.powerup.name .. '" - "' .. tostring(variable) .. '"')
 		return nil
 	
 	elseif r == 1 then -- success
 		if vehicle.powerup then
-			print('PowerUP: ' .. game_vehicle_id .. ' dropped ' .. vehicle.powerup.name)
+			Log.info('PowerUP: ' .. game_vehicle_id .. ' dropped ' .. vehicle.powerup.name)
 			vehicle.powerup.onDrop(vehicle.data)
 		end
 		
@@ -573,11 +549,11 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 		vehicle.powerup = location.powerup
 		vehicle.data = location.data
 		
-		print("PowerUp: " .. game_vehicle_id .. " picked up " .. vehicle.powerup.name)
+		Log.info("PowerUp: " .. game_vehicle_id .. " picked up " .. vehicle.powerup.name)
 		
 	elseif r == 2 then -- dont pickup new one, drop current and remove the new one
 		if vehicle.powerup then
-			print("PowerUp: " .. game_vehicle_id .. " dropped " .. vehicle.powerup.name)
+			Log.info("PowerUp: " .. game_vehicle_id .. " dropped " .. vehicle.powerup.name)
 			vehicle.powerup.onDrop(vehicle.data)
 			vehicle.powerup = nil
 			vehicle.data = nil
@@ -586,13 +562,13 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 		if is_fake_location then location.powerup.onDrop(location.data) end
 		
 	elseif r == 3 then -- reserved for charges
-		print("PowerUp: " .. game_vehicle_id .. " picked a charge")
+		Log.info("PowerUp: " .. game_vehicle_id .. " picked a charge")
 		simpleDisplayActivatedPowerup(game_vehicle_id, "Charge", powerup.type)
 
 	elseif r == 4 then -- immediate execute - for negative powerups
 		-- check currrent powerup
 		if vehicle.powerup then
-			print("PowerUp: " .. game_vehicle_id .. " dropped " .. vehicle.powerup.name)
+			Log.info("PowerUp: " .. game_vehicle_id .. " dropped " .. vehicle.powerup.name)
 			vehicle.powerup.onDrop(vehicle.data)
 		end
 				
@@ -600,15 +576,15 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 		vehicle.powerup = location.powerup
 		vehicle.data = location.data
 		
-		print("PowerUp: " .. game_vehicle_id .. " picked up negative " .. vehicle.powerup.name)
+		Log.info("PowerUp: " .. game_vehicle_id .. " picked up negative " .. vehicle.powerup.name)
 		
 		if not MPUtil.isBeamMPSession() then
-			activatePowerup(game_vehicle_id)
+			activatePowerup(game_vehicle_id, nil, math.random(1, vehicle.powerup.max_levels))
 		--else
 			--MPClientRuntime.tryActivatePowerup(game_vehicle_id) -- server does this already
 		end
 	else
-		Error('Unknown return type from powerup action of "' .. location.powerup.name .. '"')
+		Log.error('Unknown return type from powerup action of "' .. location.powerup.name .. '"')
 		
 		if is_fake_location then location.powerup.onDrop(location.data) end
 		return
@@ -661,7 +637,7 @@ end
 local function loadLocations(triggers)
 	for trigger_name, trigger in pairs(triggers) do
 		if LOCATIONS[trigger_name] then
-			Error('Location "' .. trigger_name .. '" is already known')
+			Log.error('Location "' .. trigger_name .. '" is already known')
 			trigger:delete()
 		else
 			-- adjust triggers
@@ -788,7 +764,7 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 			restockPowerups
 		)
 		if r == nil then
-			Error('Cannot initialize restock routine')
+			Log.error('Cannot initialize restock routine')
 		end
 		
 		local r = TimedTrigger.new(
@@ -798,7 +774,7 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 			checkLocationRotation
 		)
 		if r == nil then
-			Error('Cannot initialize restock routine')
+			Log.error('Cannot initialize restock routine')
 		end
 	end
 	
@@ -811,7 +787,7 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 			checkRenderDistance
 		)
 		if r == nil then
-			Error('Cannot initialize render check routine')
+			Log.error('Cannot initialize render check routine')
 		end
 		
 		local r = TimedTrigger.new(
@@ -821,7 +797,7 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 			checkIfTraffic
 		)
 		if r == nil then
-			Error('Cannot initialize traffic check routine')
+			Log.error('Cannot initialize traffic check routine')
 		end
 		
 		local r = TimedTrigger.new(
@@ -831,7 +807,7 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 			simplePowerUpDisplay
 		)
 		if r == nil then
-			Error('Cannot initialize traffic check routine')
+			Log.error('Cannot initialize traffic check routine')
 		end
 	end
 	
@@ -857,6 +833,7 @@ M.unload = function()
 		end
 		if vehicle.powerup_active ~= nil then
 			vehicle.powerup_active.onDeactivate(vehicle.powerup_data, game_vehicle_id)
+			MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
 		end
 	end
 	
@@ -877,14 +854,14 @@ end
 -- Development
 M.testExec = function(game_vehicle_id, group, charge)
 	if be:getObjectByID(game_vehicle_id) == nil then
-		Error('Unknown vehicle')
+		Log.error('Unknown vehicle')
 		return
 	end
 	local vehicle = VEHICLES[game_vehicle_id] or onVehicleSpawned(game_vehicle_id)
 	
 	local powerup = POWERUP_DEFS[group]
 	if powerup == nil then
-		Error('Unknown group')
+		Log.error('Unknown group')
 		return nil
 	end
 	
@@ -924,7 +901,7 @@ M.addCharge = function(game_vehicle_id, charge)
 	if vehicle == nil then return nil end
 	vehicle.charge = math.min(math.max(vehicle.charge + charge, 1), MAX_CHARGE)
 	
-	print(game_vehicle_id .. " charge is " .. vehicle.charge)
+	Log.info(game_vehicle_id .. " charge is " .. vehicle.charge)
 end
 
 -- ------------------------------------------------------------------------------------------------
@@ -934,7 +911,7 @@ M.loadPowerUpDefs = function(set_path)
 	for _, group_path in pairs(Util.listFiles(set_path)) do
 		local group, err = Util.compileLua(group_path)
 		if group == nil then
-			Error('Cannot compile "' .. Util.fileName(group_path) .. '" group because of "' .. err .. '"')
+			Log.error('Cannot compile "' .. Util.fileName(group_path) .. '" group because of "' .. err .. '"')
 			
 		else
 			loadPowerups(set_path, group_path, group)
@@ -947,7 +924,7 @@ end
 M.loadLocationPrefab = function(path)
 	local triggers, err = TriggerLoad.loadTriggerPrefab(path, false)
 	if triggers == nil then
-		Error(err)
+		Log.error(err)
 		return
 	end
 	
