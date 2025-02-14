@@ -61,10 +61,7 @@ local TimedTrigger = require("libs/TimedTrigger")
 
 -- BeamMP server only requirement
 -- Only loaded in init if this library has been loaded on the BeamMP Server where no log() is present
-local Colors = -1
-if not log then
-	Colors = require("mp_libs/colors")
-end
+local Log = require("libs/Log")
 
 local M = {
 	_VERSION = "0.1" -- 06.02.2025 DD.MM.YYYY
@@ -177,33 +174,7 @@ local function unghost(game_vehicle_id, timer, max_time)
 	return 1
 end
 
--- ------------------------------------------------------------------------------------------------
--- Verbose Error propagation
-local function Error(reason)
-	local insert = function(display_reason, debug_info)
-		if debug_info == nil or debug_info.name == nil then return display_reason end
-		return display_reason .. fileName(debug_info.source or "") .. '@' .. debug_info.name .. ':' .. debug_info.linedefined .. ' <- '
-	end
-	
-	local display_reason = insert('[', debug.getinfo(2))
-	
-	local index = 3;
-	while debug.getinfo(index) and (debug.getinfo(1).source == debug.getinfo(index).source) do
-		display_reason = insert(display_reason, debug.getinfo(index))
-		index = index + 1
-	end
-	display_reason = insert(display_reason, debug.getinfo(index))
-	display_reason = display_reason:sub(1, display_reason:len() - 4) .. '] THROWS\n' .. reason
-
-	if log then -- if game
-		log("E", "Sets", display_reason)
-		
-	else -- if beammp server
-		Colors.print(Colors.bold("Sets") .. ' - ' .. display_reason, Colors.lightRed("ERROR"))
-	end
-end
-
--- ------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
 -- SetClass
 local function newSet(name, set_array)
 	local set = {set = {}, ve_target = nil, adapted = false}
@@ -229,11 +200,11 @@ local function newSet(name, set_array)
 	
 		-- checks
 		if type(trigger_name) ~= "string" or trigger_name:len() == 0 then
-			return Error('"' .. trigger_name .. '" has invalid name')
+			return Log.error('"' .. trigger_name .. '" has invalid name')
 		end
 		
 		if self.set[trigger_name] ~= nil then
-			return Error('"' .. trigger_name .. '" already exists')
+			return Log.error('"' .. trigger_name .. '" already exists')
 		end
 		
 		local type_convert = {
@@ -243,25 +214,25 @@ local function newSet(name, set_array)
 			VEAllExcept = 3
 		}
 		if type_convert[trigger_type] == nil then
-			return Error('"' .. trigger_name .. '" has wrong type')
+			return Log.error('"' .. trigger_name .. '" has wrong type')
 		end
 		
 		if type(trigger_after) ~= "number" then
-			return Error('"' .. trigger_name .. '" has wrong "trigger after" var')
+			return Log.error('"' .. trigger_name .. '" has wrong "trigger after" var')
 		end
 		
 		if type(trigger_for) ~= "number" then
-			return Error('"' .. trigger_name .. '" has wrong "trigger for" var')
+			return Log.error('"' .. trigger_name .. '" has wrong "trigger for" var')
 		end
 		
 		--if type(trigger_exec) ~= "string" then
-		--	return Error('"' .. trigger_name .. '" exec var cannot be function yet!')
+		--	return Log.error('"' .. trigger_name .. '" exec var cannot be function yet!')
 		--end
 		
 		if type(trigger_exec) == "string" then
 			local func, err = load(trigger_exec)
 			if func == nil then
-				return Error('"' .. trigger_name .. '" Exec error ' .. err)
+				return Log.error('"' .. trigger_name .. '" Exec error ' .. err)
 			end
 		end
 		
@@ -359,13 +330,13 @@ local function newSet(name, set_array)
 	-- sets the same ve target to all arrays
 	function set:VETarget(game_vehicle_id)
 		if game_vehicle_id == nil then
-			return Error('Invalid game vehicle id given to execute')
+			return Log.error('Invalid game vehicle id given to execute')
 		elseif type(game_vehicle_id) == "userdata" then
 		
 			game_vehicle_id = game_vehicle_id:getId()
 		elseif map.objects[game_vehicle_id] == nil then
 		
-			return Error('Invalid game vehicle id given to execute')
+			return Log.error('Invalid game vehicle id given to execute')
 		end
 		
 		self.ve_target = game_vehicle_id
@@ -382,7 +353,7 @@ local function newSet(name, set_array)
 	function set:this()
 		local veh = getPlayerVehicle(0)
 		if veh == nil then
-			Error('Not spectating a vehicle')
+			Log.error('Not spectating a vehicle')
 			return self
 		end
 		self:VETarget(veh:getId())
@@ -422,7 +393,7 @@ local function newSet(name, set_array)
 			false
 		)
 		if r == nil then
-			Error('Could not create reset block trigger')
+			Log.error('Could not create reset block trigger')
 			return self
 		end
 		core_input_actionFilter.addAction(0, "setlib_limiter", true)
@@ -433,7 +404,7 @@ local function newSet(name, set_array)
 	function set:ghost(plus_time, ve_target)
 		local ve_target = ve_target or self.ve_target
 		if ve_target == nil then
-			Error('No ve_target to ghost')
+			Log.error('No ve_target to ghost')
 			return self
 		end
 		
@@ -447,7 +418,7 @@ local function newSet(name, set_array)
 			self:maxTime() + (plus_time or 0)
 		)
 		if r == nil then
-			Error('Could not create unghost trigger')
+			Log.error('Could not create unghost trigger')
 			return
 		end
 		
@@ -460,7 +431,7 @@ local function newSet(name, set_array)
 	
 	function set:exec(postfix)
 		if self.adapted == false then
-			Error('Can only exec adapted sets')
+			Log.error('Can only exec adapted sets')
 			return
 		end
 		
@@ -487,7 +458,7 @@ local function newSet(name, set_array)
 						)
 						if r == nil then
 							self:revert(postfix)
-							Error('Set loading aborted')
+							Log.error('Set loading aborted')
 							break
 						end
 						
@@ -503,7 +474,7 @@ local function newSet(name, set_array)
 						)
 						if r == nil then
 							self:revert(postfix)
-							Error('Set loading aborted')
+							Log.error('Set loading aborted')
 							break
 						end
 					
@@ -517,7 +488,7 @@ local function newSet(name, set_array)
 						)
 						if r == nil then
 							self:revert(postfix)
-							Error('Set loading aborted')
+							Log.error('Set loading aborted')
 							break
 						end
 					
@@ -532,7 +503,7 @@ local function newSet(name, set_array)
 						)
 						if r == nil then
 							self:revert(postfix)
-							Error('Set loading aborted')
+							Log.error('Set loading aborted')
 							break
 						end
 					end
@@ -560,7 +531,7 @@ local function newSet(name, set_array)
 			self.ve_target
 		)
 		if r == nil then
-			Error('Cannot create unlock trigger')
+			Log.error('Cannot create unlock trigger')
 			return
 		end
 		LOCKS[self.ve_target] = true
@@ -661,7 +632,7 @@ M.loadSet = function(file_path, name)
 	local set, err = compileLua(file_path)
 	local file_path = cleanse_name(file_path)
 	if set == nil then
-		Error('Cannot compile "' .. file_path .. '" because "' .. (err or 'doesnt return a set') .. '"')
+		Log.error('Cannot compile "' .. file_path .. '" because "' .. (err or 'doesnt return a set') .. '"')
 		
 	else
 		set[1] = nil
@@ -680,7 +651,7 @@ M.loadSets = function(sets_path)
 	end
 	
 	if sets == nil then
-		Error('Given sets path is empty')
+		Log.error('Given sets path is empty')
 		return
 	end
 	
