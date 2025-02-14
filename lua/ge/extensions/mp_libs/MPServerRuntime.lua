@@ -431,7 +431,7 @@ end
 
 function onPlayerDisconnected(player_id)
 	Log.info('Player "' .. MP.GetPlayerName(player_id) .. '" disconnected')
-	for _, vehicle_id in ipairs(MP.GetPlayerVehicles() or {}) do
+	for _, vehicle_id in ipairs(MP.GetPlayerVehicles(player_id) or {}) do
 		PowerUps.onVehicleDestroyed(player_id .. '-' .. vehicle_id)
 	end
 	TriggerClientEvent:remove(player_id)
