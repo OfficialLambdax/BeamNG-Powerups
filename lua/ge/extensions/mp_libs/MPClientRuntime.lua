@@ -143,7 +143,7 @@ local function onVehiclesPowerupUpdate(vehicles)
 			local vehicle = VEHICLES[game_vehicle_id]
 			if vehicle then -- can be the case for disabled traffic vehicles
 				vehicle.charge = vehicle_update.charge
-			
+				
 				if vehicle_update.powerup_group == nil then
 					if vehicle.powerup then
 						vehicle.powerup.onDrop(vehicle.powerup.data)

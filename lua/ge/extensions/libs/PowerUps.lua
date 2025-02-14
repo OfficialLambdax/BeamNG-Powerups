@@ -893,13 +893,19 @@ end
 M.setCharge = function(game_vehicle_id, charge)
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle == nil then return nil end
-	vehicle.charge = charge
+	
+	if not MPUtil.isBeamMPSession() then -- server controls this
+		vehicle.charge = charge
+	end
 end
 
 M.addCharge = function(game_vehicle_id, charge)
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle == nil then return nil end
-	vehicle.charge = math.min(math.max(vehicle.charge + charge, 1), MAX_CHARGE)
+	
+	if not MPUtil.isBeamMPSession() then -- server controls this
+		vehicle.charge = math.min(math.max(vehicle.charge + charge, 1), MAX_CHARGE)
+	end
 	
 	Log.info(game_vehicle_id .. " charge is " .. vehicle.charge)
 end

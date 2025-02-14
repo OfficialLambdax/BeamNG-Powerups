@@ -95,6 +95,8 @@ local function onInit()
 		PowerUps.loadPowerUpDefs("lua/ge/extensions/powerups/open")
 	end
 	
+	--M.onLoadingScreenFadeout()
+	
 	INITIALIZED = true
 end
 
@@ -139,6 +141,20 @@ M.onClientEndMission = function()
 	PowerUps.unload()
 	ForceField.unload()
 	INITIALIZED = false
+end
+
+M.onLoadingScreenFadeout = function()
+	if MPUtil.isBeamMPSession() and FS:fileExists("gameplay/tutorials/pages/powerups/content.html") then
+		guihooks.trigger('introPopupTutorial', {
+				{
+					type = "info",
+					content = readFile("gameplay/tutorials/pages/powerups/content.html"):gsub("\r\n", ""),
+					flavour = "onlyOk",
+					isPopup = true
+				}
+			}
+		)	
+	end
 end
 
 -- ----------------------------------------------------------------------------
