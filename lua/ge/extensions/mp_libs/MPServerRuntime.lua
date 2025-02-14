@@ -183,6 +183,7 @@ function tryTargetInfo(player_id, target_info)
 	
 	if not vehicle.powerup_active then
 		Log.warn('No active powerup from ' .. MP.GetPlayerName(player_id))
+		Build:new():to(player_id):onActivePowerupDisable(decode.server_vehicle_id):send()
 		return
 	end
 	
@@ -205,6 +206,7 @@ function tryTargetHit(player_id, targets)
 	
 	if not vehicle.powerup_active then
 		Log.warn('No active powerup from ' .. MP.GetPlayerName(player_id))
+		Build:new():to(player_id):onActivePowerupDisable(decode.server_vehicle_id):send()
 		return
 	end
 	
@@ -479,7 +481,7 @@ M.init = function(location_prefab_name, powerup_set_name)
 	-- server events
 	MP.RegisterEvent("onVehicleSpawn", "onVehicleSpawn")
 	MP.RegisterEvent("onVehicleDeleted", "onVehicleDeleted")
-	MP.RegisterEvent("onPlayerDisconnected", "onPlayerDisconnected")
+	MP.RegisterEvent("onPlayerDisconnect", "onPlayerDisconnected")
 	
 	-- hotreload
 	for player_id, player_name in pairs(MP.GetPlayers()) do
