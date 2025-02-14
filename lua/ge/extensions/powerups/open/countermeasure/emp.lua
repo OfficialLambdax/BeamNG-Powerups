@@ -89,7 +89,7 @@ end
 
 -- While the powerup is active. Update its render here, detect if it hit something. that kinda stuff
 M.whileActive = function(data, origin_id)
-	if data.targets == nil then return 1 end
+	if data.no_target then return 1 end
 
 	-- waiting for target confirmation
 	if not data.targets then
