@@ -17,7 +17,6 @@ PowerupExtender
 		This would fix any kind of wrong targeting and hitting on vehicles that are disabled (eg traffic vehicles)
 
 PowerupsLib
-	- Delay target_info and target_hit exec to simulate beammp sync behaviour (would make powerup dev easier, as were already going to work with a behaviour that is otherwise only going to be true in multiplayer scenarios)
 	- Auto remove undefined Traits
 	- make "respect_traits" var necessary for trait call sync
 	- Implement a "default" set, that only contains powerup defs. Is used when a group defines powerups but doesnt include any or all powerups
@@ -45,31 +44,13 @@ PowerupsLib
 		
 		Note
 		Once the ownership is removed the server wont have a clue who owns it and this way is eligible to allow its targeting. That needs to be kept in mind.
-		
-	- Refactor the "targets" to "targets_info"
-		Because a powerup doesnt always only target targets, as in target vehicles, but can also just have a projectile origin, direction and velocity. This info is synced to other clients. Or in other words simply make targets -> target_info
 			
-	- Implement two new defition variables to the active powerups
-		- "max_length"
-			Since the server never executes any powerup or active powerup related calls it cant tell when a power up ended. Yes a client could tell it when, but the server should have the last say.
-		
+	- Implement new defition variable to the active powerups
 		- "targets_info_describtor"
 			Necessary for the server to verify incoming "targets_info" for their correct data type structure and types. Since this info is synced to other clients it needs to be verified.
 	
-	- Add location powerup rotation. Where if a location owns a powerup for X time then swap it out
-		This could be defined by groups
-	
 	- For more variety in traffic "combat", a routine could run that checks if anyone is close to a traffic car and if so run a chance on whichs success it would grant a random powerup.
 		This could go further by adding a new var into the group definitions where groups can implement logic that decides if this powerup should be chosen.
-	
-	- Add "type" to group definitions that describes the kind of powerup. This would be used for location definitions.
-		Type.Offensive
-		Type.Defensive
-		Type.Negative
-		Type.Charge
-		Type.Utility
-		Type.Handicapping
-		Type.Undefined
 
 SetsLib
 	- Add setting for Sets to only exec triggers if vehicle is own (mp)

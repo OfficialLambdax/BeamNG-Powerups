@@ -1,28 +1,27 @@
 
-/lua/common/*
-	TimedTriggers.lua
-		Is a library that can run in VE, GE and on the BeamMP lua server.
-		Its essentially a high performance job library that allows queing rudimentary tasks and time sensitive executions.
-		
-	/mp_libs/*
-		colors.lua
-			Essentially a converter to display beammp chat color codes colored for a CUI (eg a beammp server cui)
-		
-		PauseTimer.lua
-			A compatibility library that makes the hptimer()/HighPerfTimer() interface available in the beammp server. Wraps around either hptimer()/HighPerfTimer() or MP.CreateTimer()
-			When a library imports this it will be able to use stop()/stopAndReset()/start() no matter if in the games environment or a beammp server
-			
 /lua/ge/extensions/*
 	DoNotTouch.lua
-		The mods entrypoint. It loads and unloads everything relevant for this mod and doesnt do much else.
-	
+		Entrypoint for the client side. It loads and unloads everything relevant for this mod and depending on if its a multiplayer session or not auto load locations and the "open" powerup set if its available for the map the player has loaded into.
+		
+	ServerSide.lua
+		Entrypoint for the server side. All the contents of this "extensions" directory work client and server side. Copying this entire directory into a server will automatically load this mod as a server plugin.
+		
 		/libs/*
 			CollisionsLib.lua
 				A so far unused library usable to detect "new" collisions between two vehicles.
 			
 			ForceField.lua
 				Library that creates a highly customizable, radius based force field around any given vehicle. Where as highly customizable means that it works based on callbacks with defaults.
-			
+				
+			Log.lua
+				Logging utility that also displays what threw the log as filename@luafunction:linenumber.
+				Log.info("this is my log", nil/"name of this log", nil/true/false)
+				If the 3rd arg is given it also prints a stack trace that shows the calling order. Which is just usefull to debug what called this function and what called that.
+				eg.
+				MyFile@MyFunction:linenumber
+				 ^ AnotherFile@MyOtherFunction:linenumber
+				 ^ etc
+				
 			MathUtil.lua
 				Mostly covers things like "hey tell me how many cars are in this space", "hey rotate this vector for me", "hey check along this line if there have been vehicles". aka "the tedious math stuff"
 			
@@ -34,6 +33,13 @@
 				
 			PowerUpsTraits.lua
 				Defines the traits.
+				
+			PowerUpsTypes.lua
+				Defines powerup group types.
+
+			TimedTriggers.lua
+				Is a library that can run in VE, GE and on the BeamMP lua server.
+				Its essentially a high performance job library that allows queing rudimentary tasks and time sensitive executions.
 			
 			Sets.lua
 				A wrapper for the TimedTriggers.lua library. Pretty powerfull library in my mind that isnt much used yet. Essentially makes it possible to create sets of triggers that can be executed at any time along side various conditions.
@@ -43,6 +49,26 @@
 			
 			Util.lua
 				Think of additional table functions, a better math.random etc
+
+		/mp_libs/*
+			colors.lua
+				Essentially a converter to display beammp chat color codes colored for a CUI (eg a beammp server cui)
+			
+			MPClientRuntime.lua
+				Handles the multiplayer communication between the client and server from the client side.
+				
+			MPServerRuntime.lua
+				Same but from the server side
+			
+			MPUtil.lua
+				Wrapper for the BeamMP mod. Does checks and provides compatibility functions.
+			
+			PauseTimer.lua
+				A compatibility library that makes the hptimer()/HighPerfTimer() interface available in the beammp server. Wraps around either hptimer()/HighPerfTimer() or MP.CreateTimer()
+				When a library imports this it will be able to use stop()/stopAndReset()/start() no matter if in the games environment or a beammp server
+				
+			TriggerClientEvent.lua
+				A better MP.TriggerClientEvent class
 				
 		/powerups/*
 			Directory containing the powerup sets. If "open" is loaded into the powerups library it will consider all groups/powerups of that set
