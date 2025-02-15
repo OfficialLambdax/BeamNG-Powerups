@@ -128,6 +128,12 @@ M.fileName = function(string)
 	return str:sub(pos + 1, -1)
 end
 
+M.fileExtension = function(string)
+	local _, pos = string:find(".*.")
+	if pos == nil then return nil end
+	return string:sub(pos + 1, -1)
+end
+
 -- require() but not require()
 M.compileLua = function(path)
 	local handle = io.open(path, "r")

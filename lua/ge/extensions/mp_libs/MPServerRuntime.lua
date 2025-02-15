@@ -340,7 +340,7 @@ function tryTakePowerup(player_id, data)
 	
 	local type = location.powerup.type
 	if type == Types.Charge then
-		vehicle.charge = vehicle.charge + 1
+		vehicle.charge = math.max(vehicle.charge + 1, PowerUps.getMaxCharge())
 		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name, location.powerup.name):send()
 		location.powerup = nil
 		location.respawn_timer:stopAndReset()

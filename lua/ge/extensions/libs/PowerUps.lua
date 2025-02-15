@@ -745,6 +745,10 @@ M.updateMPServerRuntime = function(this)
 	MPServerRuntime = this
 end
 
+M.getMaxCharge = function()
+	return MAX_CHARGE
+end
+
 -- ------------------------------------------------------------------------------------------------
 -- Load/Unload
 M.init = function() -- must be called during or after onWorldReadyState == 2
