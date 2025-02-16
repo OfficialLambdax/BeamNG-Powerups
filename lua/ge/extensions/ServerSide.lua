@@ -42,8 +42,25 @@ end
 
 
 local MPServerRuntime = require("mp_libs/MPServerRuntime")
+local Util = require("libs/Util")
+local Log = require("libs/Log")
 
 
 function onInit()
-	MPServerRuntime.init("utah.prefab.json", "open")
+	local map_name = ""
+	if MP.Get then
+		_, map_name, _ = table.unpack(Util.split(MP.Get(MP.Settings.Map), '/'))
+	else
+		-- MP.Get was introduced somewhen after 3.4.1.. bleh
+		local map_path = require("mp_libs/ServerConfig").Get("General", "Map")
+		_, map_name, _ = table.unpack(Util.split(map_path, '/'))
+	end
+	
+	local prefab_file = map_name .. '.prefab.json'
+	local prefab_path = Util.myPath() .. 'prefabs/' .. prefab_file
+	if not FS.Exists(prefab_path) then
+		Log.error('No prefab file available for map "' .. map_name .. '"')
+	else
+		MPServerRuntime.init(prefab_file, "open")
+	end
 end

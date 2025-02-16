@@ -39,6 +39,7 @@ local SUBJECT_TRAFFIC = "!traffic"
 local SUBJECT_UNKNOWN = "!unknown"
 
 local TEMP_PICKUP_SOUND = Sound("/lua/ge/extensions/powerups/default_powerup_pick_sound.ogg", 3)
+local DEFAULT_POWERUP_TRIGGER_SCALE = VEC3(3, 3, 3)
 
 --[[
 	Format
@@ -369,6 +370,8 @@ local function loadPowerups(set_path, group_path, group)
 		Log.error('Group "' .. group.name .. '" has unknown type "' .. tostring(group.type) .. '". Aborting load')
 		return
 	end
+	
+	Log.info('Loading group "' .. group.name .. '"')
 
 	-- init powerups of the group
 	local powerups = {}
@@ -376,13 +379,13 @@ local function loadPowerups(set_path, group_path, group)
 		local file_path = set_path .. '/' .. group.name .. '/' .. powerup_name .. '.lua'
 		local powerup, err = Util.compileLua(file_path)
 		if powerup == nil then
-			Log.error('Cannot compile "' .. powerup_name .. '" because of "' .. err .. '". Skipping.')
+			Log.error('\tCannot compile "' .. powerup_name .. '" because of "' .. err .. '". Skipping.')
 			--return -- abort
 		else
 			local is_invalid = false
 			
 			if powerup.lib_version ~= M._NAME then
-				Log.error('"' .. powerup_name .. '" of group "' .. group.name .. '" is out of date. Rejecting owerup')
+				Log.error('\t"' .. powerup_name .. '" is out of date. Rejecting powerup')
 				
 				is_invalid = true
 			end
@@ -390,11 +393,11 @@ local function loadPowerups(set_path, group_path, group)
 			for _, trait in ipairs(powerup.traits or {}) do
 				local trait_name = Extender.getTraitName(trait)
 				if trait_name == nil then
-					Log.error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" lists an unknown "' .. trait .. '" trait')
+					Log.error('\tPowerup "' .. powerup_name .. '" lists an unknown "' .. trait .. '" trait')
 					is_invalid = true
 					
 				elseif type(powerup[trait]) ~= "function" then
-					Log.error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" lists the "' .. trait_name .. '" trait but doesnt have a callback for it. Skipping.')
+					Log.error('\tPowerup "' .. powerup_name .. '" lists the "' .. trait_name .. '" trait but doesnt have a callback for it. Skipping.')
 					is_invalid = true
 				end
 			end
@@ -402,20 +405,23 @@ local function loadPowerups(set_path, group_path, group)
 			for _, trait in ipairs(powerup.respects_traits or {}) do
 				local trait_name = Extender.getTraitName(trait)
 				if trait_name == nil then
-					Log.error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" is listing to respect the "' .. trait .. '" trait, but this trait is unknown')
+					Log.error('\tPowerup "' .. powerup_name .. '" is listing to respect the "' .. trait .. '" trait, but this trait is unknown')
 					is_invalid = true
 				end
 			end
 			
 			if powerup.max_len == 0 then
-				Log.error('Powerup "' .. powerup_name .. '" of group "' .. group.name .. '" has no max_len.')
+				Log.error('\tPowerup "' .. powerup_name .. '" has no max_len.')
 				is_invalid = true
 			end
 			
 			powerup.internal_name = powerup_name
 			powerup.file_path = Util.filePath(file_path)
 			
-			if not is_invalid then table.insert(group.powerups, powerup) end
+			if not is_invalid then
+				table.insert(group.powerups, powerup)
+				Log.info('\tPowerup check passed for "' .. powerup.internal_name .. '" - "' .. powerup.clear_name .. '"')
+			end
 		end
 	end
 	
@@ -423,6 +429,7 @@ local function loadPowerups(set_path, group_path, group)
 	group.file_path = Util.filePath(group_path)
 	
 	if not MPUtil.isBeamMPServer() then
+		Log.info('\t(ClientSide) Initializing group and powerups')
 		group.onInit()
 		for _, powerup in pairs(group.powerups) do
 			powerup.onInit()
@@ -439,6 +446,26 @@ local function loadPowerups(set_path, group_path, group)
 	POWERUP_DEFS[group.name] = group
 	
 	if group.max_levels > MAX_CHARGE then MAX_CHARGE = group.max_levels end
+	
+	Log.info('\tGroup check passed for "' .. group.name .. '"')
+	Log.info('\tType     : ' .. group.type)
+	Log.info('\tPowerups : ' .. group.max_levels)
+end
+
+local function loadPowerupSet(set_path)
+	--MAX_CHARGE = 0
+	Log.info('Trying to load powerup set "' .. Util.fileName(set_path) .. '"')
+	for _, group_path in pairs(Util.listFiles(set_path)) do
+		local group, err = Util.compileLua(group_path)
+		if group == nil then
+			Log.error('Cannot compile "' .. Util.fileName(group_path) .. '" group because of "' .. tostring(err) .. '"')
+			
+		else
+			loadPowerups(set_path, group_path, group)
+		end
+	end
+	
+	if not MPUtil.isBeamMPSession() or MPUtil.isBeamMPServer() then M.restockPowerups(true) end
 end
 
 local function selectPowerup()
@@ -637,6 +664,7 @@ end
 -- ------------------------------------------------------------------------------------------------
 -- Locations
 local function loadLocations(triggers)
+	local total_loaded = 0
 	for trigger_name, trigger in pairs(triggers) do
 		if LOCATIONS[trigger_name] then
 			Log.error('Location "' .. trigger_name .. '" is already known')
@@ -658,7 +686,7 @@ local function loadLocations(triggers)
 			--terrain_height = terrain_height + 1
 			
 			trigger:setPosRot(terrain_height.x, terrain_height.y, terrain_height.z, rot.x, rot.y, rot.z, rot.w)
-			trigger:setScale(VEC3(3, 3, 3))
+			trigger:setScale(DEFAULT_POWERUP_TRIGGER_SCALE)
 			trigger:setField("TriggerMode", 0, "Overlaps")
 			trigger:setField("TriggerTestType", 0, "Bounding box")
 			trigger:setField("luaFunction", 0, "onBeamNGTrigger")
@@ -671,18 +699,26 @@ local function loadLocations(triggers)
 				respawn_timer = PauseTimer.new(),
 				rotation_timer = PauseTimer.new()
 			}
+			
+			total_loaded = total_loaded + 1
 		end
 	end
+	
+	Log.info("Added " .. total_loaded .. " Locations. Total: " .. Util.tableSize(LOCATIONS))
 end
 
 -- ------------------------------------------------------------------------------------------------
--- Location restrock and rotation check routine
+-- Location restock and rotation check routine
 local function restockPowerups(instant)
 	for location_name, location in pairs(LOCATIONS) do
 		if location.powerup == nil and (instant or location.respawn_timer:stop() > RESPAWN_TIME) then
 			location.powerup = selectPowerup()
 			if location.powerup ~= nil then
 				location.rotation_timer:stopAndReset()
+				
+				if not instant then
+					Log.info('Restocked "' .. location_name .. '" with "' .. location.powerup.name .. '"')
+				end
 				
 				if not MPUtil.isBeamMPServer() then
 					location.data = location.powerup.onCreate(location.obj)
@@ -701,6 +737,8 @@ local function checkLocationRotation()
 			location.powerup = selectPowerup()
 			if location.powerup ~= nil then
 				location.rotation_timer:stopAndReset()
+				
+				--Log.info('Restocked "' .. location_name .. '" with "' .. location.powerup.name .. '"')
 				
 				if not MPUtil.isBeamMPServer() then
 					location.data = location.powerup.onCreate(location.obj)
@@ -742,6 +780,7 @@ M.vehicleAddPowerup = vehicleAddPowerup
 M.activatePowerup = activatePowerup
 M.targetInfoExec = targetInfoExec
 M.targetHitExec = targetHitExec
+M.restockPowerups = restockPowerups
 
 M.updateMPServerRuntime = function(this)
 	MPServerRuntime = this
@@ -749,6 +788,10 @@ end
 
 M.getMaxCharge = function()
 	return MAX_CHARGE
+end
+
+M.getDefaultTriggerScale = function()
+	return DEFAULT_POWERUP_TRIGGER_SCALE
 end
 
 -- ------------------------------------------------------------------------------------------------
@@ -918,20 +961,7 @@ end
 
 -- ------------------------------------------------------------------------------------------------
 -- Load locations/powerups
-M.loadPowerUpDefs = function(set_path)
-	MAX_CHARGE = 0
-	for _, group_path in pairs(Util.listFiles(set_path)) do
-		local group, err = Util.compileLua(group_path)
-		if group == nil then
-			Log.error('Cannot compile "' .. Util.fileName(group_path) .. '" group because of "' .. err .. '"')
-			
-		else
-			loadPowerups(set_path, group_path, group)
-		end
-	end
-	
-	if not MPUtil.isBeamMPSession() or MPUtil.isBeamMPServer() then restockPowerups(true) end
-end
+M.loadPowerUpDefs = loadPowerupSet
 
 M.loadLocationPrefab = function(path)
 	local triggers, err = TriggerLoad.loadTriggerPrefab(path, false)
