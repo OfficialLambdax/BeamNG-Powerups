@@ -27,7 +27,7 @@ local RENDER_DISTANCE = 500
 local MAX_CHARGE = 0 -- updated based on the loaded set
 
 local ROUTINE_LOCATIONS_RESTOCK = 5000
-local ROUTINE_LOCATIONS_ROTATION = 5000
+local ROUTINE_LOCATIONS_ROTATION = 5000 -- dynamic (ROTATION_TIME / #LOCATIONS). Max is 5000
 
 local ROUTINE_POWERUPS_CHECK_RENDER_DISTANCE = 1000
 local ROUTINE_POWERUPS_CHECK_TRAFFIC = 10000
@@ -662,7 +662,69 @@ local function takePowerupFromLocation(location_name, trigger_data, location)
 end
 
 -- ------------------------------------------------------------------------------------------------
+-- Location restock and rotation check routine
+local function restockPowerups(instant)
+	for location_name, location in pairs(LOCATIONS) do
+		if location.powerup == nil and (instant or location.respawn_timer:stop() > RESPAWN_TIME) then
+			location.powerup = selectPowerup()
+			if location.powerup ~= nil then
+				location.rotation_timer:stopAndReset()
+				
+				if not instant then
+					Log.info('Restocked "' .. location_name .. '" with "' .. location.powerup.name .. '"')
+				end
+				
+				if not MPUtil.isBeamMPServer() then
+					location.data = location.powerup.onCreate(location.obj)
+				else
+					MPServerRuntime.syncLocationUpdate(location_name)
+				end
+			end
+		end
+	end
+end
+
+local function checkLocationRotation()
+	for location_name, location in pairs(LOCATIONS) do
+		if location.powerup and location.rotation_timer:stop() > ROTATION_TIME then
+			if not MPUtil.isBeamMPServer() then location.powerup.onDespawn(location.data) end
+			location.powerup = selectPowerup()
+			if location.powerup ~= nil then
+				location.rotation_timer:stopAndReset()
+				
+				--Log.info('Restocked "' .. location_name .. '" with "' .. location.powerup.name .. '"')
+				
+				if not MPUtil.isBeamMPServer() then
+					location.data = location.powerup.onCreate(location.obj)
+				else
+					MPServerRuntime.syncLocationUpdate(location_name)
+				end
+				
+				break
+			end
+		end
+	end
+end
+
+-- ------------------------------------------------------------------------------------------------
 -- Locations
+local function updateLocationRotationCheckTime()
+	if not MPUtil.isBeamMPSession() or MPUtil.isBeamMPServer() then
+		ROUTINE_LOCATIONS_ROTATION = math.floor(math.min(ROTATION_TIME / Util.tableSize(LOCATIONS), 5000))
+		local r = TimedTrigger.new(
+			"PowerUps_rotation",
+			ROUTINE_LOCATIONS_ROTATION,
+			0,
+			checkLocationRotation
+		)
+		if r == nil then
+			Log.error('Cannot initialize restock routine')
+		end
+		
+		Log.info("Updated location rotation check time to " .. ROUTINE_LOCATIONS_ROTATION .. " ms")
+	end
+end
+
 local function loadLocations(triggers)
 	local total_loaded = 0
 	for trigger_name, trigger in pairs(triggers) do
@@ -705,49 +767,8 @@ local function loadLocations(triggers)
 	end
 	
 	Log.info("Added " .. total_loaded .. " Locations. Total: " .. Util.tableSize(LOCATIONS))
-end
-
--- ------------------------------------------------------------------------------------------------
--- Location restock and rotation check routine
-local function restockPowerups(instant)
-	for location_name, location in pairs(LOCATIONS) do
-		if location.powerup == nil and (instant or location.respawn_timer:stop() > RESPAWN_TIME) then
-			location.powerup = selectPowerup()
-			if location.powerup ~= nil then
-				location.rotation_timer:stopAndReset()
-				
-				if not instant then
-					Log.info('Restocked "' .. location_name .. '" with "' .. location.powerup.name .. '"')
-				end
-				
-				if not MPUtil.isBeamMPServer() then
-					location.data = location.powerup.onCreate(location.obj)
-				else
-					MPServerRuntime.syncLocationUpdate(location_name)
-				end
-			end
-		end
-	end
-end
-
-local function checkLocationRotation()
-	for location_name, location in pairs(LOCATIONS) do
-		if location.powerup and location.rotation_timer:stop() > ROTATION_TIME then
-			if not MPUtil.isBeamMPServer() then location.powerup.onDespawn(location.data) end
-			location.powerup = selectPowerup()
-			if location.powerup ~= nil then
-				location.rotation_timer:stopAndReset()
-				
-				--Log.info('Restocked "' .. location_name .. '" with "' .. location.powerup.name .. '"')
-				
-				if not MPUtil.isBeamMPServer() then
-					location.data = location.powerup.onCreate(location.obj)
-				else
-					MPServerRuntime.syncLocationUpdate(location_name)
-				end
-			end
-		end
-	end
+	
+	updateLocationRotationCheckTime()
 end
 
 -- ------------------------------------------------------------------------------------------------
@@ -816,15 +837,7 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 			Log.error('Cannot initialize restock routine')
 		end
 		
-		local r = TimedTrigger.new(
-			"PowerUps_rotation",
-			ROUTINE_LOCATIONS_ROTATION,
-			0,
-			checkLocationRotation
-		)
-		if r == nil then
-			Log.error('Cannot initialize restock routine')
-		end
+		updateLocationRotationCheckTime()
 	end
 	
 	-- run only ingame, but not matter if mp session or singleplayer
