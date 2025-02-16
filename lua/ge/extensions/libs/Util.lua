@@ -129,9 +129,7 @@ M.fileName = function(string)
 end
 
 M.fileExtension = function(string)
-	local _, pos = string:find(".*.")
-	if pos == nil then return nil end
-	return string:sub(pos + 1, -1)
+	return string:match("[^.]+$")
 end
 
 -- require() but not require()

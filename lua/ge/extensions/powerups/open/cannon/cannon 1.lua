@@ -4,6 +4,7 @@ local Util = require("libs/Util")
 local MathUtil = require("libs/MathUtil")
 local Sets = require("libs/Sets")
 local Trait = Extender.Traits
+local Sound = require("libs/Sounds")
 
 local M = {
 	-- Clear name of the powerup
@@ -36,22 +37,21 @@ local M = {
 	-- DO NOT treat this is a variable cache.
 	-- These are merely definitions
 	
-	activate_sound = "cannon_" .. Util.randomName(),
-	hit_sound = "cannon_hit_" .. Util.randomName(),
+	activate_sound = nil,
+	hit_sound = nil,
 }
 
 
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-
+	M.activate_sound = Sound(M.file_path .. 'sounds/cannon_light.ogg', 3)
+	M.hit_sound = Sound(M.file_path .. 'sounds/hit.ogg', 3)
 end
 
 -- Called for each vehicle
 M.onVehicleInit = function(game_vehicle_id)
-	be:getObjectByID(game_vehicle_id):queueLuaCommand('PowerUpSounds.addSound("' .. M.activate_sound .. '", "AudioSoft3D", 12, 1, "' .. M.file_path .. 'sounds/cannon_light.ogg")')
-	
-	be:getObjectByID(game_vehicle_id):queueLuaCommand('PowerUpSounds.addSound("' .. M.hit_sound .. '", "AudioSoft3D", 12, 1, "' .. M.file_path .. 'sounds/hit.ogg")')
+
 end
 
 -- When the powerup is activated
@@ -91,7 +91,7 @@ M.onActivate = function(vehicle)
 		init_vel = MathUtil.velocity(vehicle:getVelocity())
 	}
 	
-	vehicle:queueLuaCommand('PowerUpSounds.playSound("' .. M.activate_sound .. '")')
+	M.activate_sound:playVE(vehicle:getId())
 	
 	return data, target_info
 end
@@ -173,7 +173,7 @@ M.onHit = function(data, origin_id, target_id)
 	local spin = target_vehicle:getDirectionVectorUp():normalized() * 5
 	target_vehicle:queueLuaCommand(string.format("PowerUpExtender.addAngularVelocity(0, 0, 0, %d, %d, %d)", spin.x, spin.y, spin.z))
 	
-	target_vehicle:queueLuaCommand('PowerUpSounds.playSound("' .. M.hit_sound .. '")')
+	M.hit_sound:playVE(target_id)
 end
 
 -- When the powerup is destroyed. eg when the vehicle is deleted or the powerup ended

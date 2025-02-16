@@ -3,6 +3,7 @@ local Extender = require("libs/PowerUpsExtender")
 local Util = require("libs/Util")
 local Sets = require("libs/Sets")
 local Trait = Extender.Traits
+local Sound = require("libs/Sounds")
 
 local M = {
 	-- Clear name of the powerup
@@ -35,7 +36,7 @@ local M = {
 	-- DO NOT treat this is a variable cache.
 	-- These are merely definitions
 	
-	activate_sound = "push_" .. Util.randomName(),
+	activate_sound = nil,
 	effect_radius = 30,
 }
 
@@ -43,12 +44,12 @@ local M = {
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	
+	M.activate_sound = Sound(M.file_path .. 'sounds/shockwave_1.ogg', 3)
 end
 
 -- Called for each vehicle
 M.onVehicleInit = function(game_vehicle_id)
-	be:getObjectByID(game_vehicle_id):queueLuaCommand('PowerUpSounds.addSound("' .. M.activate_sound .. '", "AudioSoft3D", 12, 1, "' .. M.file_path .. 'sounds/shockwave_1.ogg")')
+	
 end
 
 -- When the powerup is activated
@@ -93,7 +94,7 @@ M.whileActive = function(data, origin_id)
 	-- no one was close enough to apply our powerup effect to
 	if data.no_target then
 		--if Extender.isPlayerVehicle(origin_id) then
-			be:getObjectByID(origin_id):queueLuaCommand('PowerUpSounds.playSound("' .. M.activate_sound .. '")')
+			M.activate_sound:playVE(origin_id)
 			return 1
 		--else
 			--return nil
@@ -140,7 +141,7 @@ M.onHit = function(data, origin_id, target_id)
 	target_vehicle:queueLuaCommand("PowerUpExtender.addAngularVelocity(0, 0, 1.5, 0, 5, 0)")
 	
 	if not data.sound_played then
-		origin_vehicle:queueLuaCommand('PowerUpSounds.playSound("' .. M.activate_sound .. '")')
+		M.activate_sound:playVE(origin_id)
 		data.sound_played = true
 	end
 end

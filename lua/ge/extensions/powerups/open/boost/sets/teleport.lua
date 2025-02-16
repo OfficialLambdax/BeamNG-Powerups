@@ -1,5 +1,5 @@
-local function playSound(game_vehicle_id, sound_name)
-	be:getObjectByID(game_vehicle_id):queueLuaCommand('PowerUpSounds.playSound("' .. sound_name .. '")')
+local function playSound(game_vehicle_id, sound)
+	sound:playVE(game_vehicle_id)
 end
 
 local function launch(game_vehicle_id)

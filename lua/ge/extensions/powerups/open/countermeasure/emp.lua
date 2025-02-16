@@ -3,6 +3,7 @@ local Extender = require("libs/PowerUpsExtender")
 local Util = require("libs/Util")
 local Sets = require("libs/Sets")
 local Trait = Extender.Traits
+local Sound = require("libs/Sounds")
 
 local M = {
 	-- Clear name of the powerup
@@ -36,7 +37,7 @@ local M = {
 	-- These are merely definitions
 	
 	set_name = "emp_" .. Util.randomName(),
-	activate_sound = "emp_" .. Util.randomName(),
+	activate_sound = nil,
 	effect_radius = 20,
 }
 
@@ -45,11 +46,12 @@ local M = {
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
 	Sets.loadSet(M.file_path .. "sets/emp.lua", M.set_name)
+	M.activate_sound = Sound(M.file_path .. 'sounds/electrical_shock_zap.ogg', 3)
 end
 
 -- Called for each vehicle
 M.onVehicleInit = function(game_vehicle_id)
-	be:getObjectByID(game_vehicle_id):queueLuaCommand('PowerUpSounds.addSound("' .. M.activate_sound .. '", "AudioSoft3D", 12, 1, "' .. M.file_path .. 'sounds/electrical_shock_zap.ogg")')
+	
 end
 
 -- When the powerup is activated
@@ -65,7 +67,7 @@ M.onActivate = function(vehicle)
 		end
 	end
 	
-	vehicle:queueLuaCommand('PowerUpSounds.playSound("' .. M.activate_sound .. '")')
+	M.activate_sound:playVE(vehicle:getId())
 	
 	if #targets == 0 then targets = nil end
 	

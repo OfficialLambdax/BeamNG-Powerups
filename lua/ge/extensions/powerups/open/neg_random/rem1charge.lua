@@ -3,6 +3,7 @@ local Extender = require("libs/PowerUpsExtender")
 local Util = require("libs/Util")
 local Sets = require("libs/Sets")
 local Trait = Extender.Traits
+local Sound = require("libs/Sounds")
 
 local M = {
 	-- Clear name of the powerup
