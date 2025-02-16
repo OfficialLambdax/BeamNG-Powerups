@@ -13,6 +13,7 @@ local MPClientRuntime = require("mp_libs/MPClientRuntime")
 local MPServerRuntime -- filled only if loaded on server
 local PauseTimer = require("mp_libs/PauseTimer")
 local Log = require("libs/Log")
+local Sound = require("libs/Sounds")
 
 local M = {
 	_VERSION = 0.3, -- 13.02.2025 DD.MM.YYYY
@@ -32,11 +33,12 @@ local ROUTINE_POWERUPS_CHECK_RENDER_DISTANCE = 1000
 local ROUTINE_POWERUPS_CHECK_TRAFFIC = 10000
 local ROUTINE_POWERUPS_BASIC_DISPLAY_REFRESH = 5000
 
-
 -- these vars also exist in the extender. if change then also update there
 local SUBJECT_SINGLEPLAYER = "!singleplayer"
 local SUBJECT_TRAFFIC = "!traffic"
 local SUBJECT_UNKNOWN = "!unknown"
+
+local TEMP_PICKUP_SOUND = Sound("/lua/ge/extensions/powerups/default_powerup_pick_sound.ogg", 3)
 
 --[[
 	Format
@@ -608,7 +610,8 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 	end
 	if Extender.isSpectating(game_vehicle_id) then
 		-- temp. the pickup sound will be on the group
-		Engine.Audio.playOnce('AudioGui', "/lua/ge/extensions/powerups/default_powerup_pick_sound.ogg", {volume = 3, channel = 'Music'})
+		--Engine.Audio.playOnce('AudioGui', "/lua/ge/extensions/powerups/default_powerup_pick_sound.ogg", {volume = 3, channel = 'Music'})
+		TEMP_PICKUP_SOUND:play()
 	end
 end
 

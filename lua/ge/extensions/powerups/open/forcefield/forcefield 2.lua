@@ -3,6 +3,7 @@ local Extender = require("libs/PowerUpsExtender")
 local Util = require("libs/Util")
 local Sets = require("libs/Sets")
 local Trait = Extender.Traits
+local Sound = require("libs/Sounds")
 
 local M = {
 	-- Clear name of the powerup
@@ -36,20 +37,21 @@ local M = {
 	-- These are merely definitions. Exceptions are constants.
 	
 	force_field_set = "force_field_" .. Util.randomName(),
-	force_field_sound = "force_field_" .. Util.randomName(),
-	force_field_hit_sound = "force_field_hit" .. Util.randomName(),
+	force_field_sound = nil,
+	force_field_hit_sound = nil,
 }
 
 
 M.onInit = function(group_defs)
 	Sets.loadSet(M.file_path .. "sets/forceField 2.lua", M.force_field_set)
+	
+	M.force_field_sound = Sound(M.file_path ..'sounds/force_field_normal.ogg', 3)
+	M.force_field_hit_sound = Sound(M.file_path ..'sounds/shield_hit.ogg', 3)
 end
 
 -- Called for each vehicle
 M.onVehicleInit = function(game_vehicle_id)
-	be:getObjectByID(game_vehicle_id):queueLuaCommand('PowerUpSounds.addSound("' .. M.force_field_sound .. '", "AudioSoft3D", 12, 1, "' .. M.file_path ..'sounds/force_field_normal.ogg")')
 	
-	be:getObjectByID(game_vehicle_id):queueLuaCommand('PowerUpSounds.addSound("' .. M.force_field_hit_sound .. '", "AudioSoft3D", 12, 1, "' .. M.file_path ..'sounds/shield_hit.ogg")')
 end
 
 -- When the powerup is activated
@@ -64,7 +66,7 @@ M.onActivate = function(vehicle)
 	end
 	set:exec()
 	
-	vehicle:queueLuaCommand('PowerUpSounds.playSound("' .. M.force_field_sound .. '")')
+	M.force_field_sound:playVE(vehicle:getId())
 
 	return {timer = hptimer(), end_in = set:maxTime(), id = id}
 end
@@ -108,7 +110,7 @@ M.onDeactivate = function(data)
 end
 
 M[Trait.Consuming] = function(data, origin_id, target_id)
-	be:getObjectByID(origin_id):queueLuaCommand('PowerUpSounds.playSound("' .. M.force_field_hit_sound .. '")')
+	M.force_field_hit_sound:playVE(origin_id)
 end
 
 return M

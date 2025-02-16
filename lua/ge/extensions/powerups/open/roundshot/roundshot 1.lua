@@ -4,6 +4,7 @@ local Util = require("libs/Util")
 local MathUtil = require("libs/MathUtil")
 local Sets = require("libs/Sets")
 local Trait = Extender.Traits
+local Sound = require("libs/Sounds")
 
 local M = {
 	-- Clear name of the powerup
@@ -36,8 +37,8 @@ local M = {
 	-- DO NOT treat this is a variable cache.
 	-- These are merely definitions
 	
-	activate_sound = "roundshot_" .. Util.randomName(),
-	hit_sound = "roundshot_hit_" .. Util.randomName(),
+	activate_sound = nil,
+	hit_sound = nil,
 	
 	max_projectiles = 28,
 	shoot_downtime = 125,
@@ -47,19 +48,18 @@ local M = {
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	
+	M.activate_sound = Sound(M.file_path .. 'sounds/roundshot_1_double.ogg', 3)
+	M.hit_sound = Sound(M.file_path .. 'sounds/energy_bullet_hit.ogg', 3)
 end
 
 -- Called for each vehicle
 M.onVehicleInit = function(game_vehicle_id)
-	be:getObjectByID(game_vehicle_id):queueLuaCommand('PowerUpSounds.addSound("' .. M.activate_sound .. '", "AudioSoft3D", 12, 1, "' .. M.file_path .. 'sounds/roundshot_1_double.ogg")')
 	
-	be:getObjectByID(game_vehicle_id):queueLuaCommand('PowerUpSounds.addSound("' .. M.hit_sound .. '", "AudioSoft3D", 12, 1, "' .. M.file_path .. 'sounds/energy_bullet_hit.ogg")')
 end
 
 -- When the powerup is activated
 M.onActivate = function(vehicle)
-	vehicle:queueLuaCommand('PowerUpSounds.playSound("' .. M.activate_sound .. '")')
+	M.activate_sound:playVE(vehicle:getId())
 	return {
 		projectiles = {},
 		shoot_timer = hptimer(),
@@ -162,7 +162,7 @@ end
 M.onHit = function(data, origin_id, target_id)
 	-- everything in here is executed on our and the remote end
 	local target_vehicle = be:getObjectByID(target_id)
-	target_vehicle:queueLuaCommand('PowerUpSounds.playSound("' .. M.hit_sound .. '")')
+	M.hit_sound:playVE(target_id)
 	if Extender.hasTraitCalls(target_id, origin_id, Trait.Consuming) then return end
 
 	local origin_vehicle = be:getObjectByID(origin_id)

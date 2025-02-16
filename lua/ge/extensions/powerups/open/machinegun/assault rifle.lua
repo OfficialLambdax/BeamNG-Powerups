@@ -4,6 +4,7 @@ local Util = require("libs/Util")
 local MathUtil = require("libs/MathUtil")
 local Sets = require("libs/Sets")
 local Trait = Extender.Traits
+local Sound = require("libs/Sounds")
 
 local M = {
 	-- Clear name of the powerup
@@ -36,8 +37,8 @@ local M = {
 	-- DO NOT treat this is a variable cache.
 	-- These are merely definitions
 	
-	activate_sound = "assault_rifle_" .. Util.randomName(),
-	--hit_sound = "cannon_hit_" .. Util.randomName(),
+	activate_sound = nil,
+	--hit_sound = nil,
 	
 	max_projectiles = 25,
 	shoot_downtime = 200,
@@ -47,19 +48,17 @@ local M = {
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-
+	M.activate_sound = Sound(M.file_path .. 'sounds/assault_rifle.ogg', 3)
 end
 
 -- Called for each vehicle
 M.onVehicleInit = function(game_vehicle_id)
-	be:getObjectByID(game_vehicle_id):queueLuaCommand('PowerUpSounds.addSound("' .. M.activate_sound .. '", "AudioSoft3D", 12, 1, "' .. M.file_path .. 'sounds/assault_rifle.ogg")')
 	
-	--be:getObjectByID(game_vehicle_id):queueLuaCommand('PowerUpSounds.addSound("' .. M.hit_sound .. '", "AudioSoft3D", 12, 1, "' .. M.file_path .. 'sounds/hit.ogg")')
 end
 
 -- When the powerup is activated
 M.onActivate = function(vehicle)
-	vehicle:queueLuaCommand('PowerUpSounds.playSound("' .. M.activate_sound .. '")')
+	M.activate_sound:playVE(vehicle:getId())
 	return {projectiles = {}, shoot_timer = hptimer(), shot_projectiles = 0}
 end
 

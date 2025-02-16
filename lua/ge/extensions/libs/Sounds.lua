@@ -5,8 +5,8 @@ local VALID_EXTENSIONS = Util.tableVToK({"wav", "mp3", "ogg"}) -- not sure what 
 
 return function(file_path, volume, pitch)
 	local file_path = tostring(file_path)
-	local volume = tonumber(volume)
-	local pitch = tonumber(pitch)
+	local volume = tonumber(volume or 1)
+	local pitch = tonumber(pitch or 1)
 	if file_path == nil or (FS.fileExists and not FS:fileExists(file_path)) then
 		Log.error("Not sound available at " .. file_path)
 		return nil
@@ -50,7 +50,7 @@ return function(file_path, volume, pitch)
 		if not veh then return end
 		veh:queueLuaCommand(
 			string.format(
-				'SoundsLib.stopPlaySound("%s", %n, %n)',
+				'SoundsLib.stopPlaySound("%s", %f, %f)',
 				self.int.file_path,
 				volume or self.int.volume,
 				pitch or self.int.pitch
@@ -60,7 +60,7 @@ return function(file_path, volume, pitch)
 	
 	function sound:playVEAll(volume, pitch)
 		local lua = string.format(
-			'SoundsLib.stopPlaySound("%s", %n, %n)',
+			'SoundsLib.stopPlaySound("%s", %f, %f)',
 			self.int.file_path,
 			volume or self.int.volume,
 			pitch or self.int.pitch

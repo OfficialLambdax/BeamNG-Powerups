@@ -4,6 +4,7 @@ local Util = require("libs/Util")
 local MathUtil = require("libs/MathUtil")
 local Sets = require("libs/Sets")
 local Trait = Extender.Traits
+local Sound = require("libs/Sounds")
 
 local M = {
 	-- Clear name of the powerup
@@ -36,25 +37,25 @@ local M = {
 	-- DO NOT treat this is a variable cache.
 	-- These are merely definitions
 	
-	activate_sound = "ghost_" .. Util.randomName(),
+	activate_sound = nil,
 	effect_length = 9000,
 }
 
 
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
-M.onInit = function(group_defs) end
+M.onInit = function(group_defs)
+	M.activate_sound = Sound(M.file_path .. 'sounds/ghost.ogg', 3)
+end
 
 -- Called for each vehicle
-M.onVehicleInit = function(game_vehicle_id)
-	be:getObjectByID(game_vehicle_id):queueLuaCommand('PowerUpSounds.addSound("' .. M.activate_sound .. '", "AudioSoft3D", 12, 1, "' .. M.file_path .. 'sounds/ghost.ogg")')
-end
+M.onVehicleInit = function(game_vehicle_id) end
 
 -- When the powerup is activated
 M.onActivate = function(vehicle)
 	vehicle:queueLuaCommand("obj:setGhostEnabled(true)")
 	vehicle:setMeshAlpha(0.5, "", false)
-	vehicle:queueLuaCommand('PowerUpSounds.playSound("' .. M.activate_sound .. '")')
+	M.activate_sound:playVE(vehicle:getId())
 	return {end_timer = hptimer()}
 end
 

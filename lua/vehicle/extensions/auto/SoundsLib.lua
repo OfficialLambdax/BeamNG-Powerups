@@ -1,5 +1,25 @@
 local M = {}
 
+--[[ possible descriptions are:
+	AudioDefault3D
+	AudioSoft3D
+	AudioClose3D
+	AudioClosest3D
+	AudioMusic3D
+
+	AudioDefaultLoop3D
+	AudioCloseLoop3D
+	AudioClosestLoop3D
+	AudioMusicLoop3D
+
+	Audio2D
+	AudioStream2D
+	AudioMusic2D
+
+	AudioLoop2D
+	AudioStreamLoop2D
+]]
+
 --[[
 	Format
 		["file_path"] = id
@@ -9,7 +29,7 @@ local SOUNDS = {}
 M.playSound = function(file_path, volume, pitch)
 	local id = SOUNDS[file_path]
 	if id == nil then
-		id = obj:createSFXSource2(file_path, "AudioSoft3D", 0, v.data.refNodes[0].ref, 0)
+		id = obj:createSFXSource2(file_path, "AudioSoft3D", file_path:gsub("/", "_"), v.data.refNodes[0].ref, -1)
 		SOUNDS[file_path] = id
 	end
 	
