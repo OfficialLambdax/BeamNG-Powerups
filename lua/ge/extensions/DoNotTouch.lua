@@ -122,7 +122,7 @@ M.triggerShow = function(state)
 	end
 end
 
--- Will auto adjust all already places and newly placed triggers that contain the string "BeamNGTrigger" in their name to the powerups default size
+-- Will auto adjust all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name to the powerups default size
 M.triggerAdjust = function(state)
 	TRIGGER_ADJUST = state
 end

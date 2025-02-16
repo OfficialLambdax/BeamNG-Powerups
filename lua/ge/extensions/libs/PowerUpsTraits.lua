@@ -64,21 +64,25 @@ local Traits = {
 	StrongBreaking = "onStrongBreaking",
 }
 
---[[
+
+-- TODO
 local TraitBounds = {
-	Traits.Reflective = {},
+	[Traits.Reflective] = {},
 	
-	Traits.StrongReflective = {},
+	[Traits.StrongReflective] = {},
 	
-	Traits.Consuming = {},
+	[Traits.Consuming] = {},
 	
-	Traits.StrongConsuming = {},
+	[Traits.StrongConsuming] = {},
 	
-	Traits.Ghosted = {},
+	[Traits.Ghosted] = {},
 	
-	Traits.Ignore = {},
+	[Traits.Ignore] = {},
+	
+	[Traits.Breaking] = {},
+	
+	[Traits.StrongBreaking] = {},
 }
-]]
 
 --[[
 local TraitResponses = {
