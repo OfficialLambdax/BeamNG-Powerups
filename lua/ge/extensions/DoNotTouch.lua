@@ -56,6 +56,8 @@ local MPUtil = require("mp_libs/MPUtil")
 
 local M = {}
 local INITIALIZED = false
+local TRIGGER_DEBUG = false
+local TRIGGER_ADJUST = false
 
 --[[
 	Notes
@@ -74,16 +76,10 @@ local INITIALIZED = false
 				print("New Contact with: " .. game_vehicle_id)
 			end
 		end
-		
-		-- To easier build location prefabs
-		for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
-			if name:find("BeamNGTrigger_") then
-				scenetree.findObject(name):setField("debug", 0, "false")
-			end
-		end
 ]]
 
-
+-- ----------------------------------------------------------------------------
+-- Init
 -- only to be called once a map has been loaded or is already loaded
 local function onInit()
 	PowerUps.init()
@@ -96,9 +92,39 @@ local function onInit()
 		PowerUps.loadPowerUpDefs("lua/ge/extensions/powerups/open")
 	end
 	
-	--M.onLoadingScreenFadeout()
-	
 	INITIALIZED = true
+end
+
+-- ----------------------------------------------------------------------------
+-- Trigger Highlight
+local function setTriggerDebug(state)
+	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
+		if name:find("BeamNGTrigger_") then
+			scenetree.findObject(name):setField("debug", 0, tostring(state))
+		end
+	end
+end
+
+local function adjustTriggerScale()
+	local default_scale = PowerUps.getDefaultTriggerScale()
+	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
+		if name:find("BeamNGTrigger_") then
+			scenetree.findObject(name):setScale(default_scale)
+		end
+	end
+end
+
+-- Will highlight all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name
+M.triggerShow = function(state)
+	TRIGGER_DEBUG = state
+	if not TRIGGER_DEBUG then
+		setTriggerDebug(false)
+	end
+end
+
+-- Will auto adjust all already places and newly placed triggers that contain the string "BeamNGTrigger" in their name to the powerups default size
+M.triggerAdjust = function(state)
+	TRIGGER_ADJUST = state
 end
 
 -- ----------------------------------------------------------------------------
@@ -108,15 +134,17 @@ M.onUpdate = function(dt_real, dt_sim, dt_raw)
 	
 	TimedTrigger.tick()
 	CollisionsLib.tick()
+	
+	if TRIGGER_DEBUG then
+		setTriggerDebug(true)
+	end
+	if TRIGGER_ADJUST then
+		adjustTriggerScale()
+	end
 end
 
 M.onPreRender = function(dt_real, dt_sim, dt_raw)
 	if not INITIALIZED then return end
-	--for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
-	--	if name:find("BeamNGTrigger_") then
-	--		scenetree.findObject(name):setField("debug", 0, "false")
-	--	end
-	--end
 	ForceField.tick() -- unfortunately doesnt help with the marker rendering
 	PowerUps.tick(dt_real, dt_sim, dt_raw)
 end
