@@ -610,7 +610,6 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 	end
 	if Extender.isSpectating(game_vehicle_id) then
 		-- temp. the pickup sound will be on the group
-		--Engine.Audio.playOnce('AudioGui', "/lua/ge/extensions/powerups/default_powerup_pick_sound.ogg", {volume = 3, channel = 'Music'})
 		TEMP_PICKUP_SOUND:play()
 	end
 end
