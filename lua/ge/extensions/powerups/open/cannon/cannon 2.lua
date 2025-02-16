@@ -48,8 +48,8 @@ local M = {
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/cannon_light.ogg', 3)
-	M.hit_sound = Sound(M.file_path .. 'sounds/hit.ogg', 3)
+	M.activate_sound = Sound(M.file_path .. 'sounds/cannon_light.ogg', 6)
+	M.hit_sound = Sound(M.file_path .. 'sounds/hit.ogg', 6)
 end
 
 -- Called for each vehicle
@@ -105,7 +105,7 @@ M.whileActive = function(data, origin_id, dt)
 		
 		data.shoot_timer:stopAndReset()
 		
-		M.activate_sound:playVE(vehicle:getId())
+		M.activate_sound:playVE(origin_id)
 		
 		-- need to return now as we cant give target_info and target_hits back at once
 		return nil, target_info
