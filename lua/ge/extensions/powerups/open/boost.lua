@@ -35,6 +35,10 @@ local M = {
 	-- These are merely definitions
 }
 
+local function test()
+	
+end
+
 -- Anything you may want todo before anything is spawned
 M.onInit = function()
 	
