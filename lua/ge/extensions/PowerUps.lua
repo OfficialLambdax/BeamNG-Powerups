@@ -6,7 +6,8 @@
 --[[
 	-- Game side only
 	
-	For detailed describtions of this mod please see the info folder
+	For detailed describtions of this mod please see the info folder.
+	This mod is a wrapper for the PowerUps library. It loads/unloads the powerups library and a default prefab and powerup set, while also proving an api for addons.
 ]]
 
 --[[
@@ -150,7 +151,7 @@ M.onPreRender = function(dt_real, dt_sim, dt_raw)
 end
 
 -- ----------------------------------------------------------------------------
--- Mod load/unload
+-- Internal Mod load/unload
 M.onWorldReadyState = function(state)
 	if state == 2 then onInit() end
 end
@@ -202,8 +203,84 @@ end
 
 -- ----------------------------------------------------------------------------
 -- Dev specific
-M.getSet = Sets.getSet
-M.ff = ForceField
+--M.getSet = Sets.getSet
+--M.ff = ForceField
+--M.pu = PowerUps
+
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+-- API
+-- This resets the powerup library
+M.reset = function()
+	PowerUps.unload()
+	PowerUps.init()
+end
+
+-- eg
+-- prefab_path 		= 'lua/ge/extensions/prefabs/utah.prefab.json'
+-- powerup_set_path	= 'lua/ge/extensions/powerups/open'
+M.loadPowerups = function(prefab_path, powerup_set_path)
+	PowerUps.loadLocationPrefab(prefab_path)
+	PowerUps.loadPowerUpDefs(powerup_set_path)
+end
+
+
+-- ----------------------------------------------------------------------------
+-- Direct access
 M.pu = PowerUps
+M.ff = ForceField
+M.getSet = Sets.getSet
+
+-- ----------------------------------------------------------------------------
+-- Singleplayer Only
+-- 		veh_id, group_name, level
+-- or.	group_name, level			(then the spectated vehicle is used as vehicle_id)
+M.exec = function(vehicle_id, group_name, level)
+	if level == nil then
+		local vehicle = getPlayerVehicle(0)
+		if vehicle == nil then return end
+		level = group_name
+		group_name = vehicle_id
+		vehicle_id = vehicle:getId()
+	end
+	PowerUps.testExec(vehicle_id, group_name, level)
+end
+
+M.takePowerup = function(vehicle_id, location_name)
+	PowerUps.takePowerup(vehicle_id, location_name)
+end
+
+M.givePowerup = function(vehicle_id, group_name)
+	PowerUps.givePowerup(vehicle_id, group_name)
+end
+
+M.dropPowerup = function(vehicle_id)
+	PowerUps.dropPowerup(vehicle_id)
+end
+
+M.getCharge = function(vehicle_id)
+	return PowerUps.getCharge(vehicle_id)
+end
+
+M.setCharge = function(vehicle_id, level)
+	PowerUps.setCharge(vehicle_id, level)
+end
+
+-- ----------------------------------------------------------------------------
+-- Singleplayer and Multiplayer compatible
+M.getPowerup = function(vehicle_id)
+	return PowerUps.getPowerup(vehicle_id)
+end
+
+-- charge_overwrite is optional
+M.activatePowerup = function(vehicle_id, charge_overwrite)
+	PowerUps.activatePowerup(vehicle_id, nil, charge_overwrite)
+end
+
+M.disableActivePowerup = function(vehicle_id)
+	PowerUps.disableActivePowerup(vehicle_id)
+end
+
 return M
 

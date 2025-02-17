@@ -1071,4 +1071,45 @@ M.getSpawnCountByGroup = function(group_name)
 	return total
 end
 
+M.getPowerup = function(game_vehicle_id)
+	local vehicle = VEHICLES[game_vehicle_id]
+	if vehicle then
+		return vehicle.powerup
+	end
+end
+
+M.takePowerup = function(game_vehicle_id, location_name)
+	local location = LOCATIONS[location_name]
+	if location == nil then return end
+	
+	takePowerupFromLocation(location_name, {subjectID = game_vehicle_id}, location)
+end
+
+M.givePowerup = function(game_vehicle_id, group_name)
+	local powerup = POWERUP_DEFS[group_name]
+	if powerup == nil then return end
+	
+	vehicleAddPowerup(game_vehicle_id, powerup)
+end
+
+M.disableActivePowerup = function(game_vehicle_id)
+	local vehicle = VEHICLES[game_vehicle_id]
+	if vehicle == nil or vehicle.powerup_active == nil then return end
+	
+	vehicle.powerup_active.onDeactivate(vehicle.powerup_data, game_vehicle_id)
+	vehicle.powerup_active = nil
+	vehicle.powerup_data = nil
+	
+	MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+end
+
+M.dropPowerup = function(game_vehicle_id)
+	local vehicle = VEHICLES[game_vehicle_id]
+	if vehicle == nil or vehicle.powerup == nil then return end
+	
+	vehicle.powerup.onDrop(vehicle.data)
+	vehicle.powerup = nil
+	vehicle.data = nil
+end
+
 return M

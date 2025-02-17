@@ -1,5 +1,5 @@
-load("DoNotTouch")
-setExtensionUnloadMode("DoNotTouch", "manual")
+load("PowerUps")
+setExtensionUnloadMode("PowerUps", "manual")
 
 extensions.core_input_categories.powerup_mod = {
 	order = 700,
