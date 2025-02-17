@@ -19,9 +19,6 @@
 	for _, veh in pairs(getAllVehicles()) do
 		print(veh:getId())
 	end
-	
-	
-	package.loaded["CollisionsLib"] = nil; TEST = require("CollisionsLib")
 ]]
 
 local M = {}

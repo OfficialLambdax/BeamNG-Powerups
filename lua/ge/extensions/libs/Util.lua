@@ -5,6 +5,8 @@
 
 -- do not import MPUtil, that would cause a stack overflow
 
+local CompileLua = require("libs/CompileLua")
+
 local M = {}
 local RANDOM_COUNT = 0
 
@@ -132,20 +134,7 @@ M.fileExtension = function(string)
 	return string:match("[^.]+$")
 end
 
--- require() but not require()
-M.compileLua = function(path)
-	local handle = io.open(path, "r")
-	if handle == nil then return nil, 'Cannot open file "' .. path .. '"' end
-	
-	local lua = handle:read("*all")
-	handle:close()
-	
-	local lua, err = load(lua)
-	if err then return nil, err end
-	local ok, code = pcall(lua)
-	if not ok then return nil, code end
-	return code
-end
+M.compileLua = CompileLua.compileLua
 
 M.listFiles = function(path)
 	if FS.directoryList then -- if game
