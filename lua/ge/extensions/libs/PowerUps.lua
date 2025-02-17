@@ -14,6 +14,7 @@ local MPServerRuntime -- filled only if loaded on server
 local PauseTimer = require("mp_libs/PauseTimer")
 local Log = require("libs/Log")
 local Sound = require("libs/Sounds")
+local Pot = require("libs/Pot")
 
 local M = {
 	_VERSION = 0.3, -- 13.02.2025 DD.MM.YYYY
@@ -371,6 +372,13 @@ local function loadPowerups(set_path, group_path, group)
 		return
 	end
 	
+	if group.probability == nil or group.probability > 10 then
+		Log.error('Group "' .. group.name .. '" has probability outside allowed range. 0 - 10.')
+		return
+	elseif group.probability < 0 then
+		group.probability = 5
+	end
+	
 	Log.info('Loading group "' .. group.name .. '"')
 
 	-- init powerups of the group
@@ -470,15 +478,14 @@ end
 
 local function selectPowerup()
 	if not Util.tableHasContent(POWERUP_DEFS) then return end
-	
-	-- select random group
-	local random_group = {}
-	for group_name, _ in pairs(POWERUP_DEFS) do
-		table.insert(random_group, group_name)
+
+	local pot = Pot()
+	for _, group in pairs(POWERUP_DEFS) do
+		pot:add(group, group.probability)
 	end
-	random_group = random_group[Util.mathRandom(1, #random_group)]
 	
-	return POWERUP_DEFS[random_group]
+	pot:stir(5)
+	return pot:surprise()
 end
 
 local function activatePowerup(game_vehicle_id, from_server, charge_overwrite) -- charge overwrite is given by negatives
