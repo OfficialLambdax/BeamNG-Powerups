@@ -497,10 +497,14 @@ function onPlayerReady(player_id) -- called by the client side mod
 	Log.info('Player "' .. MP.GetPlayerName(player_id) .. '" signals to be ready')
 	
 	-- send location prefab
-	Build:new():to(player_id):onLoadLocationPrefab(LOCATION_PREFAB_NAME):send()
+	if LOCATION_PREFAB_NAME:len() > 0 then
+		Build:new():to(player_id):onLoadLocationPrefab(LOCATION_PREFAB_NAME):send()
+	end
 	
 	-- send powerup set
-	Build:new():to(player_id):onLoadPowerupDefs(POWERUP_SET_NAME):send()
+	if POWERUP_SET_NAME:len() > 0 then
+		Build:new():to(player_id):onLoadPowerupDefs(POWERUP_SET_NAME):send()
+	end
 	
 	-- send locations
 	local build = Build:new():to(player_id)
@@ -554,6 +558,26 @@ end
 		MP.TriggerGlobalEvent("PowerUpsApi_exec", "0-0", "forcefield", 1)
 ]]
 local A = {}
+A.reset = function()
+	LOCATION_PREFAB_NAME = ""
+	POWERUP_SET_NAME = ""
+	PowerUps.unload()
+	PowerUps.init()
+	for player_id, _ in pairs(MP.GetPlayers()) do
+		MP.TriggerClientEvent(player_id, "onCompleteReset", "")
+	end
+end
+
+A.loadPowerups = function(location_prefab_name, powerup_set_name)
+	LOCATION_PREFAB_NAME = location_prefab_name
+	POWERUP_SET_NAME = powerup_set_name
+	PowerUps.loadLocationPrefab(Util.myPath() .. '../prefabs/' .. location_prefab_name)
+	PowerUps.loadPowerUpDefs(Util.myPath() .. '../powerups/' .. powerup_set_name)
+	
+	Build:new():all():onLoadLocationPrefab(LOCATION_PREFAB_NAME):send()
+	Build:new():all():onLoadPowerupDefs(POWERUP_SET_NAME):send()
+end
+
 A.exec = function(server_vehicle_id, group_name, level)
 	A.givePowerup(server_vehicle_id, group_name)
 	A.activatePowerup(server_vehicle_id, level)
