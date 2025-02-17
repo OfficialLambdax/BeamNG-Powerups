@@ -1,21 +1,16 @@
 --[[
 	This performs a pattern search on powerup files and all its imports to find potentially malicious code.
-	
+	Server side only
 ]]
 
 local M = {}
 
-local SCRIPT_PATH = "Resources/Server/Powerups"
-local WHITELISTED = {
-	"Resources/Server/Powerups/libs/TimedTrigger.lua",
-	"Resources/Server/Powerups/libs/Sets.lua",
-}
-
-local IS_BEAMMP_SERVER = type(M) == "table" and type(MP.TriggerClientEvent) == "function"
-local BAD_KEYWORDS = {"load", "pcall", "xpcall"}
+local IS_BEAMMP_SERVER = type(MP) == "table" and type(MP.TriggerClientEvent) == "function"
+local BAD_KEYWORDS = {"load", "pcall", "xpcall", "loadstring"}
 local SPACES = {" ", "\t", "\n", "\r"}
 local VALID_CHARS = {" ", "\t", "\n", "\r", "{", "}", ";", "=", ",", "(", ")"}
 local FILE_INDEX
+local WHITELISTED = {}
 
 local function init()
 	local reverse = {}
@@ -35,9 +30,6 @@ local function init()
 		reverse[v] = true
 	end
 	WHITELISTED = reverse
-	
-	local my_path, _ = debug.getinfo(1).source:sub(2):gsub("\\", "/")
-	WHITELISTED[my_path] = true
 end
 
 local function tableConcat(into, from)
@@ -60,7 +52,7 @@ local function indexFilesRecursive(path)
 	end
 	return all_files
 end
-FILE_INDEX = indexFilesRecursive(SCRIPT_PATH)
+
 
 local function findRequireInIndex(path)
 	local finds = {}
@@ -224,6 +216,16 @@ M.compileLua = function(file_path)
 	return code
 end
 
+M.init = function(script_path, ...)
+	FILE_INDEX = indexFilesRecursive(script_path:sub(1, -2))
+	
+	for _, include in ipairs({...}) do
+		WHITELISTED[include] = true
+	end
+	
+	os.execute = nil -- force remove
+	M.init = nil
+end
 
 init()
 return M

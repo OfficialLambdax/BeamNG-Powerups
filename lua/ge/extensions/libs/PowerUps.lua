@@ -21,8 +21,8 @@ local M = {
 	_NAME = "mp_init"
 }
 local VEC3 = vec3 or function(x, y, z) return {x = x, y = y, z = z} end -- server compat
-local RESPAWN_TIME = 5000
-local ROTATION_TIME = 120000
+local RESPAWN_TIME = 30000
+local ROTATION_TIME = 180000
 local RENDER_DISTANCE = 500
 local MAX_CHARGE = 0 -- updated based on the loaded set
 
@@ -945,34 +945,6 @@ M.testExec = function(game_vehicle_id, group, charge)
 end
 
 -- ------------------------------------------------------------------------------------------------
--- PowerUps interface
-M.getCharge = function(game_vehicle_id)
-	local vehicle = VEHICLES[game_vehicle_id]
-	if vehicle == nil then return nil end
-	return vehicle.charge
-end
-
-M.setCharge = function(game_vehicle_id, charge)
-	local vehicle = VEHICLES[game_vehicle_id]
-	if vehicle == nil then return nil end
-	
-	if not MPUtil.isBeamMPSession() then -- server controls this
-		vehicle.charge = charge
-	end
-end
-
-M.addCharge = function(game_vehicle_id, charge)
-	local vehicle = VEHICLES[game_vehicle_id]
-	if vehicle == nil then return nil end
-	
-	if not MPUtil.isBeamMPSession() then -- server controls this
-		vehicle.charge = math.min(math.max(vehicle.charge + charge, 1), MAX_CHARGE)
-	end
-	
-	Log.info(game_vehicle_id .. " charge is " .. vehicle.charge)
-end
-
--- ------------------------------------------------------------------------------------------------
 -- Load locations/powerups
 M.loadPowerUpDefs = loadPowerupSet
 
@@ -1009,5 +981,94 @@ M.tick = function(dt)
 	tickRenderQue(dt)
 end
 
+-- ------------------------------------------------------------------------------------------------
+-- PowerUps interface
+M.getCharge = function(game_vehicle_id)
+	local vehicle = VEHICLES[game_vehicle_id]
+	if vehicle == nil then return nil end
+	return vehicle.charge
+end
+
+M.setCharge = function(game_vehicle_id, charge)
+	local vehicle = VEHICLES[game_vehicle_id]
+	if vehicle == nil then return nil end
+	
+	if not MPUtil.isBeamMPSession() then -- server controls this
+		vehicle.charge = charge
+	end
+end
+
+M.addCharge = function(game_vehicle_id, charge)
+	local vehicle = VEHICLES[game_vehicle_id]
+	if vehicle == nil then return nil end
+	
+	if not MPUtil.isBeamMPSession() then -- server controls this
+		vehicle.charge = math.min(math.max(vehicle.charge + charge, 1), MAX_CHARGE)
+	end
+	
+	Log.info(game_vehicle_id .. " charge is " .. vehicle.charge)
+end
+
+M.getTotalSpawnedPowerups = function()
+	local total = 0
+	for _, location in pairs(LOCATIONS) do
+		if location.powerup then total = total + 1 end
+	end
+	return total
+end
+
+M.getTotalOwnedPowerups = function()
+	local total = 0
+	for _, vehicle in pairs(VEHICLES) do
+		if vehicle.powerup then total = total + 1 end
+	end
+	return total
+end
+
+M.getTotalActivePowerups = function()
+	local total = 0
+	for _, vehicle in pairs(VEHICLES) do
+		if vehicle.powerup_active then total = total + 1 end
+	end
+	return total
+end
+
+M.getTotalLocations = function()
+	return Util.tableSize(LOCATIONS)
+end
+
+M.getKnownVehicleCount = function()
+	return Util.tableSize(VEHICLES)
+end
+
+M.getRotationTime = function()
+	return ROTATION_TIME
+end
+
+M.getRotationRoutineTime = function()
+	return ROUTINE_LOCATIONS_ROTATION
+end
+
+M.getRestockTime = function()
+	return RESPAWN_TIME
+end
+
+M.getPowerupGroups = function()
+	local groups = {}
+	for group_name, _ in pairs(POWERUP_DEFS) do
+		table.insert(groups, group_name)
+	end
+	return groups
+end
+
+M.getSpawnCountByGroup = function(group_name)
+	local total = 0
+	for _, location in pairs(LOCATIONS) do
+		if location.powerup and location.powerup.name == group_name then
+			total = total + 1
+		end
+	end
+	return total
+end
 
 return M

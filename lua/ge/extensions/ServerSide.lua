@@ -44,8 +44,6 @@ end
 local MPServerRuntime = require("mp_libs/MPServerRuntime")
 local Util = require("libs/Util")
 local Log = require("libs/Log")
-
-
 function onInit()
 	local map_name = ""
 	if MP.Get then
