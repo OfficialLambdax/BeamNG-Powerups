@@ -5,7 +5,7 @@
 
 -- do not import MPUtil, that would cause a stack overflow
 
-local CompileLua = require("libs/CompileLua")
+local CompileLua = require("mp_libs/CompileLua")
 
 local M = {}
 local RANDOM_COUNT = 0

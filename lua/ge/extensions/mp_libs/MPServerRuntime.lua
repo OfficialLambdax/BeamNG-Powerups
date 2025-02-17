@@ -10,6 +10,7 @@ local PowerUpsTypes = require("libs/PowerUpsTypes")
 local PauseTimer = require("mp_libs/PauseTimer")
 local TriggerClientEvent = require("mp_libs/TriggerClientEvent") -- is_synced when onPlayerReady
 local Log = require("libs/Log")
+local CompileLua = require("mp_libs/CompileLua")
 
 local Traits = PowerUpsTraits.Traits
 local Types = PowerUpsTypes.Types
@@ -385,6 +386,50 @@ local function checkActivePowerups()
 	end
 end
 
+-- this should rather only be shown on command
+local function displayServerState()
+	local players = Util.tableSize(MP.GetPlayers())
+	if players == 0 then return end
+	local mem = Util.mathRound(MP.GetStateMemoryUsage() / 1048576, 2)
+	local vehicles = PowerUps.getKnownVehicleCount()
+	local triggers = TimedTrigger.count()
+	local reuse = TimedTrigger.getReuseCount()
+	local spawned = PowerUps.getTotalSpawnedPowerups()
+	local owned = PowerUps.getTotalOwnedPowerups()
+	local active = PowerUps.getTotalActivePowerups()
+	local locations = PowerUps.getTotalLocations()
+	local rotation = math.floor(PowerUps.getRotationTime() / 1000)
+	local rotation_routine = PowerUps.getRotationRoutineTime()
+	local restock = math.floor(PowerUps.getRestockTime() / 1000)
+	
+	local info = string.format([[
+
+	General   _
+		Mem usage       : %s MB
+		Triggers        : %s		Reuse   : %s
+		Players         : %s		Vehicles: %s
+	Locations _
+		Total           : %s		Restock Time    : %s s
+		Rotation        : %s s		Rotation Routine: %s ms
+	Powerups  _
+		Spawned         : %s
+		Owned           : %s
+		Active          : %s
+	List      _]],
+		mem, triggers, reuse, players, vehicles,
+		locations, restock, rotation, rotation_routine,
+		spawned, owned, active
+	)
+	for _, group in ipairs(PowerUps.getPowerupGroups()) do
+		local total = PowerUps.getSpawnCountByGroup(group)
+		local percentil = math.floor((total / spawned) * 100)
+		info = info .. '\n' ..
+			'\t\t' .. total .. ' (' .. percentil .. ' %)\t: ' .. group
+	end
+	
+	Log.info(info)
+end
+
 -- ------------------------------------------------------------------------------------------------
 -- MP Events
 function onPlayerReady(player_id) -- called by the client side mod
@@ -440,15 +485,21 @@ end
 -- ------------------------------------------------------------------------------------------------
 -- Base Routine
 function baseRoutine()
-	TimedTrigger.tick()
-	--Log.info("Current usage: " .. (MP.GetStateMemoryUsage() / 1048576) .. " MB") -- like 2mb, aka nothing
 end
 
 -- ------------------------------------------------------------------------------------------------
 -- Entry Point
 M.init = function(location_prefab_name, powerup_set_name)
 	Log.info("Loading")
-
+	
+	local my_path = Util.filePath(Util.myPath():sub(1, -2))
+	CompileLua.init(
+		my_path,
+		my_path .. 'libs/TimedTrigger.lua',
+		my_path .. 'libs/Sets.lua',
+		my_path .. 'mp_libs/CompileLua.lua'
+	)
+	
 	PowerUps.init()
 	PowerUps.updateMPServerRuntime(M)
 	
@@ -457,6 +508,13 @@ M.init = function(location_prefab_name, powerup_set_name)
 		1000,
 		0,
 		checkActivePowerups
+	)
+	
+	TimedTrigger.new(
+		"PowerUps_displayServerState",
+		60000,
+		0,
+		displayServerState
 	)
 	
 	LOCATION_PREFAB_NAME = location_prefab_name
