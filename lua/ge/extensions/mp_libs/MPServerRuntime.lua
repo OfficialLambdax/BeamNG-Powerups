@@ -1,4 +1,4 @@
--- BeamMP Server only
+-- BeamMP Server only. Do not load inside client.
 
 local ServerUtil = Util
 local Util = require("libs/Util")
@@ -157,6 +157,157 @@ function Build:onVehiclesPowerupUpdate(server_vehicle_id, location_name, powerup
 end
 
 -- ------------------------------------------------------------------------------------------------
+-- Common
+local function takePowerup(server_vehicle_id, location_name)
+	local location = LOCATIONS[location_name]
+	if location == nil or location.powerup == nil then return end
+	
+	local player_id = MPUtil.getPlayerIDFromServerID(server_vehicle_id)
+	
+	local vehicle = VEHICLES[server_vehicle_id]
+	if vehicle == nil then
+		Log.warn('Vehicle of ' .. MP.GetPlayerName(player_id) .. ' is unknown')
+		return
+	end
+	
+	local type = location.powerup.type
+	if type == Types.Charge then
+		vehicle.charge = math.min(vehicle.charge + 1, PowerUps.getMaxCharge())
+		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name, location.powerup.name):send()
+		location.powerup = nil
+		location.respawn_timer:stopAndReset()
+		
+		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" now has ' .. vehicle.charge .. ' charges')
+		
+	elseif type == Types.Negative then
+		-- swap ownership
+		vehicle.powerup = location.powerup
+		location.powerup = nil
+		location.respawn_timer:stopAndReset()
+		
+		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up negative ' .. vehicle.powerup.name)
+		
+		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
+		tryActivatePowerup(player_id, server_vehicle_id)
+		
+	else
+		-- swap ownership
+		vehicle.powerup = location.powerup
+		location.powerup = nil
+		location.respawn_timer:stopAndReset()
+		
+		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up ' .. vehicle.powerup.name)
+		
+		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
+	end
+end
+
+local function givePowerup(server_vehicle_id, group_name)
+	local vehicle = VEHICLES[server_vehicle_id]
+	if vehicle == nil then return end
+	
+	local powerup = POWERUP_DEFS[group_name]
+	if powerup == nil then return end
+	
+	local player_id = MPUtil.getPlayerIDFromServerID(server_vehicle_id)
+	
+	vehicle.powerup = powerup
+	
+	Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up ' .. vehicle.powerup.name)
+	
+	Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id):send()
+end
+
+local function dropPowerup(server_vehicle_id)
+	local vehicle = VEHICLES[server_vehicle_id]
+	if vehicle == nil or vehicle.powerup == nil then return end
+	
+	vehicle.powerup = nil
+	Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, nil, nil):send()
+end
+
+local function activatePowerup(server_vehicle_id, charge_overwrite)
+	local player_id = MPUtil.getPlayerIDFromServerID(server_vehicle_id)
+	
+	local vehicle = VEHICLES[server_vehicle_id]
+	if vehicle == nil then
+		Log.error('Unknown vehicle of ' .. MP.GetPlayerName(player_id))
+		return
+	end
+	
+	if vehicle.powerup == nil then
+		Log.warn('Vehicle of ' .. MP.GetPlayerName(player_id) .. ' has no powerup')
+		return
+	end
+	
+	if vehicle.powerup_active then
+		Log.warn('Vehicle of ' .. MP.GetPlayerName(player_id) .. ' already has a active powerup')
+		return
+	end
+	
+	local is_negative = vehicle.powerup.type == Types.Negative
+	local group_name = vehicle.powerup.name
+	
+	-- select powerup
+	local powerup_active
+	local charge
+	if is_negative then
+		charge = math.random(1, vehicle.powerup.max_levels)
+		powerup_active = vehicle.powerup.powerups[charge]
+	else
+		charge = math.min(vehicle.charge, vehicle.powerup.max_levels)
+		powerup_active = vehicle.powerup.powerups[charge]
+	end
+	
+	-- select powerup
+	if powerup_active == nil then
+		Log.error('Powerup group "' .. vehicle.powerup.name .. '" has no powerups')
+		return
+	end
+	
+	vehicle.powerup_active = powerup_active
+	vehicle.powerup_active.max_len_timer = PauseTimer.new()
+	vehicle.powerup = nil
+	
+	if not is_negative then
+		vehicle.charge = 1
+		Build:new():all():onPowerupActivate(server_vehicle_id, charge_overwrite):send()
+		
+		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" activated ' .. vehicle.powerup_active.internal_name)
+	else
+		Build:new():all():onPowerupActivate(server_vehicle_id, charge_overwrite or charge):send()
+		
+		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" activated negative ' .. vehicle.powerup_active.internal_name)
+	end
+	
+	return true
+end
+
+local function disableActivePowerup(server_vehicle_id, from_client)
+	local player_id = MPUtil.getPlayerIDFromServerID(server_vehicle_id)
+	
+	local vehicle = VEHICLES[server_vehicle_id]
+	if vehicle == nil then
+		Log.error('Unknown vehicle of ' .. MP.GetPlayerName(player_id))
+		return
+	end
+	
+	if vehicle.powerup_active == nil then
+		Log.warn('Vehicle of ' .. MP.GetPlayerName(player_id) .. ' has no active powerup')
+		return
+	end
+	
+	Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" disabled ' .. vehicle.powerup_active.internal_name .. ' after ' .. Util.mathRound(vehicle.powerup_active.max_len_timer:stop() / 1000, 3) .. ' seconds')
+	
+	vehicle.powerup_active = nil
+	if from_client then
+		Build:new():allExcept(player_id):onActivePowerupDisable(server_vehicle_id):send()
+	else
+		Build:new():all():onActivePowerupDisable(server_vehicle_id):send()
+	end
+end
+
+-- ------------------------------------------------------------------------------------------------
 -- Interface for the PowerUps lib
 M.syncLocationUpdate = function(location_name)
 	Build:new():all():onLocationsPowerupUpdate(location_name):send()
@@ -223,21 +374,7 @@ function tryDisableActivePowerup(player_id, server_vehicle_id)
 		end
 	end
 	
-	local vehicle = VEHICLES[server_vehicle_id]
-	if vehicle == nil then
-		Log.error('Unknown vehicle of ' .. MP.GetPlayerName(player_id))
-		return
-	end
-	
-	if vehicle.powerup_active == nil then
-		Log.warn(MP.GetPlayerName(player_id) .. ' has no active powerup')
-		return
-	end
-	
-	Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" disabled ' .. vehicle.powerup_active.internal_name .. ' after ' .. Util.mathRound(vehicle.powerup_active.max_len_timer:stop() / 1000, 3) .. ' seconds')
-	
-	vehicle.powerup_active = nil
-	Build:new():allExcept(player_id):onActivePowerupDisable(server_vehicle_id):send()
+	disableActivePowerup(server_vehicle_id, true)
 end
 
 function tryActivatePowerup(player_id, server_vehicle_id)
@@ -247,58 +384,8 @@ function tryActivatePowerup(player_id, server_vehicle_id)
 		return
 	end
 	
-	local vehicle = VEHICLES[server_vehicle_id]
-	if vehicle == nil then
-		Log.error('Unknown vehicle of ' .. MP.GetPlayerName(player_id))
-		return
-	end
-	
-	if vehicle.powerup == nil then
-		Log.warn('Vehicle of ' .. MP.GetPlayerName(player_id) .. ' has no powerup')
+	if not activatePowerup(server_vehicle_id) then
 		Build:new():to(player_id):onActivePowerupDisable(server_vehicle_id):send()
-		return
-	end
-	
-	if vehicle.powerup_active then
-		Log.warn('Vehicle of ' .. MP.GetPlayerName(player_id) .. ' already has a active powerup')
-		Build:new():to(player_id):onActivePowerupDisable(server_vehicle_id):send()
-		return
-	end
-	
-	local is_negative = vehicle.powerup.type == Types.Negative
-	local group_name = vehicle.powerup.name
-	
-	-- select powerup
-	local powerup_active
-	local charge
-	if is_negative then
-		charge = math.random(1, vehicle.powerup.max_levels)
-		powerup_active = vehicle.powerup.powerups[charge]
-	else
-		charge = math.min(vehicle.charge, vehicle.powerup.max_levels)
-		powerup_active = vehicle.powerup.powerups[charge]
-	end
-	
-	-- select powerup
-	if powerup_active == nil then
-		Log.error('Powerup group "' .. vehicle.powerup.name .. '" has no powerups')
-		Build:new():to(player_id):onActivePowerupDisable(server_vehicle_id):send()
-		return
-	end
-	
-	vehicle.powerup_active = powerup_active
-	vehicle.powerup_active.max_len_timer = PauseTimer.new()
-	vehicle.powerup = nil
-	
-	if not is_negative then
-		vehicle.charge = 1
-		Build:new():all():onPowerupActivate(server_vehicle_id):send()
-		
-		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" activated ' .. vehicle.powerup_active.internal_name)
-	else
-		Build:new():all():onPowerupActivate(server_vehicle_id, charge):send()
-		
-		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" activated negative ' .. vehicle.powerup_active.internal_name)
 	end
 end
 
@@ -339,36 +426,7 @@ function tryTakePowerup(player_id, data)
 		return
 	end
 	
-	local type = location.powerup.type
-	if type == Types.Charge then
-		vehicle.charge = math.min(vehicle.charge + 1, PowerUps.getMaxCharge())
-		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name, location.powerup.name):send()
-		location.powerup = nil
-		location.respawn_timer:stopAndReset()
-		
-		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" now has ' .. vehicle.charge .. ' charges')
-		
-	elseif type == Types.Negative then
-		-- swap ownership
-		vehicle.powerup = location.powerup
-		location.powerup = nil
-		location.respawn_timer:stopAndReset()
-		
-		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up negative ' .. vehicle.powerup.name)
-		
-		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
-		tryActivatePowerup(player_id, server_vehicle_id)
-		
-	else
-		-- swap ownership
-		vehicle.powerup = location.powerup
-		location.powerup = nil
-		location.respawn_timer:stopAndReset()
-		
-		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up ' .. vehicle.powerup.name)
-		
-		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
-	end
+	takePowerup(server_vehicle_id, location_name)
 end
 
 -- ------------------------------------------------------------------------------------------------
@@ -379,8 +437,7 @@ local function checkActivePowerups()
 			if vehicle.powerup_active.max_len_timer:stop() > vehicle.powerup_active.max_len then
 				Log.warn('Removed overdue ' .. vehicle.powerup_active.internal_name .. ' active powerup from ' .. server_vehicle_id .. ' after ' .. Util.mathRound(vehicle.powerup_active.max_len_timer:stop() / 1000, 3) .. ' seconds')
 				
-				local player_id, _ = table.unpack(Util.split(server_vehicle_id, '-', 1))
-				tryDisableActivePowerup(player_id, server_vehicle_id)
+				disableActivePowerup(server_vehicle_id)
 			end
 		end
 	end
@@ -489,8 +546,67 @@ function baseRoutine()
 end
 
 -- ------------------------------------------------------------------------------------------------
+-- API
+--[[
+	Can access this from the same state by simply using
+		PowerUpsApi.exec()
+	or when from another state
+		MP.TriggerGlobalEvent("PowerUpsApi_exec", "0-0", "forcefield", 1)
+]]
+local A = {}
+A.exec = function(server_vehicle_id, group_name, level)
+	A.givePowerup(server_vehicle_id, group_name)
+	A.activatePowerup(server_vehicle_id, level)
+end
+
+A.takePowerup = function(server_vehicle_id, location_name)
+	takePowerup(server_vehicle_id, location_name)
+end
+
+A.givePowerup = function(server_vehicle_id, group_name)
+	givePowerup(server_vehicle_id, group_name)
+end
+
+A.dropPowerup = function(server_vehicle_id)
+	dropPowerup(server_vehicle_id)
+end
+
+A.getCharge = function(server_vehicle_id)
+	local vehicle = VEHICLES[server_vehicle_id]
+	if vehicle == nil then return end
+	
+	return vehicle.charge
+end
+
+-- doesnt sync yet
+A.setCharge = function(server_vehicle_id, level)
+	local vehicle = VEHICLES[server_vehicle_id]
+	if vehicle == nil then return end
+	
+	vehicle.charge = math.min(level, PowerUps.getMaxCharge())
+end
+
+A.getPowerup = function(server_vehicle_id)
+	local vehicle = VEHICLES[server_vehicle_id]
+	if vehicle == nil then return end
+	
+	return vehicle.powerup
+end
+
+A.activatePowerup = function(server_vehicle_id, charge_overwrite)
+	activatePowerup(server_vehicle_id, charge_overwrite)
+end
+
+A.disableActivePowerup = function(server_vehicle_id)
+	disableActivePowerup(server_vehicle_id)
+end
+
+-- ------------------------------------------------------------------------------------------------
 -- Entry Point
 M.init = function(location_prefab_name, powerup_set_name)
+	-- this is the case when another file in this lua state get reloaded and the server is of the opinion to also reinit the ServerSide.lua
+	if CompileLua.init == nil then return end
+	
 	Log.info("Loading")
 	
 	local my_path = Util.filePath(Util.myPath():sub(1, -2))
@@ -541,6 +657,17 @@ M.init = function(location_prefab_name, powerup_set_name)
 	MP.RegisterEvent("onVehicleSpawn", "onVehicleSpawn")
 	MP.RegisterEvent("onVehicleDeleted", "onVehicleDeleted")
 	MP.RegisterEvent("onPlayerDisconnect", "onPlayerDisconnected")
+	
+	-- API
+	PowerUpsApi = {} -- global
+	API = {} -- temp global
+	for api, func in pairs(A) do
+		API = func
+		load('PowerUpsApi_' .. api .. ' = API')()
+		MP.RegisterEvent('PowerUpsApi_' .. api, 'PowerUpsApi_' .. api)
+		PowerUpsApi[api] = func
+	end
+	API = nil
 	
 	-- hotreload
 	for player_id, player_name in pairs(MP.GetPlayers()) do
