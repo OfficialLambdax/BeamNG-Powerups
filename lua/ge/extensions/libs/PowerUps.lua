@@ -881,21 +881,23 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 end
 
 M.unload = function()
-	-- call destruction events on all powerups, groups and triggers
-	for location_name, location in pairs(LOCATIONS) do
-		if location.powerup ~= nil then
-			location.powerup.onDespawn(location.data)
+	if not MPUtil.isBeamMPServer() then
+		-- call destruction events on all powerups, groups and triggers
+		for location_name, location in pairs(LOCATIONS) do
+			if location.powerup ~= nil then
+				location.powerup.onDespawn(location.data)
+			end
+			location.obj:delete()
 		end
-		location.obj:delete()
-	end
-	
-	for game_vehicle_id, vehicle in pairs(VEHICLES) do
-		if vehicle.powerup ~= nil then
-			vehicle.powerup.onDespawn(vehicle.data)
-		end
-		if vehicle.powerup_active ~= nil then
-			vehicle.powerup_active.onDeactivate(vehicle.powerup_data, game_vehicle_id)
-			MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+		
+		for game_vehicle_id, vehicle in pairs(VEHICLES) do
+			if vehicle.powerup ~= nil then
+				vehicle.powerup.onDespawn(vehicle.data)
+			end
+			if vehicle.powerup_active ~= nil then
+				vehicle.powerup_active.onDeactivate(vehicle.powerup_data, game_vehicle_id)
+				MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+			end
 		end
 	end
 	
