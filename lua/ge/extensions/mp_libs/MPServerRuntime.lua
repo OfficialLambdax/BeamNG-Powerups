@@ -444,9 +444,9 @@ local function checkActivePowerups()
 end
 
 -- this should rather only be shown on command
-local function displayServerState()
+local function displayServerState(show)
 	local players = Util.tableSize(MP.GetPlayers())
-	if players == 0 then return end
+	if players == 0 and not show then return end
 	local mem = Util.mathRound(MP.GetStateMemoryUsage() / 1048576, 2)
 	local vehicles = PowerUps.getKnownVehicleCount()
 	local triggers = TimedTrigger.count()
@@ -702,6 +702,8 @@ M.init = function(location_prefab_name, powerup_set_name)
 			onVehicleSpawn(player_id, vehicle_id, data)
 		end
 	end
+	
+	displayServerState(true)
 	
 	Log.info("Loaded")
 end
