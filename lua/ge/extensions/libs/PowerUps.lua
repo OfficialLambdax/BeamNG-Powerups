@@ -25,6 +25,7 @@ local VEC3 = vec3 or function(x, y, z) return {x = x, y = y, z = z} end -- serve
 local RESPAWN_TIME = 30000
 local ROTATION_TIME = 180000
 local RENDER_DISTANCE = 500
+local PICKUP_DOWNTIME = 500
 local MAX_CHARGE = 0 -- updated based on the loaded set
 
 local ROUTINE_LOCATIONS_RESTOCK = 5000
@@ -102,6 +103,7 @@ local LOCATIONS = {}
 		[powerup_data] = nil/Whatever the onActivate function returns us
 		[is_rendered] = bool
 		[player_name] = singleplayer/traffic/player_name if multiplayer session, as a player can only have one
+		[last_pickup] = hptimer
 ]]
 local VEHICLES = {}
 
@@ -301,7 +303,8 @@ local function onVehicleSpawned(game_vehicle_id)
 		charge = 1,
 		powerup = nil,
 		is_rendered = true,
-		player_name = MPUtil.getPlayerName(game_vehicle_id) or SUBJECT_SINGLEPLAYER
+		player_name = MPUtil.getPlayerName(game_vehicle_id) or SUBJECT_SINGLEPLAYER,
+		last_pickup = PauseTimer.new()
 	}
 	
 	if not MPUtil.isBeamMPServer() then
@@ -659,6 +662,9 @@ local function takePowerupFromLocation(location_name, trigger_data, location)
 	
 	local is_own, is_traffic = Extender.isPlayerVehicle(game_vehicle_id)
 	if not is_own and not is_traffic then return end -- ignore vehicles not owned by us
+	
+	if vehicle.last_pickup:stop() < PICKUP_DOWNTIME then return end
+	vehicle.last_pickup:stopAndReset()
 	
 	if not MPUtil.isBeamMPSession() then
 		vehicleAddPowerup(game_vehicle_id, location.powerup, location)
@@ -1128,6 +1134,14 @@ end
 M.setRotationTime = function(time)
 	ROTATION_TIME = time
 	updateLocationRotationCheckTime()
+end
+
+M.setPickupDownTime = function(time)
+	PICKUP_DOWNTIME = time
+end
+
+M.getPickupDownTime = function()
+	return PICKUP_DOWNTIME
 end
 
 return M

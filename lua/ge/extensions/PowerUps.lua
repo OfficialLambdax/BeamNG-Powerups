@@ -174,6 +174,7 @@ M.onClientEndMission = function()
 end
 
 M.onLoadingScreenFadeout = function()
+	--[[
 	if MPUtil.isBeamMPSession() and FS:fileExists("gameplay/tutorials/pages/powerups/content.html") then
 		guihooks.trigger('introPopupTutorial', {
 				{
@@ -185,6 +186,7 @@ M.onLoadingScreenFadeout = function()
 			}
 		)	
 	end
+	]]
 end
 
 -- ----------------------------------------------------------------------------

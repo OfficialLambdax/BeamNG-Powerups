@@ -55,6 +55,7 @@ local function getSettings()
 			AutoLoad = true,
 			Locations = "",
 			PowerupSet = "",
+			PopupPath = "",
 		},
 		PowerUps = {
 			RespawnTime = 30000,
@@ -69,6 +70,7 @@ local function getSettings()
 			AutoLoad = "If you want the Server to auto load locations and a powerup set on startup",
 			Locations = 'The name of the location file found in /prefabs.\nAs eg "utah". This will results in utah.prefab.json\nIf left empty it will auto select a prefab that is available for the loaded map',
 			PowerupSet = 'The name of the Powerup set found in /powerups.\nIf left empty it will auto load the "open" set',
+			PopupPath = 'Path to the popup you want to show to the player after they joined. The popups content is send to the client.',
 		},
 		PowerUps = {
 			["#"] = "This defines Powerup Settings",
@@ -103,6 +105,7 @@ function onInit()
 	
 	MPServerRuntime.api.setRespawnTime(powerups.RespawnTime)
 	MPServerRuntime.api.setRotationTime(powerups.RotationTime)
+	MPServerRuntime.setPopup(general.PopupPath)
 	
 	if general.AutoLoad then
 		local location = general.Locations
