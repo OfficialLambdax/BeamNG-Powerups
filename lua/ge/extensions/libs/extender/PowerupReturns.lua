@@ -11,6 +11,10 @@ return {
 		TargetInfo = function(data, target_info)
 			return {IsTargetInfo = true, data = data, target_info = target_info}
 		end,
+		
+		TargetHits = function(target_hits)
+			return {IsTargetHits = true, target_hits = target_hits}
+		end,
 	},
 	
 	whileActive = {

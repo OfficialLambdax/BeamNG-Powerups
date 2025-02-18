@@ -182,8 +182,12 @@ local function targetInfoExec(vehicle, target_info)
 end
 
 local function targetHitExec(game_vehicle_id, vehicle, targets, deactivate)
+	local origin_id_is_ours = MPUtil.isOwn(game_vehicle_id) and Extender.isSpectating(game_vehicle_id)
+	
 	for _, target_id in ipairs(targets) do
-		vehicle.powerup_active.onTargetHit(vehicle.powerup_data, game_vehicle_id, target_id)
+		if origin_id_is_ours then -- needs testing
+			vehicle.powerup_active.onTargetHit(vehicle.powerup_data, game_vehicle_id, target_id)
+		end
 		vehicle.powerup_active.onHit(vehicle.powerup_data, game_vehicle_id, target_id)
 	end
 	
@@ -526,15 +530,14 @@ local function activatePowerup(game_vehicle_id, from_server, charge_overwrite) -
 	vehicle.powerup = nil
 	vehicle.data = nil
 	
-	-- add active powerup
 	local response = powerup_active.onActivate(be:getObjectByID(game_vehicle_id))
 	if response.IsError then
-		Log.error('Powerup "' .. powerup_active.internal_name .. '" failed to activate "' .. response.error .. '"')
+		Log.error('Powerup "' .. powerup_active.internal_name .. '" failed to activate "' .. response.reason .. '"')
 		return
 	end
 	
 	vehicle.powerup_active = powerup_active
-	vehicle.powerup_data = response.data
+	vehicle.powerup_data = response.data -- can be nil
 	
 	if MPUtil.isOwn(game_vehicle_id) and not from_server then
 		MPClientRuntime.tryActivatePowerup(game_vehicle_id)
@@ -546,6 +549,15 @@ local function activatePowerup(game_vehicle_id, from_server, charge_overwrite) -
 				targetInfoExec(vehicle, response.target_info)
 			else
 				MPClientRuntime.tryTargetInfo(game_vehicle_id, response.target_info)
+			end
+		end
+	
+	elseif response.IsTargetHits then
+		if response.target_hits then
+			if not IS_BEAMMP_SESSION then
+				targetHitExec(game_vehicle_id, vehicle, response.target_hits, true)
+			else
+				MPClientRuntime.tryTargetHit(game_vehicle_id, response.target_hits, true)
 			end
 		end
 	end
@@ -1152,6 +1164,10 @@ end
 
 M.getPickupDownTime = function()
 	return PICKUP_DOWNTIME
+end
+
+M.getLibVersion = function()
+	return {version = M._VERSION, branch = M._BRANCH, name = M._NAME}
 end
 
 return M

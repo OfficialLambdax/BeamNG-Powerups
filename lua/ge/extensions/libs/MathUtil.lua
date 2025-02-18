@@ -6,6 +6,15 @@ local Util = require("libs/Util")
 
 local M = {}
 
+-- overwrites the game own getAllVehicles() function in the scope of this file
+local function getAllVehicles(also_disabled)
+	local vehicles = {}
+	for _, vehicle in ipairs(getAllVehicles()) do
+		if vehicle:getActive() or also_disabled then table.insert(vehicles, vehicle) end
+	end
+	return vehicles
+end
+
 M.getPosInFront = function(pos_vec, dir_vec, distance)
 	return pos_vec + (dir_vec:normalized() * distance)
 end
@@ -193,5 +202,6 @@ M.rotateVectorByDegrees = function(for_vec, up_vec, degrees) -- where degree is
 		term1.z + (c.z * math.sin(q))
 	)
 end
+
 
 return M

@@ -695,6 +695,7 @@ M.init = function()
 		my_path .. 'libs/Sets.lua',
 		my_path .. 'mp_libs/CompileLua.lua'
 	)
+	package.loaded["mp_libs/CompileLua"].init = nil
 	
 	PowerUps.init()
 	PowerUps.updateMPServerRuntime(M)
