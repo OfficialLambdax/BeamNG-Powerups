@@ -1121,4 +1121,13 @@ M.dropPowerup = function(game_vehicle_id)
 	vehicle.data = nil
 end
 
+M.setRespawnTime = function(time)
+	RESPAWN_TIME = time
+end
+
+M.setRotationTime = function(time)
+	ROTATION_TIME = time
+	updateLocationRotationCheckTime()
+end
+
 return M
