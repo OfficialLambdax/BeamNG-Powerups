@@ -1,8 +1,6 @@
-
-local PowerUps = require("libs/PowerUps")
-local Util = require("libs/Util")
 local Extender = require("libs/PowerUpsExtender")
-local Type = Extender.Types
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil = Extender.defaultImports()
+local Type, onPickup = Extender.defaultGroupVars()
 
 local M = {
 	-- Any name eg "ForwardShot". No duplicates with others of this Set.
@@ -25,7 +23,7 @@ local M = {
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "mp_init",
+	lib_version = "enums",
 	
 	-- Max levels. autofilled
 	max_levels = 0,
@@ -76,14 +74,7 @@ M.onPickup = function(data, vehicle)
 	data.vehicle = vehicle
 	M.onDespawn(data)
 	
-	return 1
-	--[[
-		Return Values
-			nil = pickup fails. current powerup wont be dropped, this one not picked up
-			1 = success
-			2 = will drop the current powerup, consume this one but not pick it up
-			3 = Reserved for charges
-	]]
+	return onPickup.Success
 end
 
 -- While the powerup is in someones inventory. Can have it hover above the vehicle or play sounds.

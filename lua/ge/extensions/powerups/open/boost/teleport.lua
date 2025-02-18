@@ -1,9 +1,6 @@
-local PowerUps = require("libs/PowerUps")
 local Extender = require("libs/PowerUpsExtender")
-local Util = require("libs/Util")
-local Sets = require("libs/Sets")
-local Trait = Extender.Traits
-local Sound = require("libs/Sounds")
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil = Extender.defaultImports()
+local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
 
 local M = {
 	-- Clear name of the powerup
@@ -28,7 +25,7 @@ local M = {
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "mp_init",
+	lib_version = "enums",
 	
 	-- autofilled
 	file_path = "",
@@ -71,7 +68,7 @@ M.onActivate = function(vehicle)
 	end
 	set:exec()
 	
-	return {effect_timer = hptimer()}
+	return onActivate.Success({effect_timer = hptimer()})
 end
 
 -- only called once
@@ -86,7 +83,8 @@ end
 
 -- While the powerup is active. Update its render here, detect if it hit something. that kinda stuff
 M.whileActive = function(data, origin_id)
-	if data.effect_timer:stop() > 3000 then return 1 end
+	if data.effect_timer:stop() > 1000 then return whileActive.Stop() end
+	return whileActive.Continue()
 end
 
 -- Called once one or multiple targets have been chosen.

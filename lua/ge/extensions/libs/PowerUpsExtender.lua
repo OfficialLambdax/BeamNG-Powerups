@@ -6,19 +6,41 @@ local PowerUps
 local ServerUtil = Util -- only exists on server
 local Util = require("libs/Util")
 local MPUtil = require("mp_libs/MPUtil")
-local PowerUpsTraits = require("libs/PowerUpsTraits")
-local PowerUpsTypes = require("libs/PowerUpsTypes")
+local PowerUpsTraits = require("libs/extender/Traits")
+local PowerUpsTypes = require("libs/extender/Types")
+local GroupReturns = require("libs/extender/GroupReturns")
+local PowerupReturns = require("libs/extender/PowerupReturns")
 
 local M = {}
 M.Traits = PowerUpsTraits.Traits
 M.TraitsLookup = Util.tableVToK(M.Traits)
 --M.TraitBounds = PowerUpsTraits.TraitBounds
 M.Types = PowerUpsTypes.Types
+M.GroupReturns = GroupReturns
+M.PowerupReturns = PowerupReturns
 
 local SUBJECT_SINGLEPLAYER = "!singleplayer"
 local SUBJECT_TRAFFIC = "!traffic"
 local SUBJECT_UNKNOWN = "!unknown"
 
+
+M.defaultImports = function() -- do not change order
+	-- local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil = Extender.defaultImports()
+
+	return require("libs/PowerUps"), require("libs/Util"), require("libs/Sets"), require("libs/Sounds"), require("libs/MathUtil"), require("libs/Pot"), require("libs/Log"), require("libs/TimedTrigger"), require("libs/CollisionsLib"), require("mp_libs/MPUtil")
+end
+
+M.defaultPowerupVars = function() -- do not change order
+	-- local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
+	
+	return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles
+end
+
+M.defaultGroupVars = function()
+	-- local Type, onPickup = Extender.defaultGroupVars()
+	
+	return M.Types, GroupReturns.onPickup
+end
 
 M.defaultPowerupCreator = function(trigger_obj, shape_path, color_point)
 	local pos = trigger_obj:getPosition()

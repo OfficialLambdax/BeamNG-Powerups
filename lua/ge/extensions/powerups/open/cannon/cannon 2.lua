@@ -1,10 +1,6 @@
-local PowerUps = require("libs/PowerUps")
 local Extender = require("libs/PowerUpsExtender")
-local Util = require("libs/Util")
-local MathUtil = require("libs/MathUtil")
-local Sets = require("libs/Sets")
-local Trait = Extender.Traits
-local Sound = require("libs/Sounds")
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil = Extender.defaultImports()
+local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
 
 local M = {
 	-- Clear name of the powerup
@@ -29,7 +25,7 @@ local M = {
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "mp_init",
+	lib_version = "enums",
 	
 	-- autofilled
 	file_path = "",
@@ -59,7 +55,7 @@ end
 
 -- When the powerup is activated
 M.onActivate = function(vehicle)
-	return {projectiles = {}, shoot_timer = hptimer(), shot_projectiles = 0}
+	return onActivate.Success({projectiles = {}, shoot_timer = hptimer(), shot_projectiles = 0})
 end
 
 -- only called once
@@ -108,7 +104,7 @@ M.whileActive = function(data, origin_id, dt)
 		M.activate_sound:playVE(origin_id)
 		
 		-- need to return now as we cant give target_info and target_hits back at once
-		return nil, target_info
+		return whileActive.Continue(target_info)
 	end
 	
 	local target_hits = {}
@@ -132,11 +128,15 @@ M.whileActive = function(data, origin_id, dt)
 		end
 	end
 	
-	-- return new hits
-	if #target_hits > 0 then return 3, nil, target_hits end
-	
-	if Util.tableHasContent(data.projectiles) then return end
-	if data.shot_projectiles == M.max_projectiles then return 1 end
+	if #target_hits > 0 then
+		return whileActive.TargetHits(target_hits)
+	else
+		if Util.tableHasContent(data.projectiles) then
+			return whileActive.Continue()
+		elseif data.shot_projectiles == M.max_projectiles then
+			return whileActive.Stop()
+		end
+	end
 end
 
 -- Called once one or multiple targets have been chosen.

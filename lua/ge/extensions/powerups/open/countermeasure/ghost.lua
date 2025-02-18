@@ -1,10 +1,6 @@
-local PowerUps = require("libs/PowerUps")
 local Extender = require("libs/PowerUpsExtender")
-local Util = require("libs/Util")
-local MathUtil = require("libs/MathUtil")
-local Sets = require("libs/Sets")
-local Trait = Extender.Traits
-local Sound = require("libs/Sounds")
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil = Extender.defaultImports()
+local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
 
 local M = {
 	-- Clear name of the powerup
@@ -29,7 +25,7 @@ local M = {
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "mp_init",
+	lib_version = "enums",
 	
 	-- autofilled
 	file_path = "",
@@ -56,7 +52,7 @@ M.onActivate = function(vehicle)
 	vehicle:queueLuaCommand("obj:setGhostEnabled(true)")
 	vehicle:setMeshAlpha(0.5, "", false)
 	M.activate_sound:playVE(vehicle:getId())
-	return {end_timer = hptimer()}
+	return onActivate.Success({end_timer = hptimer()})
 end
 
 -- only called once
@@ -67,12 +63,12 @@ M.onLoad = function(data) end
 
 -- While the powerup is active. Update its render here, detect if it hit something. that kinda stuff
 M.whileActive = function(data, origin_id)
-	if data.end_timer:stop() < M.effect_length then return nil end
+	if data.end_timer:stop() < M.effect_length then return whileActive.Continue() end
 	
 	local vehicle = be:getObjectByID(origin_id)
-	if #MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), 5, origin_id) > 0 then return nil end
+	if #MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), 5, origin_id) > 0 then return whileActive.Continue() end
 	
-	return 1
+	return whileActive.Stop()
 end
 
 -- Called once one or multiple targets have been chosen.
