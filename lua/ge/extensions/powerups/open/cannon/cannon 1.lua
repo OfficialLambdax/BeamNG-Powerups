@@ -1,10 +1,6 @@
-local PowerUps = require("libs/PowerUps")
 local Extender = require("libs/PowerUpsExtender")
-local Util = require("libs/Util")
-local MathUtil = require("libs/MathUtil")
-local Sets = require("libs/Sets")
-local Trait = Extender.Traits
-local Sound = require("libs/Sounds")
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil = Extender.defaultImports()
+local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
 
 local M = {
 	-- Clear name of the powerup
@@ -29,7 +25,7 @@ local M = {
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "mp_init",
+	lib_version = "enums",
 	
 	-- autofilled
 	file_path = "",
@@ -93,7 +89,7 @@ M.onActivate = function(vehicle)
 	
 	M.activate_sound:playVE(vehicle:getId())
 	
-	return data, target_info
+	return onActivate.TargetInfo(data, target_info)
 end
 
 -- only called once
@@ -120,11 +116,11 @@ M.whileActive = function(data, origin_id, dt)
 	Extender.cleanseTargetsWithTraits(target_hits, origin_id, Trait.Ghosted)
 	
 	if #target_hits > 0 then
-		return 2, nil, target_hits
-	end
-	
-	if data.life_time:stop() > 2500 then
-		return 1
+		return whileActive.StopAfterExec(nil, target_hits)
+	elseif data.life_time:stop() > 2500 then
+		return whileActive.Stop()
+	else
+		return whileActive.Continue()
 	end
 end
 

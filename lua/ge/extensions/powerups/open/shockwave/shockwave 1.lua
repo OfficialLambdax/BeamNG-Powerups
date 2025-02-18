@@ -1,9 +1,6 @@
-local PowerUps = require("libs/PowerUps")
 local Extender = require("libs/PowerUpsExtender")
-local Util = require("libs/Util")
-local Sets = require("libs/Sets")
-local Trait = Extender.Traits
-local Sound = require("libs/Sounds")
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil = Extender.defaultImports()
+local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
 
 local M = {
 	-- Clear name of the powerup
@@ -28,7 +25,7 @@ local M = {
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "mp_init",
+	lib_version = "enums",
 	
 	-- autofilled
 	file_path = "",
@@ -76,7 +73,7 @@ M.onActivate = function(vehicle)
 		targets = nil,
 		sound_played = false
 	}
-	return data, targets
+	return onActivate.TargetInfo(data, targets)
 end
 
 -- only called once
@@ -95,7 +92,7 @@ M.whileActive = function(data, origin_id)
 	if data.no_target then
 		--if Extender.isPlayerVehicle(origin_id) then
 			M.activate_sound:playVE(origin_id)
-			return 1
+			return whileActive.Stop()
 		--else
 			--return nil
 		--end
@@ -103,10 +100,10 @@ M.whileActive = function(data, origin_id)
 	
 	-- waiting for target confirmation
 	if not data.targets then
-		return nil
+		return whileActive.Continue()
 		
 	else -- we got targets!
-		return 2, nil, data.targets
+		return whileActive.StopAfterExec(nil, data.targets)
 	end
 end
 
