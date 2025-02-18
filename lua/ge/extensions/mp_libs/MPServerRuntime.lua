@@ -24,6 +24,7 @@ local M = {}
 
 local LOCATION_PREFAB_NAME = ""
 local POWERUP_SET_NAME = ""
+local POPUP_PATH = ""
 
 -- ------------------------------------------------------------------------------------------------
 -- Response builer
@@ -153,6 +154,15 @@ function Build:onVehiclesPowerupUpdate(server_vehicle_id, location_name, powerup
 		location_name = location_name,
 		charge = VEHICLES[server_vehicle_id].charge or 1
 	})
+	return self
+end
+
+function Build:onPopup(file_path)
+	self.int.event = "onPopup"
+	local handle = io.open(file_path, 'r')
+	if handle == nil then return end
+	self.int.data = ServerUtil.JsonEncode({handle:read("*all"):gsub("\r\n", "")})
+	handle:close()
 	return self
 end
 
@@ -523,6 +533,11 @@ function onPlayerReady(player_id) -- called by the client side mod
 		build:onVehiclesPowerupUpdate(server_vehicle_id, nil, (vehicle.powerup or {}).name)
 	end
 	build:sendIfData()
+	
+	if POPUP_PATH:len() > 0 then
+		--Build:new():to(player_id):onPopup("Resources/Server/Powerups/mp_settings/content.html"):send()
+		Build:new():to(player_id):onPopup(POPUP_PATH):send()
+	end
 end
 
 function onVehicleSpawn(player_id, vehicle_id, data)
@@ -635,6 +650,10 @@ A.setRotationTime = function(time)
 	PowerUps.setRotationTime(time)
 end
 
+A.showPopupToAll = function(file_path)
+	Build:new():all():onPopup(file_path):send()
+end
+
 -- ------------------------------------------------------------------------------------------------
 -- Entry Point
 M.setLocation = function(location_prefab_name)
@@ -645,6 +664,10 @@ end
 M.setPowerupSet = function(powerup_set_name)
 	POWERUP_SET_NAME = powerup_set_name
 	PowerUps.loadPowerUpDefs(Util.myPath() .. '../powerups/' .. powerup_set_name)
+end
+
+M.setPopup = function(file_path)
+	POPUP_PATH = file_path
 end
 
 M.hotreload = function()

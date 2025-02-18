@@ -164,6 +164,19 @@ local function onVehiclesPowerupUpdate(vehicles)
 	end
 end
 
+local function onPopup(content)
+	local content = jsonDecode(content)
+	guihooks.trigger('introPopupTutorial', {
+			{
+				type = "info",
+				content = content[1],
+				flavour = "onlyOk",
+				isPopup = true
+			}
+		}
+	)	
+end
+
 -- ------------------------------------------------------------------------------------------------
 -- Init
 local REGISTERED_EVENTS = false
@@ -178,6 +191,7 @@ M.init = function()
 		AddEventHandler("onVehiclesPowerupUpdate", onVehiclesPowerupUpdate)
 		AddEventHandler("onTargetInfo", onTargetInfo)
 		AddEventHandler("onTargetHit", onTargetHit)
+		AddEventHandler("onPopup", onPopup)
 		
 		REGISTERED_EVENTS = true
 	end
