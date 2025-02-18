@@ -44,7 +44,43 @@ end
 local MPServerRuntime = require("mp_libs/MPServerRuntime")
 local Util = require("libs/Util")
 local Log = require("libs/Log")
-function onInit()
+local Settings = require("mp_libs/Settings")
+
+local IS_LOADED = false -- changes in the same state would also let to the server retriggering a reload here. Lets prevent that
+
+
+local function getSettings()
+	local base_settings = {
+		General = {
+			AutoLoad = true,
+			Locations = "",
+			PowerupSet = "",
+		},
+		PowerUps = {
+			RespawnTime = 30000,
+			RotationTime = 180000,
+		}
+	}
+	
+	local base_settings_desc = {
+		["#"] = "Multiplayer only settings",
+		General = {
+			["#"] = "General Server Settings",
+			AutoLoad = "If you want the Server to auto load locations and a powerup set on startup",
+			Locations = 'The name of the location file found in /prefabs.\nAs eg "utah". This will results in utah.prefab.json\nIf left empty it will auto select a prefab that is available for the loaded map',
+			PowerupSet = 'The name of the Powerup set found in /powerups.\nIf left empty it will auto load the "open" set',
+		},
+		PowerUps = {
+			["#"] = "This defines Powerup Settings",
+			RespawnTime = "How long it takes for a powerup to respawn once it has been picked up. In miliseconds",
+			RotationTime = "How long a powerup stays in the world before its rotated to another",
+		}
+	}
+	
+	return Settings.readSettings("multiplayer.server", base_settings, base_settings_desc)
+end
+
+local function getMapName()
 	local map_name = ""
 	if MP.Get then
 		_, map_name, _ = table.unpack(Util.split(MP.Get(MP.Settings.Map), '/'))
@@ -53,12 +89,47 @@ function onInit()
 		local map_path = require("mp_libs/ServerConfig").Get("General", "Map")
 		_, map_name, _ = table.unpack(Util.split(map_path, '/'))
 	end
+	return map_name
+end
+
+function onInit()
+	if IS_LOADED then return end
+	IS_LOADED = true
 	
-	local prefab_file = map_name .. '.prefab.json'
-	local prefab_path = Util.myPath() .. 'prefabs/' .. prefab_file
-	if not FS.Exists(prefab_path) then
-		Log.error('No prefab file available for map "' .. map_name .. '"')
-	else
-		MPServerRuntime.init(prefab_file, "open")
+	local settings = getSettings()
+	local general, powerups = settings.General, settings.PowerUps
+	
+	MPServerRuntime.init()
+	
+	MPServerRuntime.api.setRespawnTime(powerups.RespawnTime)
+	MPServerRuntime.api.setRotationTime(powerups.RotationTime)
+	
+	if general.AutoLoad then
+		local location = general.Locations
+		if location:len() == 0 then
+			location = getMapName()
+		end
+		
+		local powerup_set = general.PowerupSet
+		if powerup_set:len() == 0 then
+			powerup_set = "open"
+		end
+		
+		if not FS.Exists(Util.myPath() .. 'prefabs/' .. location .. '.prefab.json') then
+			Log.error('The selected location prefab file doesnt exists "' .. location .. '"')
+			
+		else
+			MPServerRuntime.setLocation(location)
+		end
+		
+		if not FS.Exists(Util.myPath() .. 'powerups/' .. powerup_set) then
+			Log.error('The selected powerup set doesnt exists "' .. powerup_set .. '"')
+			
+		else
+			MPServerRuntime.setPowerupSet(powerup_set)
+		end
 	end
+	
+	MPServerRuntime.hotreload()
+	MPServerRuntime.displayServerState(true)
 end

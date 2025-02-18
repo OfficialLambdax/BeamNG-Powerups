@@ -444,7 +444,7 @@ local function checkActivePowerups()
 end
 
 -- this should rather only be shown on command
-local function displayServerState(show)
+M.displayServerState = function(show)
 	local players = Util.tableSize(MP.GetPlayers())
 	if players == 0 and not show then return end
 	local mem = Util.mathRound(MP.GetStateMemoryUsage() / 1048576, 2)
@@ -550,10 +550,12 @@ function baseRoutine()
 end
 
 -- ------------------------------------------------------------------------------------------------
--- API
+-- API to the powerups lib over the sync layer of this server runtime
 --[[
 	Can access this from the same state by simply using
 		PowerUpsApi.exec()
+	or when required
+		MPServerRuntime.api.exec()
 	or when from another state
 		MP.TriggerGlobalEvent("PowerUpsApi_exec", "0-0", "forcefield", 1)
 ]]
@@ -625,9 +627,39 @@ A.disableActivePowerup = function(server_vehicle_id)
 	disableActivePowerup(server_vehicle_id)
 end
 
+A.setRespawnTime = function(time)
+	PowerUps.setRespawnTime(time)
+end
+
+A.setRotationTime = function(time)
+	PowerUps.setRotationTime(time)
+end
+
 -- ------------------------------------------------------------------------------------------------
 -- Entry Point
-M.init = function(location_prefab_name, powerup_set_name)
+M.setLocation = function(location_prefab_name)
+	LOCATION_PREFAB_NAME = location_prefab_name .. '.prefab.json'
+	PowerUps.loadLocationPrefab(Util.myPath() .. '../prefabs/' .. location_prefab_name .. '.prefab.json')
+end
+
+M.setPowerupSet = function(powerup_set_name)
+	POWERUP_SET_NAME = powerup_set_name
+	PowerUps.loadPowerUpDefs(Util.myPath() .. '../powerups/' .. powerup_set_name)
+end
+
+M.hotreload = function()
+	-- hotreload
+	for player_id, player_name in pairs(MP.GetPlayers()) do
+		Log.info("Hotreloading player: " .. player_name)
+		MP.TriggerClientEvent(player_id, "onCompleteReset", "")
+		for vehicle_id, data in pairs(MP.GetPlayerVehicles(player_id) or {}) do
+			Log.info("Hotreloading vehicle: " .. player_id .. "-" .. vehicle_id)
+			onVehicleSpawn(player_id, vehicle_id, data)
+		end
+	end
+end
+
+M.init = function()
 	-- this is the case when another file in this lua state get reloaded and the server is of the opinion to also reinit the ServerSide.lua
 	if CompileLua.init == nil then return end
 	
@@ -655,14 +687,8 @@ M.init = function(location_prefab_name, powerup_set_name)
 		"PowerUps_displayServerState",
 		60000,
 		0,
-		displayServerState
+		M.displayServerState
 	)
-	
-	LOCATION_PREFAB_NAME = location_prefab_name
-	POWERUP_SET_NAME = powerup_set_name
-	
-	PowerUps.loadLocationPrefab(Util.myPath() .. '../prefabs/' .. location_prefab_name)
-	PowerUps.loadPowerUpDefs(Util.myPath() .. '../powerups/' .. powerup_set_name)
 	
 	-- base routine
 	MP.RegisterEvent("mpruntime", "baseRoutine")
@@ -683,6 +709,7 @@ M.init = function(location_prefab_name, powerup_set_name)
 	MP.RegisterEvent("onPlayerDisconnect", "onPlayerDisconnected")
 	
 	-- API
+	M.api = A
 	PowerUpsApi = {} -- global
 	API = {} -- temp global
 	for api, func in pairs(A) do
@@ -692,18 +719,6 @@ M.init = function(location_prefab_name, powerup_set_name)
 		PowerUpsApi[api] = func
 	end
 	API = nil
-	
-	-- hotreload
-	for player_id, player_name in pairs(MP.GetPlayers()) do
-		Log.info("Hotreloading player: " .. player_name)
-		MP.TriggerClientEvent(player_id, "onCompleteReset", "")
-		for vehicle_id, data in pairs(MP.GetPlayerVehicles(player_id) or {}) do
-			Log.info("Hotreloading vehicle: " .. player_id .. "-" .. vehicle_id)
-			onVehicleSpawn(player_id, vehicle_id, data)
-		end
-	end
-	
-	displayServerState(true)
 	
 	Log.info("Loaded")
 end

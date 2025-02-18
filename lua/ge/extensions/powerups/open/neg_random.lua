@@ -21,7 +21,7 @@ local M = {
 	-- Will prevent whileActive and whilePickup calls
 	do_not_unload = false,
 	
-	probability = 5,
+	probability = 3,
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
