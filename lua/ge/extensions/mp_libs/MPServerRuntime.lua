@@ -5,14 +5,12 @@ local Util = require("libs/Util")
 local MPUtil = require("mp_libs/MPUtil")
 local PowerUps = require("libs/PowerUps")
 local TimedTrigger = require("libs/TimedTrigger")
-local PowerUpsTraits = require("libs/PowerUpsTraits")
-local PowerUpsTypes = require("libs/PowerUpsTypes")
+local PowerUpsTypes = require("libs/extender/Types")
 local PauseTimer = require("mp_libs/PauseTimer")
 local TriggerClientEvent = require("mp_libs/TriggerClientEvent") -- is_synced when onPlayerReady
 local Log = require("libs/Log")
 local CompileLua = require("mp_libs/CompileLua")
 
-local Traits = PowerUpsTraits.Traits
 local Types = PowerUpsTypes.Types
 
 local LOCATIONS = PowerUps.locations

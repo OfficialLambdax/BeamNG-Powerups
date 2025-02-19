@@ -8,6 +8,8 @@ New
 	- Add shield 4 that is charge based
 	- Negative that activates current powerup in the vehicle inv immediatly
 	- Add funny sounds to negatives
+	- Health Powerup
+	- Maybe port some of the StreamerVSChat effects
 
 -- -------------------------------------------------------------------------------------------------
 -- Libs
@@ -17,6 +19,7 @@ PowerupExtender
 		This would fix any kind of wrong targeting and hitting on vehicles that are disabled (eg traffic vehicles)
 
 PowerupsLib
+	- Add option to have powerups stack. Where if a vehicle owns eg shockwave and they pickup another shockwave it stacks the powerup as if the player drove into a charge
 	- Auto remove undefined Traits
 	- make "respect_traits" var necessary for trait call sync
 	- Implement a "default" set, that only contains powerup defs. Is used when a group defines powerups but doesnt include any or all powerups

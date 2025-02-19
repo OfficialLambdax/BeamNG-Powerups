@@ -83,7 +83,7 @@ M.onTargetHit = function(data, origin_id, target_id) end
 -- When a target was hit, called on every client
 M.onHit = function(data, origin_id, target_id)
 	-- We want out effect to not be applied to vehicles that have a active powerup with either the consuming or strong consuming trait
-	if Extender.hasTrait(target_id, Trait.Consuming)
+	if Extender.hasTrait(target_id, Trait.Consuming) then
 		
 		-- If it does then we call it, to let that powerup know about this interaction
 		-- That for example allows the powerup to play sounds. eg a bullet hitting a shield sound
