@@ -4,11 +4,12 @@ local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPow
 
 --[[
 	In this powerup we are going to put all close cars on ice for 5 seconds!
+	But we are going to ignore vehicles that have an active powerup with the Consuming trait
 ]]
 
 local M = {
 	-- Shown to the user
-	clear_name = "Template",
+	clear_name = "Freeze",
 	
 	-- Turn true to not be affected by the render distance
 	do_not_unload = false,
@@ -30,7 +31,7 @@ local M = {
 	target_info_descriptor = nil,
 	
 	-- Configure traits this powerup respects. Required for trait call sync
-	respects_traits = {},
+	respects_traits = {Trait.Consuming},
 	
 	-- Auto filled
 	-- Contains the dir path to this powerup
@@ -71,16 +72,28 @@ M.onActivate = function(vehicle)
 end
 
 -- Hooked to the onPreRender tick
-M.whileActive = function(data, origin_id) end -- WILL NOT BE CALLED IN THIS POWERUP SETUP
+M.whileActive = function(data, origin_id, dt) end -- WILL NOT BE CALLED IN THIS POWERUP SETUP
 
 -- When the powerup selected one or multiple targets or just shared target_info
 M.onTargetSelect = function(data, target_info) end
 
--- When a target was hit, only called on our client
+-- When a target was hit, only called on players spectating origin_id
 M.onTargetHit = function(data, origin_id, target_id) end
 
 -- When a target was hit, called on every client
 M.onHit = function(data, origin_id, target_id)
+	-- We want out effect to not be applied to vehicles that have a active powerup with either the consuming or strong consuming trait
+	if Extender.hasTrait(target_id, Trait.Consuming)
+		
+		-- If it does then we call it, to let that powerup know about this interaction
+		-- That for example allows the powerup to play sounds. eg a bullet hitting a shield sound
+		Extender.callTrait(target_id, Trait.Consuming, origin_id)
+		return
+	end
+	
+	-- What we just did can also be simplified like this
+	if Extender.hasTraitCall(target_id, Trait.Consuming, origin_id) then return end
+	
 	-- lets apply the freezing effect on this target by reducing the grip to a minimum
 	local vehicle = be:getObjectByID(target_id)
 	vehicle:queueLuaCommand('PowerUpExtender.setGrip(0.5)')
@@ -88,7 +101,7 @@ M.onHit = function(data, origin_id, target_id)
 	-- then we play our freezing sound on that vehicle
 	M.activate_sound:playVE(target_id)
 	
-	-- and since we cant wait for the effect to end lets keep it simple and create a simple timer that unfreezes the car for us!
+	-- and since we cant wait for the effect to end before we quit our powerup, lets keep it simple and create a simple timer that unfreezes the car for us!
 	
 	-- Choose a unique trigger name because we could accidentially overwrite another!
 	local trigger_name = Util.randomName()

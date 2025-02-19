@@ -167,12 +167,19 @@ end
 
 -- also Calls the traits
 M.cleanseTargetsWithTraits = function(targets, origin_vehicle_id, ...)
-	for index, target_id in pairs(targets) do
-		if M.hasTraitCalls(target_id, origin_vehicle_id, ...) then
-			targets[index] = nil
+	local new_targets = {}
+	for index, target_id in ipairs(targets) do
+		targets[index] = nil
+		if not M.hasTraitCalls(target_id, origin_vehicle_id, ...) then
+			table.insert(new_targets, target_id)
 		end
 	end
-	return targets
+	
+	for index, target_id in ipairs(new_targets) do
+		targets[index] = target_id
+	end
+	
+	return new_targets
 end
 
 M.isPlayerVehicle = function(game_vehicle_id)
