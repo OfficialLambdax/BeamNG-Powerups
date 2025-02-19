@@ -9,7 +9,7 @@ local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPow
 
 local M = {
 	-- Shown to the user
-	clear_name = "Template",
+	clear_name = "Grip I",
 	
 	-- Turn true to not be affected by the render distance
 	do_not_unload = false,
@@ -69,7 +69,7 @@ M.onActivate = function(vehicle)
 end
 
 -- Hooked to the onPreRender tick
-M.whileActive = function(data, origin_id)
+M.whileActive = function(data, origin_id, dt)
 	-- We want this effect to only last for 1 second, as long as we are below it we continue keeping this powerup active
 	if data.my_timer:stop() < 1000 then
 		return whileActive.Continue()
@@ -84,7 +84,7 @@ end
 -- When the powerup selected one or multiple targets or just shared target_info
 M.onTargetSelect = function(data, target_info) end
 
--- When a target was hit, only called on our client
+-- When a target was hit, only called on players spectating origin_id
 M.onTargetHit = function(data, origin_id, target_id) end
 
 -- When a target was hit, called on every client

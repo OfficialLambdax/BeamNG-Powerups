@@ -182,10 +182,10 @@ local function targetInfoExec(vehicle, target_info)
 end
 
 local function targetHitExec(game_vehicle_id, vehicle, targets, deactivate)
-	local origin_id_is_ours = MPUtil.isOwn(game_vehicle_id) and Extender.isSpectating(game_vehicle_id)
+	local is_spectating = Extender.isSpectating(game_vehicle_id)
 	
 	for _, target_id in ipairs(targets) do
-		if origin_id_is_ours then -- needs testing
+		if is_spectating then -- needs testing
 			vehicle.powerup_active.onTargetHit(vehicle.powerup_data, game_vehicle_id, target_id)
 		end
 		vehicle.powerup_active.onHit(vehicle.powerup_data, game_vehicle_id, target_id)

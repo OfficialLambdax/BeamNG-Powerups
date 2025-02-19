@@ -1,5 +1,5 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil = Extender.defaultImports()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer = Extender.defaultImports()
 local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
 
 local M = {
@@ -49,12 +49,12 @@ M.onActivate = function(vehicle)
 end
 
 -- Hooked to the onPreRender tick
-M.whileActive = function(data, origin_id) end
+M.whileActive = function(data, origin_id, dt) end
 
 -- When the powerup selected one or multiple targets or just shared target_info
 M.onTargetSelect = function(data, target_info) end
 
--- When a target was hit, only called on our client
+-- When a target was hit, only called on players spectating origin_id
 M.onTargetHit = function(data, origin_id, target_id) end
 
 -- When a target was hit, called on every client
