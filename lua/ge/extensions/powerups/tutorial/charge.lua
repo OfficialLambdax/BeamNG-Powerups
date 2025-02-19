@@ -60,8 +60,6 @@ end
 -- Vehicle that wants to pick this powerup up
 M.onPickup = function(data, vehicle)
 	M.onDespawn(data)
-	
-	Lib.addCharge(vehicle:getId(), 1)
 	return onPickup.IsCharge
 end
 

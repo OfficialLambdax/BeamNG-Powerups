@@ -87,7 +87,7 @@ local Log = require("libs/Log")
 
 
 local M = {
-	VERSION = 0.1 -- 04.02.2025 (DD.MM.YYYY)
+	VERSION = 0.2 -- 19.02.2025 (DD.MM.YYYY)
 }
 local ID_LOOKUP = {}
 local TRIGGERS = {}
@@ -268,6 +268,10 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 		return false
 	end
 	
+	function trigger:updateTriggerEvery(ms)
+		self.int.trigger_every = ms
+	end
+	
 	function trigger:check_manual(ms)
 		local int = self.int
 		int.timer_manual = int.timer_manual + ms
@@ -445,6 +449,14 @@ local function accept(trigger)
 	
 end
 
+local function updateTriggerEvery(name, trigger_every)
+	local trigger, index = find(name)
+	if not trigger then return end
+	
+	trigger:updateTriggerEvery(trigger_every)
+	return true
+end
+
 local function new(name, trigger_every, trigger_for, exec, ...)
 	local trigger, err = (reuseTake() or newTriggerClass()):update(
 					name,
@@ -591,6 +603,7 @@ M.new = new
 M.newVE = newVE
 M.newVEAll = newVEAll
 M.newVEAllExcept = newVEAllExcept
+M.updateTriggerEvery = updateTriggerEvery
 M.count = count
 M.getChunk = getChunk
 M.getReuseCount = getReuseCount

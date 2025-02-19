@@ -6,10 +6,12 @@ local Util = require("libs/Util")
 
 local M = {}
 
+local GAME_GETALLVEHICLES = getAllVehicles
+
 -- overwrites the game own getAllVehicles() function in the scope of this file
 local function getAllVehicles(also_disabled)
 	local vehicles = {}
-	for _, vehicle in ipairs(getAllVehicles()) do
+	for _, vehicle in ipairs(GAME_GETALLVEHICLES()) do
 		if vehicle:getActive() or also_disabled then table.insert(vehicles, vehicle) end
 	end
 	return vehicles
