@@ -3,6 +3,17 @@
 	Author: Neverless (discord: neverless.)
 ]]
 local M = {}
+
+--[[
+	If a stronger trait is used then the less powerfull also must be inherited.
+	traits = {Trait.Consuming, Trait.StrongConsuming}
+	
+	This makes trait handling easier for powerups that for example only handle the weaker version.
+	if Extender.hasTrait(target_id, Trait.Consuming) then x end
+	
+	And that way attacking another vehicle with a strong trait only requires checking against the powerfull trait
+	if Extender.hasTrait(target_id, Trait.StrongConsuming) then x end
+]]
 local Traits = {
 	--[[
 		Defensive
