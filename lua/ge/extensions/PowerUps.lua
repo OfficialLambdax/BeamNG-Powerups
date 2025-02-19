@@ -229,7 +229,6 @@ M.loadPowerups = function(prefab_path, powerup_set_path)
 	PowerUps.loadPowerUpDefs(powerup_set_path)
 end
 
-
 -- ----------------------------------------------------------------------------
 -- Direct access
 M.pu = PowerUps
@@ -284,6 +283,15 @@ end
 
 M.disableActivePowerup = function(vehicle_id)
 	PowerUps.disableActivePowerup(vehicle_id)
+end
+
+M.setRenderDistance = function(distance) -- in meters
+	PowerUps.setRenderDistance(distance)
+end
+
+-- You generally only want to increase the routine if you set the overall render distance lower
+M.setRenderDistanceRoutineTime = function(time) -- in ms
+	PowerUps.setRenderDistanceRoutineTime(time)
 end
 
 return M

@@ -73,9 +73,6 @@ end
 M.onPickup = function(data, vehicle)
 	data.vehicle = vehicle
 	M.onDespawn(data)
-	
-	Lib.addCharge(vehicle:getId(), 1)
-	
 	return onPickup.IsCharge
 end
 
