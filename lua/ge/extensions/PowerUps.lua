@@ -285,6 +285,8 @@ M.disableActivePowerup = function(vehicle_id)
 	PowerUps.disableActivePowerup(vehicle_id)
 end
 
+-- This affects stationary, picked up and active powerup rendering
+-- If you set this to low active powerups may break because their physics renderer isnt ran anymore
 M.setRenderDistance = function(distance) -- in meters
 	PowerUps.setRenderDistance(distance)
 end
