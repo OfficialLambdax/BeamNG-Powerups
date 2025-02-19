@@ -19,7 +19,7 @@ local Sound = require("libs/Sounds")
 local Pot = require("libs/Pot")
 
 local M = {
-	_VERSION = 0.3, -- 13.02.2025 DD.MM.YYYY
+	_VERSION = 0.4, -- 19.02.2025 DD.MM.YYYY
 	_BRANCH = "alpha",
 	_NAME = "enums"
 }
@@ -441,6 +441,8 @@ local function loadPowerups(set_path, group_path, group)
 			if powerup.max_len == 0 then
 				Log.error('\tPowerup "' .. powerup_name .. '" has no max_len.')
 				is_invalid = true
+			elseif IS_BEAMMP_SERVER then
+				powerup.max_len = powerup.max_len + 1000 -- safety
 			end
 			
 			powerup.internal_name = powerup_name
@@ -481,7 +483,6 @@ local function loadPowerups(set_path, group_path, group)
 end
 
 local function loadPowerupSet(set_path)
-	--MAX_CHARGE = 0
 	Log.info('Trying to load powerup set "' .. Util.fileName(set_path) .. '"')
 	for _, group_path in pairs(Util.listFiles(set_path)) do
 		local group, err = Util.compileLua(group_path)
@@ -855,13 +856,12 @@ end
 M.init = function() -- must be called during or after onWorldReadyState == 2
 	Extender.updatePowerUpsLib(M)
 	MPClientRuntime.updatePowerUpsLib(M)
+	IS_BEAMMP_SESSION = MPUtil.isBeamMPSession()
+	IS_BEAMMP_SERVER = MPUtil.isBeamMPServer()
 	
 	for _, vehicle in pairs(Extender.getAllVehicles()) do
 		onVehicleSpawned(vehicle:getId())
 	end
-	
-	IS_BEAMMP_SESSION = MPUtil.isBeamMPSession()
-	IS_BEAMMP_SERVER = MPUtil.isBeamMPServer()
 	
 	-- run in singleplayer and on mp server
 	if not IS_BEAMMP_SESSION or IS_BEAMMP_SERVER then
@@ -889,7 +889,7 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 	end
 	
 	-- run only ingame, but not matter if mp session or singleplayer
-	if not IS_BEAMMP_SESSION then
+	if not IS_BEAMMP_SERVER then
 		local r = TimedTrigger.new(
 			"PowerUps_checkRenderDist",
 			ROUTINE_POWERUPS_CHECK_RENDER_DISTANCE,

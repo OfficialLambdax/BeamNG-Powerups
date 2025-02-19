@@ -11,6 +11,7 @@ local SPACES = {" ", "\t", "\n", "\r"}
 local VALID_CHARS = {" ", "\t", "\n", "\r", "{", "}", ";", "=", ",", "(", ")"}
 local FILE_INDEX
 local WHITELISTED = {}
+local VERIFIED = {}
 
 local function init()
 	local reverse = {}
@@ -158,6 +159,7 @@ end
 
 local function checkFile(file_path)
 	if WHITELISTED[file_path] then return "" end
+	if VERIFIED[file_path] then return "" end
 	
 	local handle = io.open(file_path, "r")
 	if handle == nil then return nil, 'Cannot open file in read mode "' .. file_path .. '"' end
@@ -200,6 +202,7 @@ local function checkFile(file_path)
 		end
 	end
 	
+	VERIFIED[file_path] = true
 	return contents
 end
 

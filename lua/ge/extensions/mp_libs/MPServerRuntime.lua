@@ -693,7 +693,8 @@ M.init = function()
 		my_path,
 		my_path .. 'libs/TimedTrigger.lua',
 		my_path .. 'libs/Sets.lua',
-		my_path .. 'mp_libs/CompileLua.lua'
+		my_path .. 'mp_libs/CompileLua.lua',
+		my_path .. 'libs/PowerUpsExtender.lua'
 	)
 	package.loaded["mp_libs/CompileLua"].init = nil
 	
