@@ -12,14 +12,14 @@ local M = {
 	-- eg {"ForwardShot1", "ForwardShot2", "ForwardShot3"}
 	-- Resolves to the file names in the group folder. Where
 	-- eg ForwardShot1 is level 1, ForwardShot2 is level 2 .. etc
-	leveling = {"barrelroll", "jinxed", "rem1charge"},
+	leveling = {"random"},
 	
 	-- The powerup stays visible at default
 	-- If the spectator is to far away from it it will not render except this is true
 	-- Will prevent whileActive and whilePickup calls
 	do_not_unload = false,
 	
-	probability = 3,
+	probability = 4,
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.

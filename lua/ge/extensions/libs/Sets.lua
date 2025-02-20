@@ -365,6 +365,28 @@ local function newSet(name, set_array)
 		return self.set[name]
 	end
 	
+	--[[
+	function set:delay(delay, from)
+		local index = 1
+		for _, trigger in pairs(self.set) do
+			if index >= from then
+				trigger.trigger_after = trigger.trigger_after + delay
+			end
+			index = index + 1
+		end
+		
+		return self
+	end
+	]]
+	
+	function set:delayAll(delay)
+		for _, trigger in pairs(self.set) do
+			trigger.trigger_after = trigger.trigger_after + delay
+		end
+		
+		return self
+	end
+	
 	function set:maxTime()
 		local max_time = 0
 		for _, trigger in pairs(self.set) do
@@ -638,7 +660,7 @@ M.loadSet = function(file_path, name)
 		set[1] = nil
 		M.addSet(name or file_path, set)
 			
-		--print(file_path)
+		return true
 	end	
 end
 

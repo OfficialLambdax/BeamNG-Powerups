@@ -600,6 +600,7 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 		is_fake_location = true
 	end
 	
+	local type = powerup.type
 	local vehicle = VEHICLES[game_vehicle_id]
 	local response = powerup.onPickup(location.data, origin_vehicle)
 	if response == nil or response.IsError then
@@ -610,7 +611,6 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 		return nil
 		
 	elseif response.IsSuccess then
-		local type = powerup.type
 		if type == PowerupTypes.Charge then
 			M.addCharge(game_vehicle_id, 1)
 			Log.info("PowerUp: " .. game_vehicle_id .. " picked a charge")
@@ -672,7 +672,9 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 			vehicle.charge = math.random(1, MAX_CHARGE)
 			activatePowerup(game_vehicle_id)
 		else
-			MPClientRuntime.tryActivatePowerup(game_vehicle_id)
+			if type ~= PowerupTypes.Negative then
+				MPClientRuntime.tryActivatePowerup(game_vehicle_id)
+			end
 		end
 	end
 	if Extender.isSpectating(game_vehicle_id) then
