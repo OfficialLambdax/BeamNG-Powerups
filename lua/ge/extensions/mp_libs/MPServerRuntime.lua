@@ -199,6 +199,13 @@ local function takePowerup(server_vehicle_id, location_name)
 		tryActivatePowerup(player_id, server_vehicle_id)
 		
 	else
+		if vehicle.powerup then
+			if vehicle.powerup.name == location.powerup.name then
+				vehicle.charge = vehicle.charge + 1
+				Log.info(server_vehicle_id .. ' from ' .. MP.GetPlayerName(player_id) .. ' got extra charge. Because picked up same powerup')
+			end
+		end
+		
 		-- swap ownership
 		vehicle.powerup = location.powerup
 		location.powerup = nil
