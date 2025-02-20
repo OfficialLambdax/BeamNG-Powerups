@@ -15,11 +15,8 @@ New
 -- Libs
 PowerupExtender
 	- Add hasTraitButNot(target_id, has, butnot) variants for multi targets, hastraits and butnottraits
-	- Add getAllVehicles() function that only returns enabled vehicles and fully integrate it everywhere
-		This would fix any kind of wrong targeting and hitting on vehicles that are disabled (eg traffic vehicles)
 
 PowerupsLib
-	- Add option to have powerups stack. Where if a vehicle owns eg shockwave and they pickup another shockwave it stacks the powerup as if the player drove into a charge
 	- Auto remove undefined Traits
 	- make "respect_traits" var necessary for trait call sync
 	- Implement a "default" set, that only contains powerup defs. Is used when a group defines powerups but doesnt include any or all powerups
