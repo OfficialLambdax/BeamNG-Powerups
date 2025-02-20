@@ -64,12 +64,14 @@ local TRIGGER_ADJUST = false
 
 --[[
 	Notes
-		extensions.reload("DoNotTouch")
-		DoNotTouch.pu.loadPowerUpDefs("lua/ge/extensions/powerups/open")
-		DoNotTouch.pu.loadLocationPrefab("lua/ge/extensions/prefabs/test4.prefab.json")
-		DoNotTouch.pu.loadLocationPrefab("lua/ge/extensions/prefabs/west_coast_usa.prefab.json")
-		DoNotTouch.pu.testExec(29756, "forcefield", 1)
-		DoNotTouch.pu.testExec(29761, "forthshot", 1)
+		extensions.reload("PowerUps")
+		PowerUps.pu.loadPowerUpDefs("lua/ge/extensions/powerups/open")
+		PowerUps.pu.loadLocationPrefab("lua/ge/extensions/prefabs/test4.prefab.json")
+		PowerUps.pu.loadLocationPrefab("lua/ge/extensions/prefabs/west_coast_usa.prefab.json")
+		PowerUps.pu.testExec(29756, "forcefield", 1)
+		PowerUps.pu.testExec(29761, "forthshot", 1)
+		
+		PowerUps.sets.loadSet("lua/ge/extensions/sets/test.lua", "test"); PowerUps.sets.getSet("test"):this():exec()
 		
 		-- Collision lib
 		local veh = getPlayerVehicle(0)
@@ -233,7 +235,7 @@ end
 -- Direct access
 M.pu = PowerUps
 M.ff = ForceField
-M.getSet = Sets.getSet
+M.sets = Sets
 
 -- ----------------------------------------------------------------------------
 -- Singleplayer Only

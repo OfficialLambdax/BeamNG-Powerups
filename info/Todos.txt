@@ -9,7 +9,6 @@ New
 	- Negative that activates current powerup in the vehicle inv immediatly
 	- Add funny sounds to negatives
 	- Health Powerup
-	- Maybe port some of the StreamerVSChat effects
 
 -- -------------------------------------------------------------------------------------------------
 -- Libs

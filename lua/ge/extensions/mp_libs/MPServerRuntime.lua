@@ -166,57 +166,6 @@ end
 
 -- ------------------------------------------------------------------------------------------------
 -- Common
-local function takePowerup(server_vehicle_id, location_name)
-	local location = LOCATIONS[location_name]
-	if location == nil or location.powerup == nil then return end
-	
-	local player_id = MPUtil.getPlayerIDFromServerID(server_vehicle_id)
-	
-	local vehicle = VEHICLES[server_vehicle_id]
-	if vehicle == nil then
-		Log.warn('Vehicle of ' .. MP.GetPlayerName(player_id) .. ' is unknown')
-		return
-	end
-	
-	local type = location.powerup.type
-	if type == Types.Charge then
-		vehicle.charge = math.min(vehicle.charge + 1, PowerUps.getMaxCharge())
-		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name, location.powerup.name):send()
-		location.powerup = nil
-		location.respawn_timer:stopAndReset()
-		
-		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" now has ' .. vehicle.charge .. ' charges')
-		
-	elseif type == Types.Negative then
-		-- swap ownership
-		vehicle.powerup = location.powerup
-		location.powerup = nil
-		location.respawn_timer:stopAndReset()
-		
-		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up negative ' .. vehicle.powerup.name)
-		
-		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
-		tryActivatePowerup(player_id, server_vehicle_id)
-		
-	else
-		if vehicle.powerup then
-			if vehicle.powerup.name == location.powerup.name then
-				vehicle.charge = vehicle.charge + 1
-				Log.info(server_vehicle_id .. ' from ' .. MP.GetPlayerName(player_id) .. ' got extra charge. Because picked up same powerup')
-			end
-		end
-		
-		-- swap ownership
-		vehicle.powerup = location.powerup
-		location.powerup = nil
-		location.respawn_timer:stopAndReset()
-		
-		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up ' .. vehicle.powerup.name)
-		
-		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
-	end
-end
-
 local function givePowerup(server_vehicle_id, group_name)
 	local vehicle = VEHICLES[server_vehicle_id]
 	if vehicle == nil then return end
@@ -319,6 +268,58 @@ local function disableActivePowerup(server_vehicle_id, from_client)
 		Build:new():allExcept(player_id):onActivePowerupDisable(server_vehicle_id):send()
 	else
 		Build:new():all():onActivePowerupDisable(server_vehicle_id):send()
+	end
+end
+
+local function takePowerup(server_vehicle_id, location_name)
+	local location = LOCATIONS[location_name]
+	if location == nil or location.powerup == nil then return end
+	
+	local player_id = MPUtil.getPlayerIDFromServerID(server_vehicle_id)
+	
+	local vehicle = VEHICLES[server_vehicle_id]
+	if vehicle == nil then
+		Log.warn('Vehicle of ' .. MP.GetPlayerName(player_id) .. ' is unknown')
+		return
+	end
+	
+	local type = location.powerup.type
+	if type == Types.Charge then
+		vehicle.charge = math.min(vehicle.charge + 1, PowerUps.getMaxCharge())
+		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name, location.powerup.name):send()
+		location.powerup = nil
+		location.respawn_timer:stopAndReset()
+		
+		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" now has ' .. vehicle.charge .. ' charges')
+		
+	elseif type == Types.Negative then
+		-- swap ownership
+		vehicle.powerup = location.powerup
+		location.powerup = nil
+		location.respawn_timer:stopAndReset()
+		
+		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up negative ' .. vehicle.powerup.name)
+		
+		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
+		--tryActivatePowerup(player_id, server_vehicle_id)
+		activatePowerup(server_vehicle_id)
+		
+	else
+		if vehicle.powerup then
+			if vehicle.powerup.name == location.powerup.name then
+				vehicle.charge = vehicle.charge + 1
+				Log.info(server_vehicle_id .. ' from ' .. MP.GetPlayerName(player_id) .. ' got extra charge. Because picked up same powerup')
+			end
+		end
+		
+		-- swap ownership
+		vehicle.powerup = location.powerup
+		location.powerup = nil
+		location.respawn_timer:stopAndReset()
+		
+		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up ' .. vehicle.powerup.name)
+		
+		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
 	end
 end
 
