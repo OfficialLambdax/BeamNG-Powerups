@@ -73,7 +73,7 @@ end
 M.onPickup = function(data, vehicle)
 	data.vehicle = vehicle
 	M.onDespawn(data)
-	return onPickup.IsCharge
+	return onPickup.Success()
 end
 
 -- While the powerup is in someones inventory. Can have it hover above the vehicle or play sounds.

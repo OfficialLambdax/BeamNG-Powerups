@@ -7,6 +7,7 @@ local Traits = Extender.Traits
 local Types = Extender.Types
 local GroupReturns = Extender.GroupReturns
 local PowerupReturns = Extender.PowerupReturns
+local PowerupTypes = Extender.Types
 local TimedTrigger = require("libs/TimedTrigger")
 local TriggerLoad = require("libs/TriggerLoad")
 local Util = require("libs/Util")
@@ -600,60 +601,56 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 	end
 	
 	local vehicle = VEHICLES[game_vehicle_id]
-	
-	local r, variable = powerup.onPickup(location.data, origin_vehicle)
-	if r == nil then
-		Log.error('Vehicle cannot pickup "' .. location.powerup.name .. '" - "' .. tostring(variable) .. '"')
+	local response = powerup.onPickup(location.data, origin_vehicle)
+	if response == nil or response.IsError then
+		local reason = 'No reason given'
+		if r then reason = response.reason end
+		
+		Log.error('Vehicle cannot pickup "' .. location.powerup.name .. '" - "' .. reason .. '"')
 		return nil
-	
-	elseif r == GroupReturns.onPickup.Success then -- success
-		if vehicle.powerup then
-			Log.info('PowerUP: ' .. game_vehicle_id .. ' dropped ' .. vehicle.powerup.name)
-			vehicle.powerup.onDrop(vehicle.data)
-		end
 		
-		-- swap ownership
-		vehicle.powerup = location.powerup
-		vehicle.data = location.data
+	elseif response.IsSuccess then
+		local type = powerup.type
 		
-		Log.info("PowerUp: " .. game_vehicle_id .. " picked up " .. vehicle.powerup.name)
-		
-	--elseif r == GroupReturns.onPickup.Drop then -- dont pickup new one, drop current and remove the new one
-	--	if vehicle.powerup then
-	--		Log.info("PowerUp: " .. game_vehicle_id .. " dropped " .. vehicle.powerup.name)
-	--		vehicle.powerup.onDrop(vehicle.data)
-	--		vehicle.powerup = nil
-	--		vehicle.data = nil
-	--	end
-		
-	--	if is_fake_location then location.powerup.onDrop(location.data) end
-		
-	elseif r == GroupReturns.onPickup.IsCharge then -- reserved for charges
-		M.addCharge(game_vehicle_id, 1)
-		Log.info("PowerUp: " .. game_vehicle_id .. " picked a charge")
-		simpleDisplayActivatedPowerup(game_vehicle_id, "Charge", powerup.type)
-
-	elseif r == GroupReturns.onPickup.IsNegative then -- immediate execute - for negative powerups
-		-- check currrent powerup
-		if vehicle.powerup then
-			Log.info("PowerUp: " .. game_vehicle_id .. " dropped " .. vehicle.powerup.name)
-			vehicle.powerup.onDrop(vehicle.data)
-		end
-				
-		-- swap ownership
-		vehicle.powerup = location.powerup
-		vehicle.data = location.data
-		
-		Log.info("PowerUp: " .. game_vehicle_id .. " picked up negative " .. vehicle.powerup.name)
-		
-		if not IS_BEAMMP_SESSION then
-			activatePowerup(game_vehicle_id, nil, math.random(1, vehicle.powerup.max_levels))
-		--else
-			--MPClientRuntime.tryActivatePowerup(game_vehicle_id) -- server does this already
+		if type == PowerupTypes.Charge then
+			M.addCharge(game_vehicle_id, 1)
+			Log.info("PowerUp: " .. game_vehicle_id .. " picked a charge")
+			simpleDisplayActivatedPowerup(game_vehicle_id, "Charge", powerup.type)
+			
+		elseif type == PowerupTypes.Negative then
+			-- check currrent powerup
+			if vehicle.powerup then
+				Log.info("PowerUp: " .. game_vehicle_id .. " dropped " .. vehicle.powerup.name)
+				vehicle.powerup.onDrop(vehicle.data)
+			end
+					
+			-- swap ownership
+			vehicle.powerup = location.powerup
+			vehicle.data = location.data
+			
+			Log.info("PowerUp: " .. game_vehicle_id .. " picked up negative " .. vehicle.powerup.name)
+			
+			if not IS_BEAMMP_SESSION then
+				activatePowerup(game_vehicle_id, nil, math.random(1, vehicle.powerup.max_levels))
+			--else
+				--MPClientRuntime.tryActivatePowerup(game_vehicle_id) -- server does this already
+			end
+			
+		else
+			if vehicle.powerup then
+				Log.info('PowerUP: ' .. game_vehicle_id .. ' dropped ' .. vehicle.powerup.name)
+				vehicle.powerup.onDrop(vehicle.data)
+			end
+			
+			-- swap ownership
+			vehicle.powerup = location.powerup
+			vehicle.data = location.data
+			
+			Log.info("PowerUp: " .. game_vehicle_id .. " picked up " .. vehicle.powerup.name)
 		end
 	else
 		Log.error('Unknown return type from powerup action of "' .. location.powerup.name .. '"')
-		
+			
 		if is_fake_location then location.powerup.onDrop(location.data) end
 		return
 	end

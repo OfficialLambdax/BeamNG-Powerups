@@ -71,12 +71,13 @@ end
 M.onPickup = function(data, vehicle)
 	--[[
 		Return types are defined in /libs/extender/GroupReturns.lua
-			onPickup.Success
-			onPickup.IsCharge
-			onPickup.IsNegative
+			onPickup.Success()
+			onPickup.Error(
+				reason = string, -- optional
+			)
 	]]
 	M.onDespawn(data)
-	return onPickup.Success
+	return onPickup.Success()
 end
 
 -- Hooked to the onPreRender tick
