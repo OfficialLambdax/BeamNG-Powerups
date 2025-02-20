@@ -307,7 +307,17 @@ end
 -- ------------------------------------------------------------------------------------------------
 -- Vehicles
 function onPowerUpVehicleInit(game_vehicle_id)
-	if be:getObjectByID(game_vehicle_id) == nil then return end
+	local vehicle = be:getObjectByID(game_vehicle_id)
+	if vehicle == nil then
+		-- vehicle disappeared before we could init it
+		TimedTrigger.remove('powerup_vehicle_initer_' .. game_vehicle_id)
+		return
+	end
+	
+	-- powerups cannot que lua on disabled vehicles. So we MUST delay until that vehicle is either active again or doesnt exists anymore
+	if not vehicle:getActive() then return end
+	TimedTrigger.remove('powerup_vehicle_initer_' .. game_vehicle_id)
+	
 	for _, group in pairs(POWERUP_DEFS) do
 		group.onVehicleInit(game_vehicle_id)
 		for _, powerup in pairs(group.powerups) do
@@ -329,7 +339,7 @@ local function onVehicleSpawned(game_vehicle_id)
 		TimedTrigger.new(
 			'powerup_vehicle_initer_' .. game_vehicle_id,
 			100,
-			1,
+			0,
 			onPowerUpVehicleInit,
 			game_vehicle_id
 		)
@@ -690,7 +700,8 @@ local function takePowerupFromLocation(location_name, trigger_data, location)
 	if location.powerup == nil then return end
 	
 	local game_vehicle_id = trigger_data.subjectID
-	local vehicle = VEHICLES[game_vehicle_id] or onVehicleSpawned(game_vehicle_id)
+	local vehicle = VEHICLES[game_vehicle_id]
+	if vehicle == nil then return end -- unknown vehicle or simply not successfully initialized yet
 	
 	local is_own, is_traffic = Extender.isPlayerVehicle(game_vehicle_id)
 	if not is_own and not is_traffic then return end -- ignore vehicles not owned by us
@@ -862,7 +873,7 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 	IS_BEAMMP_SESSION = MPUtil.isBeamMPSession()
 	IS_BEAMMP_SERVER = MPUtil.isBeamMPServer()
 	
-	for _, vehicle in pairs(Extender.getAllVehicles()) do
+	for _, vehicle in pairs(Extender.getAllVehicles(true)) do
 		onVehicleSpawned(vehicle:getId())
 	end
 	
@@ -972,7 +983,8 @@ M.testExec = function(game_vehicle_id, group, charge)
 		Log.error('Unknown vehicle')
 		return
 	end
-	local vehicle = VEHICLES[game_vehicle_id] or onVehicleSpawned(game_vehicle_id)
+	local vehicle = VEHICLES[game_vehicle_id]
+	if vehicle == nil then return end -- vehicle simply doesnt exists or hasnt been initialized yet
 	
 	local powerup = POWERUP_DEFS[group]
 	if powerup == nil then

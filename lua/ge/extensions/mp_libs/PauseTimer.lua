@@ -12,11 +12,8 @@ local function precisionTimer()
 	end
 	function timer:stopAndReset()
 		local time = self.int.timer:GetCurrent() * 1000
-		self:start()
-		return time
-	end
-	function timer:start()
 		self.int.timer:Start()
+		return time
 	end
 	return timer
 end
@@ -25,13 +22,12 @@ M.new = function()
 	local timer = {
 		int = {
 			-- must have stop(), stopAndReset() and start() interface
-			timer = hptimer or HighPerfTimer or precisionTimer,
+			timer = (hptimer or HighPerfTimer or precisionTimer)(),
 			time = 0,
 			paused = false
 		}
 	}
 	
-	timer.int.timer = timer.int.timer()
 	timer.int.timer:stopAndReset() -- HighPerfTimer bug troubleshoot
 
 	function timer:stop()
@@ -56,7 +52,7 @@ M.new = function()
 	
 	function timer:start()
 		self.int.time = 0
-		self.int.timer:start()
+		self.int.timer:stopAndReset()
 	end
 	
 	function timer:pause(state)
