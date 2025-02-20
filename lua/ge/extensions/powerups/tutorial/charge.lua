@@ -60,7 +60,7 @@ end
 -- Vehicle that wants to pick this powerup up
 M.onPickup = function(data, vehicle)
 	M.onDespawn(data)
-	return onPickup.IsCharge
+	return onPickup.Success()
 end
 
 -- Hooked to the onPreRender tick

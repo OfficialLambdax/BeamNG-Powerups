@@ -1,8 +1,10 @@
 return {
 	onPickup = {
-		Success = 1,
-		--Drop = 2,
-		IsCharge = 3,
-		IsNegative = 4
+		Error = function(reason)
+			return {IsError = true, reason = tostring(reason) or "No reason given"}
+		end,
+		Success = function()
+			return {IsSuccess = true}
+		end,
 	}
 }
