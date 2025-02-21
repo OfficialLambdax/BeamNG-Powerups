@@ -1,5 +1,5 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer = Extender.defaultImports()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle = Extender.defaultImports()
 local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
 
 local M = {
@@ -88,6 +88,13 @@ M.onActivate = function(vehicle)
 	}
 	
 	M.activate_sound:playVE(vehicle:getId())
+	Particle("BNGP_51", vehicle:getPosition())
+		:active(true)
+		:follow(vehicle, 200)
+		:selfDisable(200)
+		:selfDestruct(10000)
+	
+	vehicle:queueLuaCommand('PowerUpExtender.pushForward(-5)')
 	
 	return onActivate.TargetInfo(data, target_info)
 end

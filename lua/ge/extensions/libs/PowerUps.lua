@@ -630,7 +630,7 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 			simpleDisplayActivatedPowerup(game_vehicle_id, "Charge", powerup.type)
 			
 		elseif type == PowerupTypes.Negative then
-			-- check currrent powerup
+			-- check current powerup
 			if vehicle.powerup then
 				Log.info("PowerUp: " .. game_vehicle_id .. " dropped " .. vehicle.powerup.name)
 				vehicle.powerup.onDrop(vehicle.data)
@@ -901,8 +901,6 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 		if r == nil then
 			Log.error('Cannot initialize restock routine')
 		end
-		
-		updateLocationRotationCheckTime()
 	end
 	
 	-- run only ingame, but not matter if mp session or singleplayer
