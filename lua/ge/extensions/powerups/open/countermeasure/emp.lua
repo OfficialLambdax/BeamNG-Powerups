@@ -47,57 +47,25 @@ M.onInit = function(group_defs)
 end
 
 -- Called for each vehicle
-M.onVehicleInit = function(game_vehicle_id)
-	
-end
+M.onVehicleInit = function(game_vehicle_id) end
 
 -- When the powerup is activated
 M.onActivate = function(vehicle)
-	local targets = {}
-	local vehicle_id = vehicle:getId()
-	for _, target in ipairs(getAllVehicles()) do
-		local target_id = target:getId()
-		if vehicle_id ~= target_id then
-			if Util.dist3d(vehicle:getPosition(), target:getPosition()) < M.effect_radius then
-				table.insert(targets, target_id)
-			end
-		end
-	end
-	
 	M.activate_sound:playVE(vehicle:getId())
 	
-	if #targets == 0 then targets = nil end
-	
-	local data = {
-		no_target = targets == nil,
-		targets = nil,
-		sound_played = false
-	}
-	return onActivate.TargetInfo(data, targets)
+	return onActivate.TargetHits(
+		MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), M.effect_radius, vehicle:getId())
+	)
 end
 
 -- only called once
-M.onUnload = function(data)
-
-end
+M.onUnload = function(data) end
 
 -- only called once
-M.onLoad = function(data)
-
-end
+M.onLoad = function(data) end
 
 -- While the powerup is active. Update its render here, detect if it hit something. that kinda stuff
-M.whileActive = function(data, origin_id)
-	if data.no_target then return whileActive.Stop() end
-
-	-- waiting for target confirmation
-	if not data.targets then
-		return whileActive.Continue()
-		
-	else -- we got targets!
-		return whileActive.StopAfterExec(nil, data.targets)
-	end
-end
+M.whileActive = function(data, origin_id) end
 
 -- Called once one or multiple targets have been chosen.
 -- In a singleplayer scenario this event is called directly.
@@ -107,9 +75,7 @@ M.onTargetSelect = function(data, targets)
 end
 
 -- When the powerup hit another vehicle
-M.onTargetHit = function(data, origin_id, target_id)
-	-- everything in here is only executed on our end
-end
+M.onTargetHit = function(data, origin_id, target_id) end
 
 -- When the powerup hit our vehicle. Aka another vehicle with this powerup shoots at our vehicle
 -- We are target_id
@@ -117,13 +83,12 @@ M.onHit = function(data, origin_id, target_id)
 	-- everything in here is executed on our and the remote end
 	-- push vehicle away from us
 	local set = Sets.getSet(M.set_name):VETarget(target_id)
+	if set == nil then return end
 	if Extender.isPlayerVehicle(target_id) then set:resetBlock() end
 	set:exec()
 end
 
 -- When the powerup is destroyed. eg when the vehicle is deleted or the powerup ended
-M.onDeactivate = function(data)
-	
-end
+M.onDeactivate = function(data) end
 
 return M

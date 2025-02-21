@@ -79,7 +79,8 @@ local function onTargetHit(data)
 	
 	local targets = {}
 	for index, server_vehicle_id in ipairs(data.targets) do
-		targets[index] = MPUtil.serverVehicleIDToGameVehicleID(server_vehicle_id)
+		local game_vehicle_id = MPUtil.serverVehicleIDToGameVehicleID(server_vehicle_id)
+		targets[index] = game_vehicle_id
 	end
 	
 	PowerUps.targetHitExec(game_vehicle_id, vehicle, targets, data.deactivate)
