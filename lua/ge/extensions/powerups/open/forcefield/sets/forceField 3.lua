@@ -58,7 +58,7 @@ local function destroyMarker(marker)
 end
 
 local function onDefaultForceFieldReaction(origin_vehicle, target_vehicle, settings)
-	if Extender.hasTrait(target_vehicle:getId(), Trait.Ghosted) then return end
+	--if Extender.hasTrait(target_vehicle:getId(), Trait.Ghosted) then return end
 	local vel1 = origin_vehicle:getVelocity()
 	local vel2 = target_vehicle:getVelocity()
 	
