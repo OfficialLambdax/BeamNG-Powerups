@@ -186,13 +186,12 @@ end
 local function targetHitExec(game_vehicle_id, vehicle, targets, deactivate)
 	local is_spectating = Extender.isSpectating(game_vehicle_id)
 	
+	-- must use "pairs" as MPClientRuntime.onTargetHit() can nilify entries of unknown vehicles
 	for _, target_id in pairs(targets) do
-		if target_id and target_id ~= -1 then -- can be nil or -1 if it comes from the server that references a vehicle we dont have yet spawned
-			if is_spectating then -- needs testing
-				vehicle.powerup_active.onTargetHit(vehicle.powerup_data, game_vehicle_id, target_id)
-			end
-			vehicle.powerup_active.onHit(vehicle.powerup_data, game_vehicle_id, target_id)
+		if is_spectating then -- needs testing
+			vehicle.powerup_active.onTargetHit(vehicle.powerup_data, game_vehicle_id, target_id)
 		end
+		vehicle.powerup_active.onHit(vehicle.powerup_data, game_vehicle_id, target_id)
 	end
 	
 	if deactivate then

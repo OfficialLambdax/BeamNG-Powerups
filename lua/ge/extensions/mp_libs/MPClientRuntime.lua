@@ -63,6 +63,8 @@ end
 local function onTargetInfo(data)
 	local data = jsonDecode(data)
 	local game_vehicle_id = MPUtil.serverVehicleIDToGameVehicleID(data.server_vehicle_id)
+	if game_vehicle_id == nil then return end
+	
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle == nil then return end
 	if vehicle.powerup_active == nil then return end
@@ -73,14 +75,15 @@ end
 local function onTargetHit(data)
 	local data = jsonDecode(data)
 	local game_vehicle_id = MPUtil.serverVehicleIDToGameVehicleID(data.server_vehicle_id)
+	if game_vehicle_id == nil then return end
+	
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle == nil then return end
 	if vehicle.powerup_active == nil then return end
 	
 	local targets = {}
 	for index, server_vehicle_id in ipairs(data.targets) do
-		local game_vehicle_id = MPUtil.serverVehicleIDToGameVehicleID(server_vehicle_id)
-		targets[index] = game_vehicle_id
+		targets[index] = MPUtil.serverVehicleIDToGameVehicleID(server_vehicle_id)
 	end
 	
 	PowerUps.targetHitExec(game_vehicle_id, vehicle, targets, data.deactivate)
