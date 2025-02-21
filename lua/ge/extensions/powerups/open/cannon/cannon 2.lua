@@ -1,5 +1,5 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer = Extender.defaultImports()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle = Extender.defaultImports()
 local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
 
 local M = {
@@ -102,6 +102,14 @@ M.whileActive = function(data, origin_id, dt)
 		data.shoot_timer:stopAndReset()
 		
 		M.activate_sound:playVE(origin_id)
+		
+		Particle("BNGP_51", origin_vehicle:getPosition())
+			:active(true)
+			:follow(origin_vehicle, 200)
+			:selfDisable(200)
+			:selfDestruct(10000)
+		
+		origin_vehicle:queueLuaCommand('PowerUpExtender.pushForward(-5)')
 		
 		-- need to return now as we cant give target_info and target_hits back at once
 		return whileActive.Continue(target_info)
