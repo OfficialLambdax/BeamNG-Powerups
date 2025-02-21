@@ -21,7 +21,7 @@ local M = {
 	--[[
 		eg. {Trait.Consuming, Trait.Reflective}
 	]]
-	respects_traits = {},
+	respects_traits = {Trait.Ghosted},
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
