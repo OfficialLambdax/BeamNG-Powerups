@@ -6,6 +6,9 @@ local PowerUps
 local ServerUtil = Util -- only exists on server
 local Util = require("libs/Util")
 local MPUtil = require("mp_libs/MPUtil")
+local TimedTrigger = require("libs/TimedTrigger")
+local MathUtil = require("libs/MathUtil")
+
 local PowerUpsTraits = require("libs/extender/Traits")
 local PowerUpsTypes = require("libs/extender/Types")
 local GroupReturns = require("libs/extender/GroupReturns")
@@ -246,8 +249,40 @@ else
 	end
 end
 
+M.getVehicleRotation = function(vehicle)
+	return quatFromDir(
+		-vec3(vehicle:getDirectionVector()),
+		vec3(vehicle:getDirectionVectorUp())
+	)
+end
+
 M.updatePowerUpsLib = function(this)
 	PowerUps = this
+end
+
+M.ghostVehicleAutoUnghost = function(vehicle, time)
+	vehicle:queueLuaCommand('obj:setGhostEnabled(true)')
+	vehicle:setMeshAlpha(0.5, "", false)
+	
+	local trigger_name = 'extender_unghost_' .. Util.randomName()
+	TimedTrigger.new(
+		trigger_name,
+		time,
+		0,
+		function(vehicle, trigger_name)
+			if #MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), 5, vehicle:getId()) > 0 then
+				TimedTrigger.updateTriggerEvery(trigger_name, 100)
+				return
+			end
+			
+			vehicle:setMeshAlpha(1, "", false)
+			vehicle:queueLuaCommand('obj:setGhostEnabled(false)')
+			
+			TimedTrigger.remove(trigger_name)
+		end,
+		vehicle,
+		trigger_name
+	)
 end
 
 
