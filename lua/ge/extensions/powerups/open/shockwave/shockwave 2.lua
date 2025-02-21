@@ -50,7 +50,7 @@ M.onVehicleInit = function(game_vehicle_id) end
 -- When the powerup is activated
 M.onActivate = function(vehicle)
 	local vehicle_id = vehicle:getId()
-	M.activate_sound:playVE(vehicle_id)
+	M.activate_sound:smart(vehicle_id)
 	
 	return onActivate.TargetHits(
 		MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), M.effect_radius, vehicle_id)

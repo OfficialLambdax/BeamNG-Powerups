@@ -34,7 +34,7 @@ local M = {
 	
 	-- Add extra variables here if needed. Constants only!
 	sets = {}, -- [1..n] = {name = name, sound = Sound, delay = time}
-	--test = "ice"
+	test = "ice"
 }
 
 -- Called once when the powerup is loaded
@@ -132,14 +132,9 @@ M.whileActive = function(data, origin_id, dt)
 		
 		if Extender.isSpectating(origin_id) then
 			set:resetBlock(2000)
-			if set_def.sound then
-				set_def.sound:play() -- for spectator
-			end
-		else
-			if set_def.sound then
-				set_def.sound:playVE(origin_id) -- for players surrounding the car
-			end
 		end
+		
+		if set_def.sound then set_def.sound:smart(origin_id) end
 		
 		set:exec()
 		
