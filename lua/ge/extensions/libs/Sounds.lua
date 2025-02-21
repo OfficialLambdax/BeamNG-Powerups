@@ -34,6 +34,16 @@ return function(file_path, volume, pitch)
 		}
 	}
 	
+	-- plays the sound in GE if vehicle is spectated, otherwise in VE
+	function sound:smart(target_id, volume, pitch)
+		local spectated = getPlayerVehicle(0)
+		if spectated and spectated:getId() == target_id then
+			self:play(volume)
+		else
+			self:playVE(target_id, volume, pitch)
+		end
+	end
+	
 	function sound:play(volume)
 		Engine.Audio.playOnce(
 			'AudioGui',

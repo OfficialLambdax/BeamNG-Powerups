@@ -65,7 +65,7 @@ M.onActivate = function(vehicle)
 	end
 	set:exec(id)
 	
-	M.force_field_sound:playVE(vehicle:getId())
+	M.force_field_sound:smart(vehicle:getId())
 
 	return onActivate.Success({timer = hptimer(), end_in = set:maxTime(), id = id, broke = false})
 end
