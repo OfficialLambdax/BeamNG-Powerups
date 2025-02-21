@@ -301,7 +301,6 @@ local function takePowerup(server_vehicle_id, location_name)
 		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up negative ' .. vehicle.powerup.name)
 		
 		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
-		--tryActivatePowerup(player_id, server_vehicle_id)
 		activatePowerup(server_vehicle_id)
 		
 	else
@@ -321,6 +320,8 @@ local function takePowerup(server_vehicle_id, location_name)
 		
 		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
 	end
+	
+	Build:new():all():onLocationsPowerupUpdate(location_name):send()
 end
 
 -- ------------------------------------------------------------------------------------------------
