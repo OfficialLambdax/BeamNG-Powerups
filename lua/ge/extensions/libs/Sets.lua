@@ -467,7 +467,8 @@ local function newSet(name, set_array)
 		for trigger_name, trigger in pairs(self.set) do
 			if trigger.trigger_enabled then
 				-- if either the spectate option is false or when it is enable then check if the ve target is what we are spectating
-				if not trigger.trigger_settings.spectate or (trigger.trigger_settings.spectate and self.ve_target == getPlayerVehicle(0):getId()) then
+				--if not trigger.trigger_settings.spectate or (trigger.trigger_settings.spectate and self.ve_target == getPlayerVehicle(0):getId()) then
+				if not trigger.trigger_settings.spectate or (trigger.trigger_settings.spectate and getPlayerVehicle(0) and self.ve_target == getPlayerVehicle(0):getId()) then
 					local trigger_name = 'set_' .. trigger_name .. postfix
 					local type = trigger.trigger_type
 					if type == 0 then -- GE

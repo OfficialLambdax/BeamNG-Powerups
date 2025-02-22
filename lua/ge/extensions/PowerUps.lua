@@ -57,6 +57,9 @@ local Sets = require("libs/Sets")
 local ForceField = require("libs/ForceField")
 local PowerUps = require("libs/PowerUps")
 local MPUtil = require("mp_libs/MPUtil")
+local PauseTimer = require("mp_libs/PauseTimer")
+local Log = require("libs/Log")
+local Util = require("libs/Util")
 
 local M = {}
 local INITIALIZED = false
@@ -85,6 +88,33 @@ local TRIGGER_ADJUST = false
 ]]
 
 -- ----------------------------------------------------------------------------
+-- Measurement timer
+local MEASURE_TIMER = PauseTimer.new()
+local MEASURE_BUFFER, MEASURE_INDEX = {}, 1
+local MEASURE_PRINT = false
+local function measure()
+	MEASURE_BUFFER[MEASURE_INDEX] = MEASURE_TIMER:stop()
+	MEASURE_INDEX = MEASURE_INDEX + 1
+	if MEASURE_INDEX > 9 then MEASURE_INDEX = 1 end
+end
+
+local function measureAverage()
+	local total = 0
+	for i = 0, 10, 1 do
+		total = total + (MEASURE_BUFFER[i] or 0)
+	end
+	local avg = total / 10
+	
+	if avg > 5 then
+		Log.warn('PowerUps runtime is taking alot of time! ' .. Util.mathRound(avg, 3) .. ' ms\nIf you are experiencing heavy lag, this might be why')
+	end
+	
+	if MEASURE_PRINT then
+		Log.info('Current average runtime: ' .. Util.mathRound(avg, 3) .. ' ms\t with: ' .. PowerUps.getRenderedLocationsCount() .. ' rendered locations.')
+	end
+end
+
+-- ----------------------------------------------------------------------------
 -- Init
 -- only to be called once a map has been loaded or is already loaded
 local function onInit()
@@ -98,12 +128,37 @@ local function onInit()
 		PowerUps.loadPowerUpDefs("lua/ge/extensions/powerups/open")
 	end
 	
+	TimedTrigger.new("powerups_measurement", 1000, 0, measureAverage)
+	
 	INITIALIZED = true
 end
 
 -- ----------------------------------------------------------------------------
--- Trigger Highlight
-local function setTriggerDebug(state)
+-- Runtime
+M.onPreRender = function(dt_real, dt_sim, dt_raw)
+	if not INITIALIZED then return end
+	
+	MEASURE_TIMER:stopAndReset()
+	
+	-- order matters. timed trigger before powerups as powerups may que anything for the next frame
+	TimedTrigger.tick()
+	CollisionsLib.tick()
+	ForceField.tick() -- unfortunately doesnt help with the marker rendering
+	PowerUps.tick(dt_real, dt_sim, dt_raw)
+	
+	if TRIGGER_DEBUG then
+		M.setTriggerDebug(true)
+	end
+	if TRIGGER_ADJUST then
+		M.autoAdjustTriggerScale()
+	end
+	
+	measure()
+end
+
+-- ----------------------------------------------------------------------------
+-- Convenience stuff
+M.setTriggerDebug = function(state)
 	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
 		if name:find("BeamNGTrigger_") then
 			scenetree.findObject(name):setField("debug", 0, tostring(state))
@@ -111,7 +166,7 @@ local function setTriggerDebug(state)
 	end
 end
 
-local function adjustTriggerScale()
+M.autoAdjustTriggerScale = function()
 	local default_scale = PowerUps.getDefaultTriggerScale()
 	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
 		if name:find("BeamNGTrigger_") then
@@ -121,38 +176,20 @@ local function adjustTriggerScale()
 end
 
 -- Will highlight all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name
-M.triggerShow = function(state)
+M.setTriggerDebug = function(state)
 	TRIGGER_DEBUG = state
 	if not TRIGGER_DEBUG then
-		setTriggerDebug(false)
+		M.setTriggerDebug(false)
 	end
 end
 
 -- Will auto adjust all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name to the powerups default size
-M.triggerAdjust = function(state)
+M.autoAdjustTriggerScale = function(state)
 	TRIGGER_ADJUST = state
 end
 
--- ----------------------------------------------------------------------------
--- Runtime
-M.onUpdate = function(dt_real, dt_sim, dt_raw)
-	if not INITIALIZED then return end
-	
-	TimedTrigger.tick()
-	CollisionsLib.tick()
-	
-	if TRIGGER_DEBUG then
-		setTriggerDebug(true)
-	end
-	if TRIGGER_ADJUST then
-		adjustTriggerScale()
-	end
-end
-
-M.onPreRender = function(dt_real, dt_sim, dt_raw)
-	if not INITIALIZED then return end
-	ForceField.tick() -- unfortunately doesnt help with the marker rendering
-	PowerUps.tick(dt_real, dt_sim, dt_raw)
+M.autoPrintRoutineMeasurement = function(state)
+	MEASURE_PRINT = state
 end
 
 -- ----------------------------------------------------------------------------
@@ -178,8 +215,8 @@ M.onClientEndMission = function()
 	INITIALIZED = false
 end
 
+--[[
 M.onLoadingScreenFadeout = function()
-	--[[
 	if MPUtil.isBeamMPSession() and FS:fileExists("gameplay/tutorials/pages/powerups/content.html") then
 		guihooks.trigger('introPopupTutorial', {
 				{
@@ -191,8 +228,8 @@ M.onLoadingScreenFadeout = function()
 			}
 		)	
 	end
-	]]
 end
+]]
 
 -- ----------------------------------------------------------------------------
 -- Lib specific

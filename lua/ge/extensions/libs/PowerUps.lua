@@ -1203,8 +1203,19 @@ M.setRenderDistance = function(distance) -- in meters
 	RENDER_DISTANCE = distance
 end
 
-M.setRenderDistanceRoutineTime = function(time)
+-- taxing routine
+M.setRenderDistanceRoutineTime = function(time) -- in ms
 	updateRenderDistanceCheckTime(time)
+end
+
+M.getRenderedLocationsCount = function()
+	local total = 0
+	for _, location in pairs(LOCATIONS) do
+		if location.is_rendered and location.powerup then
+			total = total + 1
+		end
+	end
+	return total
 end
 
 return M

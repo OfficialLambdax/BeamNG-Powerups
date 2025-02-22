@@ -94,6 +94,19 @@ M.onActivate = function(vehicle)
 		:selfDisable(200)
 		:selfDestruct(10000)
 	
+	-- untested. Idea is to have the effect appear in the front of the vehicle
+	--[[
+	Particle("BNGP_51", vehicle:getPosition())
+		:active(true)
+		:followC(vehicle, 200,
+			function(self, obj, emitter)
+				self:setPosition(obj:getPosition())
+			end
+		),
+		:selfDisable(200)
+		:selfDestruct(10000)
+	]]
+	
 	vehicle:queueLuaCommand('PowerUpExtender.pushForward(-5)')
 	
 	return onActivate.TargetInfo(data, target_info)
