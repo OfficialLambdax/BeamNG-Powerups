@@ -130,6 +130,7 @@ local function onLocationsPowerupUpdate(locations)
 			location.powerup = POWERUP_DEFS[location_update.powerup_group]
 			if location.powerup then
 				location.data = location.powerup.onCreate(location.obj)
+				location.is_rendered = true
 			end
 			
 		else

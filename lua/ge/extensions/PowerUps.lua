@@ -88,30 +88,76 @@ local TRIGGER_ADJUST = false
 ]]
 
 -- ----------------------------------------------------------------------------
--- Measurement timer
+-- Runtime Measurement
 local MEASURE_TIMER = PauseTimer.new()
 local MEASURE_BUFFER, MEASURE_INDEX = {}, 1
 local MEASURE_PRINT = false
 local function measure()
 	MEASURE_BUFFER[MEASURE_INDEX] = MEASURE_TIMER:stop()
 	MEASURE_INDEX = MEASURE_INDEX + 1
-	if MEASURE_INDEX > 9 then MEASURE_INDEX = 1 end
+	if MEASURE_INDEX > 99 then MEASURE_INDEX = 1 end
 end
 
 local function measureAverage()
 	local total = 0
-	for i = 0, 10, 1 do
+	for i = 0, 100, 1 do
 		total = total + (MEASURE_BUFFER[i] or 0)
 	end
-	local avg = total / 10
+	local avg = total / 100
 	
-	if avg > 5 then
-		Log.warn('PowerUps runtime is taking alot of time! ' .. Util.mathRound(avg, 3) .. ' ms\nIf you are experiencing heavy lag, this might be why')
-	end
+	--if avg > 5 then
+	--	Log.warn('PowerUps runtime is taking alot of time! Average: ' .. Util.mathRound(avg, 3) .. ' ms\nIf you are experiencing heavy lag, this might be why')
+	--end
 	
 	if MEASURE_PRINT then
 		Log.info('Current average runtime: ' .. Util.mathRound(avg, 3) .. ' ms\t with: ' .. PowerUps.getRenderedLocationsCount() .. ' rendered locations.')
 	end
+end
+
+-- ----------------------------------------------------------------------------
+-- Delta time Measurement for auto frame skipping
+local MEASURE_DT_BUFFER, MEASURE_DT_INDEX = {}, 1
+
+local FRAME_SKIPPING = false
+local FRAME_SKIPPING_DT = 0
+local FRAME_SKIPPING_COUNT = 0
+local FRAME_SKIPPING_LIMIT = 1
+
+local function measureDt(dt)
+	MEASURE_DT_BUFFER[MEASURE_INDEX] = dt
+	MEASURE_DT_INDEX = MEASURE_DT_INDEX + 1
+	if MEASURE_DT_INDEX > 99 then MEASURE_DT_INDEX = 1 end
+end
+
+local function measureDtAverage()
+	local total = 0
+	for i = 0, 100, 1 do
+		total = total + (MEASURE_DT_BUFFER[i] or 0)
+	end
+	local avg = (total / 100) * 1000
+	
+	-- enables frame skipping when <30 fps
+	if not FRAME_SKIPPING and avg > 30 then -- ~30fps
+		FRAME_SKIPPING = true
+		
+		Log.warn('Detected low average FPS. Enabled frame skipping')
+	
+	-- disables once >60fps again
+	elseif FRAME_SKIPPING and avg < 17 then -- ~60fps
+		FRAME_SKIPPING = false
+		FRAME_SKIPPING_LIMIT = 1
+		
+		Log.warn('FPS recovered. Disabled frame skipping')
+		
+	elseif FRAME_SKIPPING then
+		local frame_step = math.min(math.ceil(math.max((avg / 30) * 1.75, 1)), 5)
+		if frame_step ~= FRAME_SKIPPING_LIMIT then
+			FRAME_SKIPPING_LIMIT = frame_step
+			Log.warn('Skipping: ' .. frame_step .. ' frames')
+		end
+	end
+	
+	--Log.info('Current average delta time: ' .. Util.mathRound(avg, 3) .. ' ms')
 end
 
 -- ----------------------------------------------------------------------------
@@ -128,23 +174,36 @@ local function onInit()
 		PowerUps.loadPowerUpDefs("lua/ge/extensions/powerups/open")
 	end
 	
-	TimedTrigger.new("powerups_measurement", 1000, 0, measureAverage)
+	TimedTrigger.new("powerups_measurement", 10000, 0, measureAverage)
+	TimedTrigger.new("powerups_dt_measurement", 1000, 0, measureDtAverage)
 	
 	INITIALIZED = true
 end
 
 -- ----------------------------------------------------------------------------
 -- Runtime
-M.onPreRender = function(dt_real, dt_sim, dt_raw)
+M.onPreRender = function(dt_real) -- , dt_sim, dt_raw
 	if not INITIALIZED then return end
+	
+	local dt = dt_real
+	if FRAME_SKIPPING then
+		FRAME_SKIPPING_DT = FRAME_SKIPPING_DT + dt_real
+		FRAME_SKIPPING_COUNT = FRAME_SKIPPING_COUNT + 1
+		if FRAME_SKIPPING_COUNT < FRAME_SKIPPING_LIMIT then
+			measureDt(dt_real)
+			return
+		end
+		
+		dt = FRAME_SKIPPING_DT
+	end
 	
 	MEASURE_TIMER:stopAndReset()
 	
 	-- order matters. timed trigger before powerups as powerups may que anything for the next frame
 	TimedTrigger.tick()
 	CollisionsLib.tick()
-	ForceField.tick() -- unfortunately doesnt help with the marker rendering
-	PowerUps.tick(dt_real, dt_sim, dt_raw)
+	ForceField.tick()
+	PowerUps.tick(dt)
 	
 	if TRIGGER_DEBUG then
 		M.setTriggerDebug(true)
@@ -153,43 +212,11 @@ M.onPreRender = function(dt_real, dt_sim, dt_raw)
 		M.autoAdjustTriggerScale()
 	end
 	
+	FRAME_SKIPPING_DT = 0
+	FRAME_SKIPPING_COUNT = 0
+	
 	measure()
-end
-
--- ----------------------------------------------------------------------------
--- Convenience stuff
-M.setTriggerDebug = function(state)
-	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
-		if name:find("BeamNGTrigger_") then
-			scenetree.findObject(name):setField("debug", 0, tostring(state))
-		end
-	end
-end
-
-M.autoAdjustTriggerScale = function()
-	local default_scale = PowerUps.getDefaultTriggerScale()
-	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
-		if name:find("BeamNGTrigger_") then
-			scenetree.findObject(name):setScale(default_scale)
-		end
-	end
-end
-
--- Will highlight all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name
-M.setTriggerDebug = function(state)
-	TRIGGER_DEBUG = state
-	if not TRIGGER_DEBUG then
-		M.setTriggerDebug(false)
-	end
-end
-
--- Will auto adjust all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name to the powerups default size
-M.autoAdjustTriggerScale = function(state)
-	TRIGGER_ADJUST = state
-end
-
-M.autoPrintRoutineMeasurement = function(state)
-	MEASURE_PRINT = state
+	measureDt(dt_real)
 end
 
 -- ----------------------------------------------------------------------------
@@ -246,16 +273,46 @@ M.onVehicleDestroyed = function(...)
 end
 
 -- ----------------------------------------------------------------------------
--- Dev specific
---M.getSet = Sets.getSet
---M.ff = ForceField
---M.pu = PowerUps
+-- Convenience stuff
+M.setTriggerDebug = function(state)
+	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
+		if name:find("BeamNGTrigger_") then
+			scenetree.findObject(name):setField("debug", 0, tostring(state))
+		end
+	end
+end
+
+M.autoAdjustTriggerScale = function()
+	local default_scale = PowerUps.getDefaultTriggerScale()
+	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
+		if name:find("BeamNGTrigger_") then
+			scenetree.findObject(name):setScale(default_scale)
+		end
+	end
+end
+
+-- Will highlight all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name
+M.setTriggerDebug = function(state)
+	TRIGGER_DEBUG = state
+	if not TRIGGER_DEBUG then
+		M.setTriggerDebug(false)
+	end
+end
+
+-- Will auto adjust all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name to the powerups default size
+M.autoAdjustTriggerScale = function(state)
+	TRIGGER_ADJUST = state
+end
+
+M.autoPrintRoutineMeasurement = function(state)
+	MEASURE_PRINT = state
+end
 
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- API
--- This resets the powerup library
+-- This resets the powerup library. And it removes all powerups from each and everything and also all locations. Its as if the mod was just loaded but powerups and locations arent reinstated
 M.reset = function()
 	PowerUps.unload()
 	PowerUps.init()
@@ -264,6 +321,7 @@ end
 -- eg
 -- prefab_path 		= 'lua/ge/extensions/prefabs/utah.prefab.json'
 -- powerup_set_path	= 'lua/ge/extensions/powerups/open'
+-- PowerUps.loadPowerups('lua/ge/extensions/prefabs/smallgrid_perftest.prefab.json', 'lua/ge/extensions/powerups/open')
 M.loadPowerups = function(prefab_path, powerup_set_path)
 	PowerUps.loadLocationPrefab(prefab_path)
 	PowerUps.loadPowerUpDefs(powerup_set_path)
