@@ -4,6 +4,7 @@
 ]]
 
 local MPUtil = require("mp_libs/MPUtil")
+local createObject = require("libs/ObjectWrapper")
 
 local M = {
 	_VERSION = "0.1" -- 06.02.2025 DD.MM.YYYY
