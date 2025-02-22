@@ -1,6 +1,6 @@
 local Extender = require("libs/PowerUpsExtender")
 local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle = Extender.defaultImports()
-local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
+local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 
 local M = {
 	-- Clear name of the powerup
@@ -88,24 +88,6 @@ M.onActivate = function(vehicle)
 	}
 	
 	M.activate_sound:playVE(vehicle:getId())
-	Particle("BNGP_51", vehicle:getPosition())
-		:active(true)
-		:follow(vehicle, 200)
-		:selfDisable(200)
-		:selfDestruct(10000)
-	
-	-- untested. Idea is to have the effect appear in the front of the vehicle
-	--[[
-	Particle("BNGP_51", vehicle:getPosition())
-		:active(true)
-		:followC(vehicle, 200,
-			function(self, obj, emitter)
-				self:setPosition(obj:getPosition())
-			end
-		),
-		:selfDisable(200)
-		:selfDestruct(10000)
-	]]
 	
 	vehicle:queueLuaCommand('PowerUpExtender.pushForward(-5)')
 	
@@ -162,6 +144,17 @@ M.onTargetSelect = function(data, target_info)
 	
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)
+	
+	Particle("BNGP_51", data.start_pos)
+		:active(true)
+		:selfDisable(math.random(100, 300))
+		:selfDestruct(10000)
+	
+	Particle("BNGP_51", data.start_pos)
+		:active(true)
+		:follow(marker, 100)
+		:selfDisable(80)
+		:selfDestruct(10000)
 	
 	data.projectile = marker
 end

@@ -14,6 +14,8 @@ local PowerUpsTypes = require("libs/extender/Types")
 local GroupReturns = require("libs/extender/GroupReturns")
 local PowerupReturns = require("libs/extender/PowerupReturns")
 
+local createObject = require("libs/ObjectWrapper")
+
 local M = {}
 M.Traits = PowerUpsTraits.Traits
 M.TraitsLookup = Util.tableVToK(M.Traits)
@@ -34,15 +36,15 @@ M.defaultImports = function() -- do not change order
 end
 
 M.defaultPowerupVars = function() -- do not change order
-	-- local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
+	-- local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 	
-	return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles
+	return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject
 end
 
 M.defaultGroupVars = function()
-	-- local Type, onPickup = Extender.defaultGroupVars()
+	-- local Type, onPickup, createObject = Extender.defaultGroupVars()
 	
-	return M.Types, GroupReturns.onPickup
+	return M.Types, GroupReturns.onPickup, createObject
 end
 
 M.defaultPowerupCreator = function(trigger_obj, shape_path, color_point)

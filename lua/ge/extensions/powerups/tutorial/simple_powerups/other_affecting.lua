@@ -1,6 +1,6 @@
 local Extender = require("libs/PowerUpsExtender")
 local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle = Extender.defaultImports()
-local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
+local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 
 --[[
 	In this powerup we are going to put all close cars on ice for 5 seconds!

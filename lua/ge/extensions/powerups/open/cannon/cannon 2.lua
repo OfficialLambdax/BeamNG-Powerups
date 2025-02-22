@@ -1,6 +1,6 @@
 local Extender = require("libs/PowerUpsExtender")
 local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle = Extender.defaultImports()
-local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
+local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 
 local M = {
 	-- Clear name of the powerup
@@ -103,12 +103,6 @@ M.whileActive = function(data, origin_id, dt)
 		
 		M.activate_sound:playVE(origin_id)
 		
-		Particle("BNGP_51", origin_vehicle:getPosition())
-			:active(true)
-			:follow(origin_vehicle, 200)
-			:selfDisable(200)
-			:selfDestruct(10000)
-		
 		origin_vehicle:queueLuaCommand('PowerUpExtender.pushForward(-5)')
 		
 		-- need to return now as we cant give target_info and target_hits back at once
@@ -164,6 +158,17 @@ M.onTargetSelect = function(data, target_info)
 	
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)
+	
+	Particle("BNGP_51", target_info.start_pos)
+		:active(true)
+		:selfDisable(math.random(100, 300))
+		:selfDestruct(10000)
+	
+	Particle("BNGP_51", target_info.start_pos)
+		:active(true)
+		:follow(marker, 100)
+		:selfDisable(80)
+		:selfDestruct(10000)
 	
 	target_info.projectile = marker
 	table.insert(data.projectiles, target_info)

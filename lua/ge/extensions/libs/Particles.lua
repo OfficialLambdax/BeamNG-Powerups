@@ -6,11 +6,10 @@ local Util = require("libs/Util")
 local Log = require("libs/Log")
 local TimedTrigger = require("libs/TimedTrigger")
 local PauseTimer = require("mp_libs/PauseTimer")
+local createObject = require("libs/ObjectWrapper")
 
 local function selfDestruct(self)
-	if self.int.is_deleted then return end
 	self.int.obj:delete()
-	self.int.is_deleted = true
 end
 
 local function selfDisable(self)
@@ -18,7 +17,7 @@ local function selfDisable(self)
 end
 
 local function follow(trigger_name, timer, for_time, self, obj)
-	if timer:stop() >= for_time or self.int.is_deleted then
+	if timer:stop() >= for_time or (obj.isDeleted and obj:isDeleted()) then
 		TimedTrigger.remove(trigger_name)
 		return
 	end
@@ -27,12 +26,12 @@ local function follow(trigger_name, timer, for_time, self, obj)
 end
 
 local function followCallback(trigger_name, timer, for_time, self, obj, callback)
-	if timer:stop() >= for_time or self.int.is_deleted then
+	if timer:stop() >= for_time then
 		TimedTrigger.remove(trigger_name)
 		return
 	end
 	
-	callback(self, vehicle, self.int.obj)
+	callback(self, obj, self.int.obj)
 end
 
 return function(emitter_name, pos_vec, rot_quat)
@@ -55,8 +54,7 @@ return function(emitter_name, pos_vec, rot_quat)
 	obj:registerObject('particle_emitter_' .. Util.randomName())
 	
 	local particle = {int = {
-			obj = obj,
-			is_deleted = false
+			obj = obj
 		}
 	}
 	
@@ -106,36 +104,25 @@ return function(emitter_name, pos_vec, rot_quat)
 	end
 	
 	function particle:delete()
-		if self.int.is_deleted then return end
-		
 		self.int.obj:delete()
-		self.int.is_deleted = true
 	end
 	
 	function particle:velocity(velocity)
-		if self.int.is_deleted then return end
-		
 		self.int.obj:setField("Velocity", 0, velocity)
 		return self
 	end
 	
 	function particle:active(state)
-		if self.int.is_deleted then return end
-		
 		self.int.obj:setActive(state)
 		return self
 	end
 	
 	function particle:setPosition(pos_vec)
-		if self.int.is_deleted then return end
-		
 		self.int.obj:setPosition(pos_vec)
 		return self
 	end
 	
 	function particle:setRotation(rot_quat)
-		if self.int.is_deleted then return end
-		
 		local pos_vec = self.int.obj:getPosition()
 		self.int.obj:setPosRot(
 			pos_vec.x, pos_vec.y, pos_vec.z,

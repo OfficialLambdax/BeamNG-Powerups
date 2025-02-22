@@ -48,6 +48,7 @@ package.loaded["libs/Util"] = nil
 package.loaded["libs/Log"] = nil
 package.loaded["libs/Sounds"] = nil
 package.loaded["libs/Particles"] = nil
+package.loaded["libs/ObjectWrapper"] = nil
 package.loaded["mp_libs/MPUtil"] = nil
 package.loaded["mp_libs/MPClientRuntime"] = nil
 
@@ -239,6 +240,9 @@ end
 M.onClientEndMission = function()
 	PowerUps.unload()
 	ForceField.unload()
+	
+	TimedTrigger.remove("powerups_measurement")
+	TimedTrigger.remove("powerups_dt_measurement")
 	INITIALIZED = false
 end
 
