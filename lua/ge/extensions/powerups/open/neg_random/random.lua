@@ -1,5 +1,5 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle = Extender.defaultImports()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
 local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 
 local M = {
@@ -34,7 +34,7 @@ local M = {
 	
 	-- Add extra variables here if needed. Constants only!
 	sets = {}, -- [1..n] = {name = name, sound = Sound, delay = time}
-	--test = "backwards"
+	test = "disco"
 }
 
 -- Called once when the powerup is loaded
@@ -134,7 +134,7 @@ M.whileActive = function(data, origin_id, dt)
 			set:resetBlock(2000)
 		end
 		
-		if set_def.sound then set_def.sound:smart(origin_id) end
+		if set_def.sound then set_def.sound:smartSFX(origin_id, nil, nil, 20000) end
 		
 		set:exec()
 		

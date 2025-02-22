@@ -1,5 +1,6 @@
 local Log = require("libs/Log")
 local Util = require("libs/Util")
+local Sfx = require("libs/Sfx")
 
 local VALID_EXTENSIONS = Util.tableVToK({"wav", "mp3", "ogg"}) -- not sure what it all accepts yet
 
@@ -41,6 +42,24 @@ return function(file_path, volume, pitch)
 			self:play(volume)
 		else
 			self:playVE(target_id, volume, pitch)
+		end
+	end
+	
+	-- 50 to 250 meter is the default sound effect distance
+	function sound:smartSFX(target_id, volume, distance, max_time)
+		local spectated = getPlayerVehicle(0)
+		if spectated and spectated:getId() == target_id then
+			self:play(volume or self.int.volume)
+		else
+			local target_vehicle = be:getObjectByID(target_id)
+			Sfx(self.int.file_path, target_vehicle:getPosition())
+				:minDistance(distance or 50)
+				:maxDistance((distance or 150) + 100)
+				:is3D(true)
+				:volume(1)
+				:follow(target_vehicle, max_time or 10000)
+				:selfDestruct(max_time or 10000)
+				:spawn()
 		end
 	end
 	
