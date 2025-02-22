@@ -1,6 +1,6 @@
 local Extender = require("libs/PowerUpsExtender")
 local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle = Extender.defaultImports()
-local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
+local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 
 --[[
 	This powerup will spawn a non directed cannon ball out of the front of the vehicle and then check if it collides with any other vehicle.

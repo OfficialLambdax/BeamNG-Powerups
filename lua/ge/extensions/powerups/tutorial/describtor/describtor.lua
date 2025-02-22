@@ -1,6 +1,6 @@
 local Extender = require("libs/PowerUpsExtender")
 local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle = Extender.defaultImports()
-local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
+local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 
 --[[
 	When "vtable" is mentioned it means a table where the data is in the v

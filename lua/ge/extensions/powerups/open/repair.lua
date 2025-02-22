@@ -1,6 +1,6 @@
 local Extender = require("libs/PowerUpsExtender")
 local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle = Extender.defaultImports()
-local Type, onPickup = Extender.defaultGroupVars()
+local Type, onPickup, createObject = Extender.defaultGroupVars()
 
 local M = {
 	-- Name of this group. Must be unique in this Set.

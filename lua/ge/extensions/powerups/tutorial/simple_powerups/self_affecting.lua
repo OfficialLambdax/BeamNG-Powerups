@@ -1,6 +1,6 @@
 local Extender = require("libs/PowerUpsExtender")
 local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle = Extender.defaultImports()
-local Trait, Type, onActivate, whileActive, getAllVehicles = Extender.defaultPowerupVars()
+local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 
 --[[
 	In this powerup example we are going to increase the grip of our vehicle and end it after 1 second.
