@@ -1,3 +1,7 @@
+--[[
+	Adds a wrapper for the particle emitter object of the game (ParticleEmitterNode)
+]]
+
 local Util = require("libs/Util")
 local Log = require("libs/Log")
 local TimedTrigger = require("libs/TimedTrigger")
@@ -20,6 +24,15 @@ local function follow(trigger_name, timer, for_time, self, obj)
 	end
 	
 	self:setPosition(obj:getPosition())
+end
+
+local function followCallback(trigger_name, timer, for_time, self, obj, callback)
+	if timer:stop() >= for_time or self.int.is_deleted then
+		TimedTrigger.remove(trigger_name)
+		return
+	end
+	
+	callback(self, vehicle, self.int.obj)
 end
 
 return function(emitter_name, pos_vec, rot_quat)
@@ -47,7 +60,8 @@ return function(emitter_name, pos_vec, rot_quat)
 		}
 	}
 	
-	function particle:follow(obj, for_time) -- obj must have :getPosition() method and return a vec3
+	-- obj must have :getPosition() method and return a vec3
+	function particle:follow(obj, for_time)
 		local trigger_name = 'particle_follow_' .. Util.randomName()
 		TimedTrigger.new(
 			trigger_name,
@@ -59,6 +73,33 @@ return function(emitter_name, pos_vec, rot_quat)
 			for_time,
 			self,
 			obj
+		)
+		
+		return self
+	end
+	
+	--[[
+		Obj can be any.
+		Callback can have
+			function(
+				self, -- is this class
+				obj, -- the given object
+				emitter -- the unwrapped emitter
+			)
+	]]
+	function particle:followC(obj, for_time, callback)
+		local trigger_name = 'particle_follow_' .. Util.randomName()
+		TimedTrigger.new(
+			trigger_name,
+			0,
+			0,
+			followCallback,
+			trigger_name,
+			PauseTimer.new(),
+			for_time,
+			self,
+			obj,
+			callback
 		)
 		
 		return self

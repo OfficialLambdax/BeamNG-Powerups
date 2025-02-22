@@ -185,7 +185,7 @@ end
 -- Init
 local REGISTERED_EVENTS = false
 M.init = function()
-	if not REGISTERED_EVENTS then
+	if not REGISTERED_EVENTS then -- beammp doing beammp things
 		AddEventHandler("onCompleteReset", onCompleteReset)
 		AddEventHandler("onPowerupActivate", onPowerupActivate)
 		AddEventHandler("onActivePowerupDisable", onActivePowerupDisable)
