@@ -50,7 +50,7 @@ M.onCreate = function(trigger)
 	-- Whatever you return here is given to all other callbacks too. So if you need the trigger, then also add that.
 	return {
 		trigger = trigger,
-		marker = Extender.defaultPowerupCreator(trigger, "art/shapes/collectible/s_collect_medikit.cdae", Point4F(0, 0, 0, 0)),
+		marker = Extender.defaultPowerupCreator(trigger, "art/shapes/collectible/s_marker_BNG.cdae", Point4F(0, 0, 0, 1)),
 		vehicle = nil
 	}
 end

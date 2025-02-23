@@ -38,13 +38,14 @@ local M = {
 	
 	max_projectiles = 5,
 	shoot_downtime = 500,
+	follow_sound = 'sounds/cannonball_flying.ogg',
 }
 
 
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/cannon_light.ogg', 6)
+	M.activate_sound = Sound(M.file_path .. 'sounds/cannon_light.ogg', 3)
 	M.hit_sound = Sound(M.file_path .. 'sounds/hit.ogg', 6)
 end
 
@@ -101,7 +102,7 @@ M.whileActive = function(data, origin_id, dt)
 		
 		data.shoot_timer:stopAndReset()
 		
-		M.activate_sound:playVE(origin_id)
+		M.activate_sound:smartSFX(origin_id)
 		
 		origin_vehicle:queueLuaCommand('PowerUpExtender.pushForward(-5)')
 		
@@ -169,6 +170,16 @@ M.onTargetSelect = function(data, target_info)
 		:follow(marker, 100)
 		:selfDisable(80)
 		:selfDestruct(10000)
+	
+	Sfx(M.file_path .. M.follow_sound, target_info.start_pos)
+		:is3D(true)
+		:volume(1)
+		:minDistance(30)
+		:maxDistance(100)
+		:isLooping(true)
+		:follow(marker)
+		:bind(marker)
+		:spawn()
 	
 	target_info.projectile = marker
 	table.insert(data.projectiles, target_info)

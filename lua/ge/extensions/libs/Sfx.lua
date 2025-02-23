@@ -19,7 +19,7 @@ local function selfDisable(self)
 end
 
 local function follow(trigger_name, timer, for_time, self, obj)
-	if timer:stop() >= for_time or (obj.isDeleted and obj:isDeleted()) then
+	if (for_time > 0 and timer:stop() >= for_time) or (obj.isDeleted and obj:isDeleted()) or self.int.obj:isDeleted() then
 		TimedTrigger.remove(trigger_name)
 		return
 	end
@@ -28,13 +28,28 @@ local function follow(trigger_name, timer, for_time, self, obj)
 end
 
 local function followCallback(trigger_name, timer, for_time, self, obj, callback)
-	if timer:stop() >= for_time then
+	if (for_time > 0 and timer:stop() >= for_time) or self.int.obj:isDeleted() then
 		TimedTrigger.remove(trigger_name)
 		return
 	end
 	
 	callback(self, obj, self.int.obj)
 end
+
+local function bind(trigger_name, self, obj, delete_after)
+	if obj:isDeleted() or self.int.obj:isDeleted() then
+		TimedTrigger.remove(trigger_name)
+		if delete_after > 0 then
+			self:active(false)
+			self:selfDestruct(delete_after)
+		else
+			self:delete()
+		end
+	end
+end
+
+
+
 
 return function(file_path, pos_vec)
 	local obj = createObject("SFXEmitter")
@@ -152,7 +167,7 @@ return function(file_path, pos_vec)
 			follow,
 			trigger_name,
 			PauseTimer.new(),
-			for_time,
+			for_time or 0,
 			self,
 			obj
 		)
@@ -178,10 +193,28 @@ return function(file_path, pos_vec)
 			followCallback,
 			trigger_name,
 			PauseTimer.new(),
-			for_time,
+			for_time or 0,
 			self,
 			obj,
 			callback
+		)
+		
+		return self
+	end
+	
+	-- Requires that the obj has the :isDeleted() method.
+	-- Vehicles dont have that!
+	function sfx:bind(obj, delete_after)
+		local trigger_name = 'sfx_bind_' .. Util.randomName()
+		TimedTrigger.new(
+			trigger_name,
+			0,
+			0,
+			bind,
+			trigger_name,
+			self,
+			obj,
+			delete_after or 0
 		)
 		
 		return self

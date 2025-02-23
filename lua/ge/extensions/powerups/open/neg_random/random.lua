@@ -35,7 +35,7 @@ local M = {
 	-- Add extra variables here if needed. Constants only!
 	sets = {}, -- [1..n] = ~
 	pot = Pot(),
-	--test = "techno",
+	test = "fart",
 }
 
 -- Called once when the powerup is loaded
@@ -78,26 +78,25 @@ M.whileActive = function(data, origin_id, dt)
 		if set_def.delay then set:delayAll(set_def.delay) end
 		if set_def.block_reset and Extender.isSpectating(origin_id) then set:resetBlock(2000) end
 		if set_def.ghost then set:ghost(2000) end
+		set:exec()
 		
 		if set_def.sound then
 			if Extender.isSpectating(origin_id) then
 				set_def.sound:play()
+				
 			else
-				
 				local origin_vehicle = be:getObjectByID(origin_id)
-				
 				Sfx(set_def.sound:getFilePath(), origin_vehicle:getPosition())
 					:minDistance(set_def.min_distance)
 					:maxDistance(set_def.max_distance)
 					:is3D(true)
 					:volume(1)
-					:follow(origin_vehicle, 20000)
-					:selfDestruct(20000)
+					:follow(origin_vehicle, 30000)
+					:selfDestruct(30000)
 					:spawn()
 			end
 		end
 		
-		set:exec()
 		data.running = true
 		data.timer = Timer.new()
 		data.len = set:maxTime()

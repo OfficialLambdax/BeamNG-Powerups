@@ -41,7 +41,7 @@ local M = {
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/shockwave_heavy.ogg', 20)
+	M.activate_sound = Sound(M.file_path .. 'sounds/shockwave_heavy.ogg', 7)
 end
 
 -- Called for each vehicle
@@ -50,7 +50,7 @@ M.onVehicleInit = function(game_vehicle_id) end
 -- When the powerup is activated
 M.onActivate = function(vehicle)
 	local vehicle_id = vehicle:getId()
-	M.activate_sound:smart(vehicle_id)
+	M.activate_sound:smartSFX(vehicle_id)
 	
 	Particle("BNGP_32", vehicle:getPosition())
 		:active(true)

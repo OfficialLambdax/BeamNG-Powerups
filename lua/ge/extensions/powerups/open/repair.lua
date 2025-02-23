@@ -7,7 +7,7 @@ local M = {
 	name = "repair",
 	
 	-- Define general type of this group. Decides over where this powerup is spawned in the world.
-	type = Type.Undefined,
+	type = Type.Utility,
 	
 	-- Define the level hirachy of this group
 	-- {"powerup 1", "powerup N"}
@@ -46,8 +46,8 @@ M.onCreate = function(trigger)
 	return {
 		marker = Extender.defaultPowerupCreator(
 			trigger,
-			"art/shapes/collectible/s_collect_gear.cdae",
-			Point4F(1, 1, 0, 1)
+			"art/shapes/collectible/s_collect_medikit.cdae",
+			Point4F(0, 1, 0, 1)
 		)
 	}
 end

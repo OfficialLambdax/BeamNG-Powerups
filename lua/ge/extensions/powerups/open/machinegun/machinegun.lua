@@ -44,7 +44,7 @@ local M = {
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/machinegun.ogg', 6)
+	M.activate_sound = Sound(M.file_path .. 'sounds/machinegun.ogg', 2)
 end
 
 -- Called for each vehicle
@@ -54,7 +54,7 @@ end
 
 -- When the powerup is activated
 M.onActivate = function(vehicle)
-	M.activate_sound:playVE(vehicle:getId())
+	M.activate_sound:smartSFX(vehicle:getId())
 	return onActivate.Success({projectiles = {}, shoot_timer = hptimer(), shot_projectiles = 0})
 end
 
@@ -115,7 +115,7 @@ M.whileActive = function(data, origin_id, dt)
 		projectile.projectile:setPosRot(new_pos.x, new_pos.y, new_pos.z, 0, 0, 0, 0)
 		
 		-- check collision
-		local new_hit = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 1, origin_id)
+		local new_hit = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 2, origin_id)
 		Extender.cleanseTargetsWithTraits(new_hit, origin_id, Trait.Ghosted)
 		if #new_hit > 0 then
 			Util.tableArrayMerge(target_hits, new_hit)
@@ -158,6 +158,16 @@ M.onTargetSelect = function(data, target_info)
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)
 	
+	Sfx(M.file_path .. 'sounds/bullet_flying2.ogg', target_info.start_pos)
+		:is3D(true)
+		:volume(0.1)
+		:minDistance(5)
+		:maxDistance(20)
+		:isLooping(true)
+		:follow(marker)
+		:bind(marker)
+		:spawn()
+	
 	target_info.projectile = marker
 	table.insert(data.projectiles, target_info)
 	
@@ -186,7 +196,12 @@ M.onHit = function(data, origin_id, target_id)
 	local spin = target_vehicle:getDirectionVectorUp():normalized() * 1.5
 	target_vehicle:queueLuaCommand(string.format("PowerUpExtender.addAngularVelocity(0, 0, 0, %d, %d, %d)", spin.x, spin.y, spin.z))
 	
-	--target_vehicle:queueLuaCommand('PowerUpSounds.playSound("' .. M.hit_sound .. '")')
+	Sfx(M.file_path .. 'sounds/bullet_impact_heavy.ogg', target_pos)
+		:is3D(true)
+		:minDistance(5)
+		:maxDistance(10)
+		:selfDestruct(1000)
+		:spawn()
 end
 
 -- When the powerup is destroyed. eg when the vehicle is deleted or the powerup ended
