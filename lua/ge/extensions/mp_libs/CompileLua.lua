@@ -1,6 +1,8 @@
 --[[
 	This performs a pattern search on powerup files and all its imports to find potentially malicious code.
 	Server side only
+	
+	DISABLED ATM
 ]]
 
 local M = {}
@@ -207,8 +209,13 @@ local function checkFile(file_path)
 end
 
 M.compileLua = function(file_path)
-	local contents, err = checkFile(file_path)
-	if contents == nil then return nil, err end
+	--local contents, err = checkFile(file_path)
+	--if contents == nil then return nil, err end
+	
+	local handle = io.open(file_path, 'r')
+	if handle == nil then return end
+	local contents = handle:read("*all")
+	handle:close()
 	
 	local lua, err = load(contents)
 	if err then return nil, err end
