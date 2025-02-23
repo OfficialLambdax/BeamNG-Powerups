@@ -35,7 +35,7 @@ local M = {
 	-- Add extra variables here if needed. Constants only!
 	sets = {}, -- [1..n] = ~
 	pot = Pot(),
-	test = "fart",
+	--test = "fart",
 }
 
 -- Called once when the powerup is loaded
