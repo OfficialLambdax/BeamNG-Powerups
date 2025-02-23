@@ -122,5 +122,9 @@ return function(file_path, volume, pitch)
 		end
 	end
 	
+	function sound:getFilePath()
+		return self.int.file_path
+	end
+	
 	return sound
 end

@@ -33,60 +33,24 @@ local M = {
 	file_path = "",
 	
 	-- Add extra variables here if needed. Constants only!
-	sets = {}, -- [1..n] = {name = name, sound = Sound, delay = time}
-	test = "disco"
+	sets = {}, -- [1..n] = ~
+	pot = Pot(),
+	--test = "techno",
 }
 
 -- Called once when the powerup is loaded
 M.onInit = function(group_defs)
-	-- PowerUps.sets.loadSet("lua/ge/extensions/powerups/open/neg_random/sets/explosion_simple.lua", "test"); PowerUps.sets.getSet("test"):this():exec()
-	local try_sets = {
-		-- set filenname, sound filename, set delay if sound takes a bit, volume if needed
-		{"explosion_simple", "fbi_open_up.mp3", 2600},
-		{"ice", "ice_ice_baby.mp3", 0, 5},
-		{"moveit", "move_it.mp3", 100, 5},
-		{"flashbang", "flashbang.mp3", 2000},
-		{"spin", "spin_me_right_round.mp3", 300},
-		{"disco", "bad_lil_kiddies.ogg"},
-		{"backflip", "do_a_flip.ogg", 5200},
-		{"backwards", "burp.ogg", 200, 1},
-		{"blind", "legally_blind.ogg", 1000, 5},
-		{"jinxed", "gorillaz.ogg", 2600},
-		{"change_camera", "underwater_poop.ogg", nil, 2},
-		{"explosion_cool", "big_bang.ogg", 8000, 5},
-		{"barrelroll_multi", "barrelroll_multi.ogg", 500},
-		{"clutch", nil},
-		{"gravity_moon", nil},
-		{"handbrake", nil},
-		{"horn", nil},
-		{"ignition", nil},
-		{"lights_toggle", nil},
-		{"lookback_short", nil},
-		{"rotatecam_short", nil},
-		{"small_jump", nil},
-		{"steer_right", nil},
-		{"warning_signal", nil},
-		{"barrelroll", nil},
-	}
-	
-	for _, set in ipairs(try_sets) do
-		if not Sets.loadSet(M.file_path .. 'sets/' .. set[1] .. '.lua', set[1]) then
-			Log.error('Cannot load set file for "' .. set[1] .. '"')
-		else
-			
-			local sound = nil
-			if set[2] then
-				sound = Sound(M.file_path .. 'sounds/' .. set[2], set[4] or 3)
-				if sound == nil then
-					Log.error('Cannot load sound for "' .. set[1] .. '"')
-				end
+	package.loaded[M.file_path .. 'defs/all'] = nil -- required to reload
+	local randoms = require(M.file_path .. 'defs/all')
+	for _, set_def in ipairs(randoms) do
+		if set_def.file ~= nil then
+			Sets.loadSet(M.file_path .. 'sets/' .. set_def.file .. '.lua', set_def.file)
+			if set_def.sound then
+				set_def.sound = Sound(M.file_path .. 'sounds/' .. set_def.sound, set_def.volume)
 			end
 			
-			table.insert(M.sets, {
-				name = set[1],
-				sound = sound,
-				delay = set[3] or 0
-			})
+			M.sets[set_def.file] = set_def
+			M.pot:add(set_def, set_def.probability)
 		end
 	end
 end
@@ -97,47 +61,43 @@ M.onVehicleInit = function(game_vehicle_id) end
 -- Called once the powerup is activated by a vehicle
 -- Vehicle = game vehicle
 M.onActivate = function(vehicle)
-	local _, set_def = Util.tablePickRandom(M.sets)
-	if set_def == nil then
-		return onActivate.Error('There are no sets available')
-	end
+	local set_def = M.sets[M.test] or M.pot:stir(5):surprise()
+	if set_def == nil then return onActivate.Error('There are no sets available') end
 	
-	if M.test then
-		for _, set in ipairs(M.sets) do
-			if set.name == M.test then
-				set_def = set
-				break
-			end
-		end
-	end
-	
-	return onActivate.TargetInfo({}, {set_name = set_def.name})
+	return onActivate.TargetInfo({}, {file = set_def.file})
 end
 
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, origin_id, dt)
-	if not data.set_name then return whileActive.Continue() end
+	if data.set_def == nil then return whileActive.Continue() end
 	
 	if not data.running then
-		local set_def
-		for _, set in ipairs(M.sets) do
-			if set.name == data.set_name then
-				set_def = set
-				break
+		local set_def = data.set_def
+		local set = Sets.getSet(set_def.file):VETarget(origin_id)
+		
+		if set_def.delay then set:delayAll(set_def.delay) end
+		if set_def.block_reset and Extender.isSpectating(origin_id) then set:resetBlock(2000) end
+		if set_def.ghost then set:ghost(2000) end
+		
+		if set_def.sound then
+			if Extender.isSpectating(origin_id) then
+				set_def.sound:play()
+			else
+				
+				local origin_vehicle = be:getObjectByID(origin_id)
+				
+				Sfx(set_def.sound:getFilePath(), origin_vehicle:getPosition())
+					:minDistance(set_def.min_distance)
+					:maxDistance(set_def.max_distance)
+					:is3D(true)
+					:volume(1)
+					:follow(origin_vehicle, 20000)
+					:selfDestruct(20000)
+					:spawn()
 			end
 		end
-		if not set_def then return whileActive.Stop() end
-		
-		local set = Sets.getSet(set_def.name):delayAll(set_def.delay):VETarget(origin_id)
-		
-		if Extender.isSpectating(origin_id) then
-			set:resetBlock(2000)
-		end
-		
-		if set_def.sound then set_def.sound:smartSFX(origin_id, nil, nil, 20000) end
 		
 		set:exec()
-		
 		data.running = true
 		data.timer = Timer.new()
 		data.len = set:maxTime()
@@ -152,8 +112,11 @@ end
 
 -- When the powerup selected one or multiple targets or just shared target_info
 M.onTargetSelect = function(data, target_info)
-	data.set_name = target_info.set_name
-	Log.info('Selected "' .. data.set_name .. '"')
+	local set_def = M.sets[target_info.file]
+	if set_def == nil then return end
+	
+	data.set_def = set_def
+	Log.info('Selected "' .. set_def.file .. '"')
 end
 
 -- When a target was hit, only called on players spectating origin_id
