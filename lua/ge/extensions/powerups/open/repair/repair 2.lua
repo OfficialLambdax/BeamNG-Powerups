@@ -33,12 +33,26 @@ local M = {
 	file_path = "",
 	
 	-- Add extra variables here if needed. Constants only!
-	activate_sound = nil,
+	sounds = {},
+	pot = Pot(),
 }
 
 -- Called once when the powerup is loaded
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/awhwhwhwww.ogg', 5)
+	local sounds = {
+		-- file, volume, probability
+		{"awhwhwhwww.ogg", 5, 1},
+		{"hexhex.ogg", 4, 3},
+		{"repairing.ogg", 4, 5},
+	}
+	
+	for _, sound in ipairs(sounds) do
+		local soundObj = Sound(M.file_path .. 'sounds/' .. sound[1], sound[2])
+		if soundObj then
+			M.sounds[sound[1]] = soundObj
+			M.pot:add(sound[1], sound[3])
+		end
+	end
 end
 
 -- Called every time a vehicle is spawned or reloaded
@@ -47,7 +61,6 @@ M.onVehicleInit = function(game_vehicle_id) end
 -- Called once the powerup is activated by a vehicle
 -- Vehicle = game vehicle
 M.onActivate = function(vehicle)
-	M.activate_sound:smart(vehicle:getId())
 	local pos = vehicle:getPosition()
 	local rot = Extender.getVehicleRotation(vehicle)
 	vehicle:setPositionRotation(pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w)
@@ -67,16 +80,27 @@ M.onActivate = function(vehicle)
 		vehicle:getVelocity()
 	)
 	
-	return onActivate.Success()
+	return onActivate.TargetInfo(
+		{played = false, origin_id = vehicle:getId()},
+		{sound_name = M.pot:stir(5):surprise()}
+	)
 end
 
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, origin_id, dt)
-	return whileActive.Stop()
+	if data.played then return whileActive.Stop() end
+	return whileActive.Continue()
 end
 
 -- When the powerup selected one or multiple targets or just shared target_info
-M.onTargetSelect = function(data, target_info) end
+M.onTargetSelect = function(data, target_info)
+	data.played = true
+	
+	local sound = M.sounds[target_info.sound_name]
+	if sound then
+		sound:smart(data.origin_id)
+	end
+end
 
 -- When a target was hit, only called on players spectating origin_id
 M.onTargetHit = function(data, origin_id, target_id) end

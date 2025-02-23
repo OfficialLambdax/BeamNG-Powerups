@@ -7,7 +7,7 @@ local M = {
 	-- Create folder of the same name in this directory containing all the powerups
 	name = "countermeasure",
 	
-	type = Type.Defensive,
+	type = Type.Handicapping,
 	
 	-- eg {"ForwardShot1", "ForwardShot2", "ForwardShot3"}
 	-- Resolves to the file names in the group folder. Where
@@ -50,7 +50,7 @@ M.onCreate = function(trigger)
 	-- Whatever you return here is given to all other callbacks too. So if you need the trigger, then also add that.
 	return {
 		trigger = trigger,
-		marker = Extender.defaultPowerupCreator(trigger, "art/shapes/collectible/s_collect_wrenchkit.cdae", Point4F(0, 0, 1, 1)),
+		marker = Extender.defaultPowerupCreator(trigger, "art/shapes/collectible/s_collect_wrenchkit.cdae", Point4F(1, 0, 1, 1)),
 		vehicle = nil
 	}
 end

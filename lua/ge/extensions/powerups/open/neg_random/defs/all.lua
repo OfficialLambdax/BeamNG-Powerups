@@ -17,9 +17,9 @@ table.insert(randoms, {
 	volume = 3,
 	block_reset = true,
 	ghost = false,
-	minDistance = 50,
+	minDistance = 100,
 	maxDistance = 250,
-	probability = 5,
+	probability = 3,
 })
 table.insert(randoms, {
 	file = "ice",
@@ -254,7 +254,7 @@ table.insert(randoms, {
 })
 table.insert(randoms, {
 	file = "small_jump",
-	sound = nil,
+	sound = "jump.ogg",
 	delay = nil,
 	volume = 3,
 	block_reset = true,
@@ -276,7 +276,7 @@ table.insert(randoms, {
 })
 table.insert(randoms, {
 	file = "warning_signal",
-	sound = nil,
+	sound = "ALARM.ogg",
 	delay = nil,
 	volume = 3,
 	block_reset = true,
@@ -289,6 +289,28 @@ table.insert(randoms, {
 	file = "barrelroll",
 	sound = nil,
 	delay = nil,
+	volume = 3,
+	block_reset = true,
+	ghost = false,
+	minDistance = 50,
+	maxDistance = 250,
+	probability = 5,
+})
+table.insert(randoms, {
+	file = "sneeze",
+	sound = "multi_sneeze.ogg",
+	delay = 100,
+	volume = 3,
+	block_reset = true,
+	ghost = false,
+	minDistance = 50,
+	maxDistance = 250,
+	probability = 5,
+})
+table.insert(randoms, {
+	file = "fart",
+	sound = "fart.mp3",
+	delay = 4600,
 	volume = 3,
 	block_reset = true,
 	ghost = false,
