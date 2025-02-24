@@ -94,7 +94,7 @@ M.whileActive = function(data, origin_id, dt)
 		end
 		
 		local target_info = {
-			target_dir = target_dir,
+			target_dir = MathUtil.disperseVec(target_dir, 1.5),
 			start_pos = MathUtil.getPosInFront(veh_pos, veh_dir, 2),
 			init_vel = MathUtil.velocity(origin_vehicle:getVelocity())
 		}
@@ -206,7 +206,7 @@ M.onHit = function(data, origin_id, target_id)
 	Sfx(M.file_path .. 'sounds/bullet_impact.ogg', target_pos)
 		:is3D(true)
 		:minDistance(5)
-		:maxDistance(10)
+		:maxDistance(20)
 		:selfDestruct(1000)
 		:spawn()
 end

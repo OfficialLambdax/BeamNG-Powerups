@@ -562,6 +562,14 @@ function onPlayerDisconnected(player_id)
 	for vehicle_id, _ in ipairs(MP.GetPlayerVehicles(player_id) or {}) do
 		onVehicleDeleted(player_id, vehicle_id)
 	end
+	
+	-- Manual because "GetPlayerVehicles" for some reason doesnt know all vehicles that this player had spawned on disconnect. Needs investigating
+	for server_vehicle_id, _ in pairs(VEHICLES) do
+		if MPUtil.getPlayerIDFromServerID(server_vehicle_id) == player_id then
+			VEHICLES[server_vehicle_id] = nil
+		end
+	end
+	
 	TriggerClientEvent:remove(player_id)
 end
 

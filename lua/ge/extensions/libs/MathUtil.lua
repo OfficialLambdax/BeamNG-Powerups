@@ -205,5 +205,13 @@ M.rotateVectorByDegrees = function(for_vec, up_vec, degrees) -- where degree is
 	)
 end
 
+M.disperseVec = function(dir_vec, strength)
+	dir_vec = dir_vec:normalized()
+	dir_vec.x = dir_vec.x + (math.random(0 - strength, 0 + strength) / 100)
+	dir_vec.y = dir_vec.y + (math.random(0 - strength, 0 + strength) / 100)
+	dir_vec.z = dir_vec.z + (math.random(0 - strength, 0 + strength) / 100)
+	return dir_vec
+end
+
 
 return M

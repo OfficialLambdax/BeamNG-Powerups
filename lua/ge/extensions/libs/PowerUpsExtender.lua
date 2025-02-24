@@ -33,6 +33,38 @@ M.defaultImports = function() -- do not change order
 	-- local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
 
 	return require("libs/PowerUps"), require("libs/Util"), require("libs/Sets"), require("libs/Sounds"), require("libs/MathUtil"), require("libs/Pot"), require("libs/Log"), require("libs/TimedTrigger"), require("libs/CollisionsLib"), require("mp_libs/MPUtil"), require("mp_libs/PauseTimer"), require("libs/Particles"), require("libs/Sfx")
+	
+	--[[
+		Lib = libs/PowerUps.lua
+			The main framework
+		Util = libs/Util.lua
+			Adds convenience functions like tableMerge, better math random etc.
+		Sets = libs/Sets.lua
+			Wrapper for the TimedTrigger lib that allows to configure trigger sets
+		Sound = libs/Sounds.lua
+			Wrapper for the games sound engine to play sounds in GE or on vehicle targets
+		MathUtil = libs/MathUtil.lua
+			Adds things like "get me all vehicles inside this radius but not mine", "create a box in front of me and tell me the vehicles inside it", "rotate this vector for me" etc
+		Pot = libs/Pot.lua
+			Adds probability based randomization
+		Log = libs/Log.lua
+			Log.info("some info", "name", true/false for stack trace print)
+			Log.info("some info")
+				will print -> GELua.libs_Log.FileName@FunctionName			Some Info
+				eg		   -> GeLua.libs_Log.PowerUps@vehicleAddPowerup		PowerUp: 73534 picked up cannon
+		TimedTrigger = libs/TimedTrigger.lua
+			Library to que things like routines, things to be run after X time or just for the next frame.
+		Collision = libs/Collision.lua
+			Can tell you if the given vehicle has a collision with another vehicle. Mostly untested and completly unused so far.
+		MPUtil
+		
+		Timer
+		
+		Particle
+		
+		Sfx
+			
+	]]
 end
 
 M.defaultPowerupVars = function() -- do not change order
