@@ -553,14 +553,14 @@ function onVehicleSpawn(player_id, vehicle_id, data)
 end
 
 function onVehicleDeleted(player_id, vehicle_id)
-	Log.info('Deleted vehicle from "' .. MP.GetPlayerName(player_id) .. '"')
+	Log.info('Deleted vehicle ' .. player_id .. '-' .. vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '"')
 	PowerUps.onVehicleDestroyed(player_id .. '-' .. vehicle_id)
 end
 
 function onPlayerDisconnected(player_id)
 	Log.info('Player "' .. MP.GetPlayerName(player_id) .. '" disconnected')
-	for _, vehicle_id in ipairs(MP.GetPlayerVehicles(player_id) or {}) do
-		PowerUps.onVehicleDestroyed(player_id .. '-' .. vehicle_id)
+	for vehicle_id, _ in ipairs(MP.GetPlayerVehicles(player_id) or {}) do
+		onVehicleDeleted(player_id, vehicle_id)
 	end
 	TriggerClientEvent:remove(player_id)
 end

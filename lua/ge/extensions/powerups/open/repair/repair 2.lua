@@ -11,7 +11,7 @@ local M = {
 	
 	-- Configure traits of this powerup
 	-- {Trait.Consuming, Trait.Reflective}
-	traits = {},
+	traits = {Trait.Ghosted},
 	
 	-- Must match the libs version name. If it doesnt, this powerup group is considered out of date
 	-- dump(Lib.getLibVersion())
