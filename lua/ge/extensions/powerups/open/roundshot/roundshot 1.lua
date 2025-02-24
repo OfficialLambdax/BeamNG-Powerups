@@ -44,7 +44,7 @@ local M = {
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/roundshot_1_double.ogg', 6)
+	M.activate_sound = Sound(M.file_path .. 'sounds/roundshot_1_double.ogg', 3)
 	M.hit_sound = Sound(M.file_path .. 'sounds/energy_bullet_hit.ogg', 6)
 end
 
@@ -55,7 +55,7 @@ end
 
 -- When the powerup is activated
 M.onActivate = function(vehicle)
-	M.activate_sound:playVE(vehicle:getId())
+	M.activate_sound:smartSFX(vehicle:getId())
 	return onActivate.Success({
 		projectiles = {},
 		shoot_timer = hptimer(),
@@ -146,6 +146,21 @@ M.onTargetSelect = function(data, target_info)
 	
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)
+	
+	Sfx(M.file_path .. 'sounds/bullet_flying.ogg', target_info.start_pos)
+		:bind(marker):follow(marker)
+		:is3D(true)
+		:volume(0.3)
+		:minDistance(5)
+		:maxDistance(15)
+		:isLooping(true)
+		:spawn()
+	
+	Particle("BNGP_27", target_info.start_pos)
+		:active(true)
+		:velocity(0)
+		:follow(marker)
+		:bind(marker)
 	
 	target_info.projectile = marker
 	table.insert(data.projectiles, target_info)

@@ -266,7 +266,7 @@ M.ghostVehicleAutoUnghost = function(vehicle, time)
 	vehicle:queueLuaCommand('obj:setGhostEnabled(true)')
 	vehicle:setMeshAlpha(0.5, "", false)
 	
-	local trigger_name = 'extender_unghost_' .. Util.randomName()
+	local trigger_name = TimedTrigger.getUnused('extender_unghost')
 	TimedTrigger.new(
 		trigger_name,
 		time,
