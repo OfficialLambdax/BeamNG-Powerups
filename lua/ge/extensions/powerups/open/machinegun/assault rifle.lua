@@ -73,7 +73,7 @@ M.whileActive = function(data, origin_id, dt)
 	if data.shot_projectiles < M.max_projectiles and #data.projectiles < M.max_projectiles and data.shoot_timer:stop() > M.shoot_downtime then
 		local origin_vehicle = be:getObjectByID(origin_id)
 		local veh_dir = origin_vehicle:getDirectionVector()
-		veh_dir.z = 0
+		veh_dir.z = veh_dir.z + 0.01
 		
 		local veh_pos = origin_vehicle:getPosition()
 		veh_pos.z = veh_pos.z + 0.5

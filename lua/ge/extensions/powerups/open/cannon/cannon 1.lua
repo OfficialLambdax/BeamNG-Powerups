@@ -54,7 +54,7 @@ end
 -- When the powerup is activated
 M.onActivate = function(vehicle)
 	local veh_dir = vehicle:getDirectionVector()
-	veh_dir.z = 0
+	veh_dir.z = veh_dir.z + 0.01
 	
 	local veh_pos = vehicle:getPosition()
 	veh_pos.z = veh_pos.z + 0.5
