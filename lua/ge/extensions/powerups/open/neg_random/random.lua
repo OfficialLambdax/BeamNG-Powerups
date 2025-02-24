@@ -20,7 +20,7 @@ local M = {
 	-- Server related below
 	
 	-- Define the maximum length this powerup is active. The server will end it after this time.
-	max_len = 20000,
+	max_len = 30000,
 	
 	-- TODO
 	target_info_descriptor = nil,

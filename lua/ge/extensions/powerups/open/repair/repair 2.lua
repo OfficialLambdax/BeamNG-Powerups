@@ -20,7 +20,7 @@ local M = {
 	-- Server related below
 	
 	-- Define the maximum length this powerup is active. The server will end it after this time.
-	max_len = 1000,
+	max_len = 5000,
 	
 	-- TODO
 	target_info_descriptor = nil,
@@ -81,14 +81,18 @@ M.onActivate = function(vehicle)
 	)
 	
 	return onActivate.TargetInfo(
-		{played = false, origin_id = vehicle:getId()},
+		{
+			played = false,
+			origin_id = vehicle:getId(),
+			timer = Timer.new()
+		},
 		{sound_name = M.pot:stir(5):surprise()}
 	)
 end
 
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, origin_id, dt)
-	if data.played then return whileActive.Stop() end
+	if data.played and data.timer:stop() > M.max_len then return whileActive.Stop() end
 	return whileActive.Continue()
 end
 
@@ -116,5 +120,6 @@ M.onUnload = function(data) end
 
 M.onLoad = function(data) end
 
+M[Trait.Ghosted] = function(data, origin_id, target_id) end
 
 return M
