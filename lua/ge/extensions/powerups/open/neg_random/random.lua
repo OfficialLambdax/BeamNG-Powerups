@@ -35,7 +35,7 @@ local M = {
 	-- Add extra variables here if needed. Constants only!
 	sets = {}, -- [1..n] = ~
 	pot = Pot(),
-	--test = "fart",
+	--test = "techno",
 }
 
 -- Called once when the powerup is loaded
@@ -87,8 +87,8 @@ M.whileActive = function(data, origin_id, dt)
 			else
 				local origin_vehicle = be:getObjectByID(origin_id)
 				Sfx(set_def.sound:getFilePath(), origin_vehicle:getPosition())
-					:minDistance(set_def.min_distance)
-					:maxDistance(set_def.max_distance)
+					:minDistance(set_def.minDistance)
+					:maxDistance(set_def.maxDistance)
 					:is3D(true)
 					:volume(1)
 					:follow(origin_vehicle, 30000)
