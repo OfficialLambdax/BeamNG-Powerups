@@ -1,8 +1,6 @@
-
-local PowerUps = require("libs/PowerUps")
-local Util = require("libs/Util")
 local Extender = require("libs/PowerUpsExtender")
-local Type = Extender.Types
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
+local Type, onPickup, createObject = Extender.defaultGroupVars()
 
 local M = {
 	-- Any name eg "ForwardShot". No duplicates with others of this Set.
@@ -14,18 +12,18 @@ local M = {
 	-- eg {"ForwardShot1", "ForwardShot2", "ForwardShot3"}
 	-- Resolves to the file names in the group folder. Where
 	-- eg ForwardShot1 is level 1, ForwardShot2 is level 2 .. etc
-	leveling = {"barrelroll", "jinxed", "rem1charge"},
+	leveling = {"random"},
 	
 	-- The powerup stays visible at default
 	-- If the spectator is to far away from it it will not render except this is true
 	-- Will prevent whileActive and whilePickup calls
 	do_not_unload = false,
 	
-	probability = 3,
+	probability = 4,
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "mp_init",
+	lib_version = "enums",
 	
 	-- Max levels. autofilled
 	max_levels = 0,
@@ -52,7 +50,7 @@ M.onCreate = function(trigger)
 	-- Whatever you return here is given to all other callbacks too. So if you need the trigger, then also add that.
 	return {
 		trigger = trigger,
-		marker = Extender.defaultPowerupCreator(trigger, "art/shapes/collectible/s_collect_medikit.cdae", Point4F(0, 0, 0, 0)),
+		marker = Extender.defaultPowerupCreator(trigger, "art/shapes/collectible/s_marker_BNG.cdae", Point4F(0, 0, 0, 1)),
 		vehicle = nil
 	}
 end
@@ -76,15 +74,7 @@ M.onPickup = function(data, vehicle)
 	data.vehicle = vehicle
 	M.onDespawn(data)
 	
-	return 4, true
-	--[[
-		Return Values
-			nil = pickup fails. current powerup wont be dropped, this one not picked up
-			1 = success
-			2 = will drop the current powerup, consume this one but not pick it up
-			3 = Reserved for charges
-			4 = Reserved for negatives
-	]]
+	return onPickup.Success()
 end
 
 -- While the powerup is in someones inventory. Can have it hover above the vehicle or play sounds.

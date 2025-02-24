@@ -8,13 +8,12 @@ New
 	- Add shield 4 that is charge based
 	- Negative that activates current powerup in the vehicle inv immediatly
 	- Add funny sounds to negatives
+	- Health Powerup
 
 -- -------------------------------------------------------------------------------------------------
 -- Libs
 PowerupExtender
 	- Add hasTraitButNot(target_id, has, butnot) variants for multi targets, hastraits and butnottraits
-	- Add getAllVehicles() function that only returns enabled vehicles and fully integrate it everywhere
-		This would fix any kind of wrong targeting and hitting on vehicles that are disabled (eg traffic vehicles)
 
 PowerupsLib
 	- Auto remove undefined Traits

@@ -70,7 +70,7 @@ local function getSettings()
 			AutoLoad = "If you want the Server to auto load locations and a powerup set on startup",
 			Locations = 'The name of the location file found in /prefabs.\nAs eg "utah". This will results in utah.prefab.json\nIf left empty it will auto select a prefab that is available for the loaded map',
 			PowerupSet = 'The name of the Powerup set found in /powerups.\nIf left empty it will auto load the "open" set',
-			PopupPath = 'Path to the popup you want to show to the player after they joined. The popups content is send to the client.',
+			PopupPath = 'Path to the popup you want to show to the player after they joined. The popups content is send to the client. Leave empty to show none.',
 		},
 		PowerUps = {
 			["#"] = "This defines Powerup Settings",

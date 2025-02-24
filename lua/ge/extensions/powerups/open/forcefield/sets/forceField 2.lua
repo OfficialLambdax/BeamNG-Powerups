@@ -1,4 +1,6 @@
 local ForceField = require("libs/ForceField")
+local Extender = require("libs/PowerUpsExtender")
+local Trait = Extender.Traits
 
 local function randomName()
 	return tostring({}):sub(8) -- dont ask, its quick n easy to just use a memory address xD
@@ -18,7 +20,6 @@ local function createMarker(radius, origin_vehicle)
 	return marker
 end
 
--- You can overwrite this function if your marker needs custom handling
 local function updateMarker(origin_vehicle, settings)
 	local bounding_box = origin_vehicle:getSpawnWorldOOBB()
 	local center = bounding_box:getCenter()
@@ -57,6 +58,7 @@ local function destroyMarker(marker)
 end
 
 local function onDefaultForceFieldReaction(origin_vehicle, target_vehicle, settings)
+	if Extender.hasTrait(target_vehicle:getId(), Trait.Ghosted) then return end
 	local vel1 = origin_vehicle:getVelocity()
 	local vel2 = target_vehicle:getVelocity()
 	

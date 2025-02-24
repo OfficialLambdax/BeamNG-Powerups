@@ -38,13 +38,19 @@ package.loaded["libs/Sets"] = nil
 package.loaded["libs/ForceField"] = nil
 package.loaded["libs/PowerUps"] = nil
 package.loaded["libs/PowerUpsExtender"] = nil
-package.loaded["libs/PowerUpsTraits"] = nil
-package.loaded["libs/PowerUpsTypes"] = nil
+package.loaded["libs/extender/PowerUpsTraits"] = nil
+package.loaded["libs/extender/PowerUpsTypes"] = nil
+package.loaded["libs/extender/GroupReturns"] = nil
+package.loaded["libs/extender/PowerupReturns"] = nil
 package.loaded["libs/TriggerLoad"] = nil
 package.loaded["libs/MathUtil"] = nil
 package.loaded["libs/Util"] = nil
 package.loaded["libs/Log"] = nil
 package.loaded["libs/Sounds"] = nil
+package.loaded["libs/Particles"] = nil
+package.loaded["libs/Sfx"] = nil
+package.loaded["libs/Pot"] = nil
+package.loaded["libs/ObjectWrapper"] = nil
 package.loaded["mp_libs/MPUtil"] = nil
 package.loaded["mp_libs/MPClientRuntime"] = nil
 
@@ -54,6 +60,9 @@ local Sets = require("libs/Sets")
 local ForceField = require("libs/ForceField")
 local PowerUps = require("libs/PowerUps")
 local MPUtil = require("mp_libs/MPUtil")
+local PauseTimer = require("mp_libs/PauseTimer")
+local Log = require("libs/Log")
+local Util = require("libs/Util")
 
 local M = {}
 local INITIALIZED = false
@@ -62,12 +71,14 @@ local TRIGGER_ADJUST = false
 
 --[[
 	Notes
-		extensions.reload("DoNotTouch")
-		DoNotTouch.pu.loadPowerUpDefs("lua/ge/extensions/powerups/open")
-		DoNotTouch.pu.loadLocationPrefab("lua/ge/extensions/prefabs/test4.prefab.json")
-		DoNotTouch.pu.loadLocationPrefab("lua/ge/extensions/prefabs/west_coast_usa.prefab.json")
-		DoNotTouch.pu.testExec(29756, "forcefield", 1)
-		DoNotTouch.pu.testExec(29761, "forthshot", 1)
+		extensions.reload("PowerUps")
+		PowerUps.pu.loadPowerUpDefs("lua/ge/extensions/powerups/open")
+		PowerUps.pu.loadLocationPrefab("lua/ge/extensions/prefabs/test4.prefab.json")
+		PowerUps.pu.loadLocationPrefab("lua/ge/extensions/prefabs/west_coast_usa.prefab.json")
+		PowerUps.pu.testExec(29756, "forcefield", 1)
+		PowerUps.pu.testExec(29761, "forthshot", 1)
+		
+		PowerUps.sets.loadSet("lua/ge/extensions/sets/test.lua", "test"); PowerUps.sets.getSet("test"):this():exec()
 		
 		-- Collision lib
 		local veh = getPlayerVehicle(0)
@@ -78,6 +89,121 @@ local TRIGGER_ADJUST = false
 			end
 		end
 ]]
+
+-- ----------------------------------------------------------------------------
+-- For debug
+M.displayClientState = function(show)
+	local vehicles = PowerUps.getKnownVehicleCount()
+	local triggers = TimedTrigger.count()
+	local reuse = TimedTrigger.getReuseCount()
+	local spawned = PowerUps.getTotalSpawnedPowerups()
+	local owned = PowerUps.getTotalOwnedPowerups()
+	local active = PowerUps.getTotalActivePowerups()
+	local locations = PowerUps.getTotalLocations()
+	local rotation = math.floor(PowerUps.getRotationTime() / 1000)
+	local rotation_routine = PowerUps.getRotationRoutineTime()
+	local restock = math.floor(PowerUps.getRestockTime() / 1000)
+	
+	local info = string.format([[
+	General   _
+		Triggers        : %s		Reuse   : %s
+		Vehicles        : %s
+	Locations _
+		Total           : %s
+		Restock Time    : %s s
+		Rotation        : %s s
+		Rotation Routine: %s ms
+	Powerups  _
+		Spawned         : %s
+		Owned           : %s
+		Active          : %s
+	List      _]],
+		triggers, reuse, vehicles,
+		locations, restock, rotation, rotation_routine,
+		spawned, owned, active
+	)
+	for _, group in ipairs(PowerUps.getPowerupGroups()) do
+		local total = PowerUps.getSpawnCountByGroup(group)
+		local percentil = math.floor((total / spawned) * 100)
+		info = info .. '\n' ..
+			'\t\t' .. total .. ' (' .. percentil .. ' %)\t: ' .. group
+	end
+	
+	Log.info(info)
+end
+
+-- ----------------------------------------------------------------------------
+-- Runtime Measurement
+local MEASURE_TIMER = PauseTimer.new()
+local MEASURE_BUFFER, MEASURE_INDEX = {}, 1
+local MEASURE_PRINT = false
+local function measure()
+	MEASURE_BUFFER[MEASURE_INDEX] = MEASURE_TIMER:stop()
+	MEASURE_INDEX = MEASURE_INDEX + 1
+	if MEASURE_INDEX > 99 then MEASURE_INDEX = 1 end
+end
+
+local function measureAverage()
+	local total = 0
+	for i = 0, 100, 1 do
+		total = total + (MEASURE_BUFFER[i] or 0)
+	end
+	local avg = total / 100
+	
+	--if avg > 5 then
+	--	Log.warn('PowerUps runtime is taking alot of time! Average: ' .. Util.mathRound(avg, 3) .. ' ms\nIf you are experiencing heavy lag, this might be why')
+	--end
+	
+	if MEASURE_PRINT then
+		Log.info('Current average runtime: ' .. Util.mathRound(avg, 3) .. ' ms\t with: ' .. PowerUps.getRenderedLocationsCount() .. ' rendered locations.')
+	end
+end
+
+-- ----------------------------------------------------------------------------
+-- Delta time Measurement for auto frame skipping
+local MEASURE_DT_BUFFER, MEASURE_DT_INDEX = {}, 1
+
+local FRAME_SKIPPING = false
+local FRAME_SKIPPING_DT = 0
+local FRAME_SKIPPING_COUNT = 0
+local FRAME_SKIPPING_LIMIT = 1
+
+local function measureDt(dt)
+	MEASURE_DT_BUFFER[MEASURE_INDEX] = dt
+	MEASURE_DT_INDEX = MEASURE_DT_INDEX + 1
+	if MEASURE_DT_INDEX > 99 then MEASURE_DT_INDEX = 1 end
+end
+
+local function measureDtAverage()
+	local total = 0
+	for i = 0, 100, 1 do
+		total = total + (MEASURE_DT_BUFFER[i] or 0)
+	end
+	local avg = (total / 100) * 1000
+	
+	-- enables frame skipping when <30 fps
+	if not FRAME_SKIPPING and avg > 30 then -- ~30fps
+		FRAME_SKIPPING = true
+		
+		Log.warn('Detected low average FPS. Enabled frame skipping')
+	
+	-- disables once >60fps again
+	elseif FRAME_SKIPPING and avg < 17 then -- ~60fps
+		FRAME_SKIPPING = false
+		FRAME_SKIPPING_LIMIT = 1
+		
+		Log.warn('FPS recovered. Disabled frame skipping')
+		
+	elseif FRAME_SKIPPING then
+		local frame_step = math.min(math.ceil(math.max((avg / 30) * 1.75, 1)), 5)
+		if frame_step ~= FRAME_SKIPPING_LIMIT then
+			FRAME_SKIPPING_LIMIT = frame_step
+			Log.warn('Skipping: ' .. frame_step .. ' frames')
+		end
+	end
+	
+	--Log.info('Current average delta time: ' .. Util.mathRound(avg, 3) .. ' ms')
+end
 
 -- ----------------------------------------------------------------------------
 -- Init
@@ -93,61 +219,49 @@ local function onInit()
 		PowerUps.loadPowerUpDefs("lua/ge/extensions/powerups/open")
 	end
 	
+	TimedTrigger.new("PowerUps_measurement", 10000, 0, measureAverage)
+	TimedTrigger.new("PowerUps_dt_measurement", 1000, 0, measureDtAverage)
+	
 	INITIALIZED = true
 end
 
 -- ----------------------------------------------------------------------------
--- Trigger Highlight
-local function setTriggerDebug(state)
-	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
-		if name:find("BeamNGTrigger_") then
-			scenetree.findObject(name):setField("debug", 0, tostring(state))
-		end
-	end
-end
-
-local function adjustTriggerScale()
-	local default_scale = PowerUps.getDefaultTriggerScale()
-	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
-		if name:find("BeamNGTrigger_") then
-			scenetree.findObject(name):setScale(default_scale)
-		end
-	end
-end
-
--- Will highlight all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name
-M.triggerShow = function(state)
-	TRIGGER_DEBUG = state
-	if not TRIGGER_DEBUG then
-		setTriggerDebug(false)
-	end
-end
-
--- Will auto adjust all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name to the powerups default size
-M.triggerAdjust = function(state)
-	TRIGGER_ADJUST = state
-end
-
--- ----------------------------------------------------------------------------
 -- Runtime
-M.onUpdate = function(dt_real, dt_sim, dt_raw)
+M.onPreRender = function(dt_real) -- , dt_sim, dt_raw
 	if not INITIALIZED then return end
 	
+	local dt = dt_real
+	if FRAME_SKIPPING then
+		FRAME_SKIPPING_DT = FRAME_SKIPPING_DT + dt_real
+		FRAME_SKIPPING_COUNT = FRAME_SKIPPING_COUNT + 1
+		if FRAME_SKIPPING_COUNT < FRAME_SKIPPING_LIMIT then
+			measureDt(dt_real)
+			return
+		end
+		
+		dt = FRAME_SKIPPING_DT
+	end
+	
+	MEASURE_TIMER:stopAndReset()
+	
+	-- order matters. timed trigger before powerups as powerups may que anything for the next frame
 	TimedTrigger.tick()
 	CollisionsLib.tick()
+	ForceField.tick()
+	PowerUps.tick(dt)
 	
 	if TRIGGER_DEBUG then
-		setTriggerDebug(true)
+		M.setTriggerDebug(true)
 	end
 	if TRIGGER_ADJUST then
-		adjustTriggerScale()
+		M.autoAdjustTriggerScale()
 	end
-end
-
-M.onPreRender = function(dt_real, dt_sim, dt_raw)
-	if not INITIALIZED then return end
-	ForceField.tick() -- unfortunately doesnt help with the marker rendering
-	PowerUps.tick(dt_real, dt_sim, dt_raw)
+	
+	FRAME_SKIPPING_DT = 0
+	FRAME_SKIPPING_COUNT = 0
+	
+	measure()
+	measureDt(dt_real)
 end
 
 -- ----------------------------------------------------------------------------
@@ -170,11 +284,14 @@ end
 M.onClientEndMission = function()
 	PowerUps.unload()
 	ForceField.unload()
+	
+	TimedTrigger.remove("PowerUps_measurement")
+	TimedTrigger.remove("PowerUps_dt_measurement")
 	INITIALIZED = false
 end
 
+--[[
 M.onLoadingScreenFadeout = function()
-	--[[
 	if MPUtil.isBeamMPSession() and FS:fileExists("gameplay/tutorials/pages/powerups/content.html") then
 		guihooks.trigger('introPopupTutorial', {
 				{
@@ -186,8 +303,8 @@ M.onLoadingScreenFadeout = function()
 			}
 		)	
 	end
-	]]
 end
+]]
 
 -- ----------------------------------------------------------------------------
 -- Lib specific
@@ -204,16 +321,46 @@ M.onVehicleDestroyed = function(...)
 end
 
 -- ----------------------------------------------------------------------------
--- Dev specific
---M.getSet = Sets.getSet
---M.ff = ForceField
---M.pu = PowerUps
+-- Convenience stuff
+M.setTriggerDebug = function(state)
+	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
+		if name:find("BeamNGTrigger_") then
+			scenetree.findObject(name):setField("debug", 0, tostring(state))
+		end
+	end
+end
+
+M.autoAdjustTriggerScale = function()
+	local default_scale = PowerUps.getDefaultTriggerScale()
+	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
+		if name:find("BeamNGTrigger_") then
+			scenetree.findObject(name):setScale(default_scale)
+		end
+	end
+end
+
+-- Will highlight all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name
+M.setTriggerDebug = function(state)
+	TRIGGER_DEBUG = state
+	if not TRIGGER_DEBUG then
+		M.setTriggerDebug(false)
+	end
+end
+
+-- Will auto adjust all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name to the powerups default size
+M.autoAdjustTriggerScale = function(state)
+	TRIGGER_ADJUST = state
+end
+
+M.autoPrintRoutineMeasurement = function(state)
+	MEASURE_PRINT = state
+end
 
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- ----------------------------------------------------------------------------
 -- API
--- This resets the powerup library
+-- This resets the powerup library. And it removes all powerups from each and everything and also all locations. Its as if the mod was just loaded but powerups and locations arent reinstated
 M.reset = function()
 	PowerUps.unload()
 	PowerUps.init()
@@ -222,17 +369,18 @@ end
 -- eg
 -- prefab_path 		= 'lua/ge/extensions/prefabs/utah.prefab.json'
 -- powerup_set_path	= 'lua/ge/extensions/powerups/open'
+-- PowerUps.loadPowerups('lua/ge/extensions/prefabs/smallgrid_perftest.prefab.json', 'lua/ge/extensions/powerups/open')
 M.loadPowerups = function(prefab_path, powerup_set_path)
 	PowerUps.loadLocationPrefab(prefab_path)
 	PowerUps.loadPowerUpDefs(powerup_set_path)
 end
 
-
 -- ----------------------------------------------------------------------------
 -- Direct access
 M.pu = PowerUps
 M.ff = ForceField
-M.getSet = Sets.getSet
+M.sets = Sets
+M.tt = TimedTrigger
 
 -- ----------------------------------------------------------------------------
 -- Singleplayer Only
@@ -282,6 +430,17 @@ end
 
 M.disableActivePowerup = function(vehicle_id)
 	PowerUps.disableActivePowerup(vehicle_id)
+end
+
+-- This affects stationary, picked up and active powerup rendering
+-- If you set this to low active powerups may break because their physics renderer isnt ran anymore
+M.setRenderDistance = function(distance) -- in meters
+	PowerUps.setRenderDistance(distance)
+end
+
+-- You generally only want to increase the routine if you set the overall render distance lower
+M.setRenderDistanceRoutineTime = function(time) -- in ms
+	PowerUps.setRenderDistanceRoutineTime(time)
 end
 
 return M

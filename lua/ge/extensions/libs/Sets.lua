@@ -365,6 +365,28 @@ local function newSet(name, set_array)
 		return self.set[name]
 	end
 	
+	--[[
+	function set:delay(delay, from)
+		local index = 1
+		for _, trigger in pairs(self.set) do
+			if index >= from then
+				trigger.trigger_after = trigger.trigger_after + delay
+			end
+			index = index + 1
+		end
+		
+		return self
+	end
+	]]
+	
+	function set:delayAll(delay)
+		for _, trigger in pairs(self.set) do
+			trigger.trigger_after = trigger.trigger_after + delay
+		end
+		
+		return self
+	end
+	
 	function set:maxTime()
 		local max_time = 0
 		for _, trigger in pairs(self.set) do
@@ -383,8 +405,8 @@ local function newSet(name, set_array)
 	end
 	
 	function set:resetBlock(plus_time)
-		local r = TimedTrigger.new(
-			"setlib_limiter_" .. Util.randomName(),
+		local r = TimedTrigger.newF(
+			"setlib_limiter",
 			self:maxTime() + (plus_time or 0),
 			1,
 			core_input_actionFilter.addAction,
@@ -408,8 +430,8 @@ local function newSet(name, set_array)
 			return self
 		end
 		
-		local r = TimedTrigger.new(
-			"setlib_unghost_" .. Util.randomName(),
+		local r = TimedTrigger.newF(
+			"setlib_unghost",
 			1000,
 			0,
 			unghost,
@@ -445,7 +467,8 @@ local function newSet(name, set_array)
 		for trigger_name, trigger in pairs(self.set) do
 			if trigger.trigger_enabled then
 				-- if either the spectate option is false or when it is enable then check if the ve target is what we are spectating
-				if not trigger.trigger_settings.spectate or (trigger.trigger_settings.spectate and self.ve_target == getPlayerVehicle(0):getId()) then
+				--if not trigger.trigger_settings.spectate or (trigger.trigger_settings.spectate and self.ve_target == getPlayerVehicle(0):getId()) then
+				if not trigger.trigger_settings.spectate or (trigger.trigger_settings.spectate and getPlayerVehicle(0) and self.ve_target == getPlayerVehicle(0):getId()) then
 					local trigger_name = 'set_' .. trigger_name .. postfix
 					local type = trigger.trigger_type
 					if type == 0 then -- GE
@@ -523,8 +546,8 @@ local function newSet(name, set_array)
 	
 	function set:lock()
 		if self.ve_target == nil then return end
-		local r = TimedTrigger.new(
-			"setlib_unlock_" .. Util.randomName(),
+		local r = TimedTrigger.newF(
+			"setlib_unlock",
 			self:maxTime(),
 			1,
 			remLock,
@@ -638,7 +661,7 @@ M.loadSet = function(file_path, name)
 		set[1] = nil
 		M.addSet(name or file_path, set)
 			
-		--print(file_path)
+		return true
 	end	
 end
 

@@ -1,10 +1,6 @@
-local PowerUps = require("libs/PowerUps")
 local Extender = require("libs/PowerUpsExtender")
-local Util = require("libs/Util")
-local MathUtil = require("libs/MathUtil")
-local Sets = require("libs/Sets")
-local Trait = Extender.Traits
-local Sound = require("libs/Sounds")
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
+local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 
 local M = {
 	-- Clear name of the powerup
@@ -29,7 +25,7 @@ local M = {
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "mp_init",
+	lib_version = "enums",
 	
 	-- autofilled
 	file_path = "",
@@ -48,7 +44,7 @@ local M = {
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/machinegun.ogg', 6)
+	M.activate_sound = Sound(M.file_path .. 'sounds/machinegun.ogg', 2)
 end
 
 -- Called for each vehicle
@@ -58,8 +54,8 @@ end
 
 -- When the powerup is activated
 M.onActivate = function(vehicle)
-	M.activate_sound:playVE(vehicle:getId())
-	return {projectiles = {}, shoot_timer = hptimer(), shot_projectiles = 0}
+	M.activate_sound:smartSFX(vehicle:getId())
+	return onActivate.Success({projectiles = {}, shoot_timer = hptimer(), shot_projectiles = 0})
 end
 
 -- only called once
@@ -77,7 +73,7 @@ M.whileActive = function(data, origin_id, dt)
 	if data.shot_projectiles < M.max_projectiles and #data.projectiles < M.max_projectiles and data.shoot_timer:stop() > M.shoot_downtime then
 		local origin_vehicle = be:getObjectByID(origin_id)
 		local veh_dir = origin_vehicle:getDirectionVector()
-		veh_dir.z = 0
+		veh_dir.z = veh_dir.z + 0.01
 		
 		local veh_pos = origin_vehicle:getPosition()
 		veh_pos.z = veh_pos.z + 0.5
@@ -105,8 +101,10 @@ M.whileActive = function(data, origin_id, dt)
 		
 		data.shoot_timer:stopAndReset()
 		
+		origin_vehicle:queueLuaCommand('PowerUpExtender.pushForward(-0.3)')
+		
 		-- need to return now as we cant give target_info and target_hits back at once
-		return nil, target_info
+		return whileActive.TargetInfo(target_info)
 	end
 	
 	local target_hits = {}
@@ -117,7 +115,7 @@ M.whileActive = function(data, origin_id, dt)
 		projectile.projectile:setPosRot(new_pos.x, new_pos.y, new_pos.z, 0, 0, 0, 0)
 		
 		-- check collision
-		local new_hit = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 1, origin_id)
+		local new_hit = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 2, origin_id)
 		Extender.cleanseTargetsWithTraits(new_hit, origin_id, Trait.Ghosted)
 		if #new_hit > 0 then
 			Util.tableArrayMerge(target_hits, new_hit)
@@ -131,10 +129,15 @@ M.whileActive = function(data, origin_id, dt)
 	end
 	
 	-- return new hits
-	if #target_hits > 0 then return 3, nil, target_hits end
-	
-	if Util.tableHasContent(data.projectiles) then return end
-	if data.shot_projectiles == M.max_projectiles then return 1 end
+	if #target_hits > 0 then
+		return whileActive.TargetHits(target_hits)
+	else
+		if Util.tableHasContent(data.projectiles) then
+			return whileActive.Continue()
+		elseif data.shot_projectiles == M.max_projectiles then
+			return whileActive.Stop()
+		end
+	end
 end
 
 -- Called once one or multiple targets have been chosen.
@@ -154,6 +157,23 @@ M.onTargetSelect = function(data, target_info)
 	
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)
+	
+	Sfx(M.file_path .. 'sounds/bullet_flying2.ogg', target_info.start_pos)
+		:bind(marker):follow(marker)
+		:is3D(true)
+		:volume(0.4)
+		:minDistance(5)
+		:maxDistance(15)
+		:isLooping(true)
+		:spawn()
+	
+	local life_time = math.random(300, 400)
+	Particle("BNGP_66", data.start_pos)
+		:active(true)
+		:velocity(0)
+		:bind(marker)
+		:follow(marker, life_time)
+		:selfDestruct(life_time)
 	
 	target_info.projectile = marker
 	table.insert(data.projectiles, target_info)
@@ -183,7 +203,12 @@ M.onHit = function(data, origin_id, target_id)
 	local spin = target_vehicle:getDirectionVectorUp():normalized() * 1.5
 	target_vehicle:queueLuaCommand(string.format("PowerUpExtender.addAngularVelocity(0, 0, 0, %d, %d, %d)", spin.x, spin.y, spin.z))
 	
-	--target_vehicle:queueLuaCommand('PowerUpSounds.playSound("' .. M.hit_sound .. '")')
+	Sfx(M.file_path .. 'sounds/bullet_impact_heavy.ogg', target_pos)
+		:is3D(true)
+		:minDistance(5)
+		:maxDistance(10)
+		:selfDestruct(1000)
+		:spawn()
 end
 
 -- When the powerup is destroyed. eg when the vehicle is deleted or the powerup ended

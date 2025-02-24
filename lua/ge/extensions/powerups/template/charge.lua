@@ -80,9 +80,6 @@ end
 M.onPickup = function(data, vehicle)
 	data.vehicle = vehicle
 	M.onDespawn(data)
-	
-	PowerUps.addCharge(vehicle:getId(), 1)
-	
 	return 3
 	--[[
 		Return Values

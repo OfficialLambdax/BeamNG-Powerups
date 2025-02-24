@@ -1,10 +1,6 @@
-local PowerUps = require("libs/PowerUps")
 local Extender = require("libs/PowerUpsExtender")
-local Util = require("libs/Util")
-local MathUtil = require("libs/MathUtil")
-local Sets = require("libs/Sets")
-local Trait = Extender.Traits
-local Sound = require("libs/Sounds")
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
+local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 
 local M = {
 	-- Clear name of the powerup
@@ -29,7 +25,7 @@ local M = {
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "mp_init",
+	lib_version = "enums",
 	
 	-- autofilled
 	file_path = "",
@@ -39,13 +35,14 @@ local M = {
 	
 	activate_sound = nil,
 	hit_sound = nil,
+	follow_sound = 'sounds/cannonball_flying.ogg',
 }
 
 
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/cannon_light.ogg', 6)
+	M.activate_sound = Sound(M.file_path .. 'sounds/cannon_light.ogg', 3)
 	M.hit_sound = Sound(M.file_path .. 'sounds/hit.ogg', 6)
 end
 
@@ -57,7 +54,7 @@ end
 -- When the powerup is activated
 M.onActivate = function(vehicle)
 	local veh_dir = vehicle:getDirectionVector()
-	veh_dir.z = 0
+	veh_dir.z = veh_dir.z + 0.01
 	
 	local veh_pos = vehicle:getPosition()
 	veh_pos.z = veh_pos.z + 0.5
@@ -91,9 +88,11 @@ M.onActivate = function(vehicle)
 		init_vel = MathUtil.velocity(vehicle:getVelocity())
 	}
 	
-	M.activate_sound:playVE(vehicle:getId())
+	M.activate_sound:smartSFX(vehicle:getId())
 	
-	return data, target_info
+	vehicle:queueLuaCommand('PowerUpExtender.pushForward(-5)')
+	
+	return onActivate.TargetInfo(data, target_info)
 end
 
 -- only called once
@@ -120,11 +119,11 @@ M.whileActive = function(data, origin_id, dt)
 	Extender.cleanseTargetsWithTraits(target_hits, origin_id, Trait.Ghosted)
 	
 	if #target_hits > 0 then
-		return 2, nil, target_hits
-	end
-	
-	if data.life_time:stop() > 2500 then
-		return 1
+		return whileActive.StopAfterExec(nil, target_hits)
+	elseif data.life_time:stop() > 2500 then
+		return whileActive.Stop()
+	else
+		return whileActive.Continue()
 	end
 end
 
@@ -146,6 +145,36 @@ M.onTargetSelect = function(data, target_info)
 	
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)
+	
+	Particle("BNGP_51", data.start_pos)
+		:active(true)
+		:selfDisable(math.random(100, 300))
+		:selfDestruct(10000)
+	
+	Particle("BNGP_51", data.start_pos)
+		:active(true)
+		:follow(marker, 100)
+		:selfDisable(80)
+		:selfDestruct(10000)
+	
+	local life_time = math.random(500, 1000)
+	Particle("BNGP_26", data.start_pos)
+		:active(true)
+		:velocity(0)
+		:follow(marker, life_time)
+		:bind(marker, 500)
+		:selfDisable(life_time)
+		:selfDestruct(life_time + 500)
+	
+	Sfx(M.file_path .. M.follow_sound, data.start_pos)
+		:is3D(true)
+		:volume(1)
+		:minDistance(30)
+		:maxDistance(100)
+		:isLooping(true)
+		:follow(marker)
+		:bind(marker)
+		:spawn()
 	
 	data.projectile = marker
 end

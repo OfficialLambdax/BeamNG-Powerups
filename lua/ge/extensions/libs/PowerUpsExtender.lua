@@ -6,19 +6,46 @@ local PowerUps
 local ServerUtil = Util -- only exists on server
 local Util = require("libs/Util")
 local MPUtil = require("mp_libs/MPUtil")
-local PowerUpsTraits = require("libs/PowerUpsTraits")
-local PowerUpsTypes = require("libs/PowerUpsTypes")
+local TimedTrigger = require("libs/TimedTrigger")
+local MathUtil = require("libs/MathUtil")
+
+local PowerUpsTraits = require("libs/extender/Traits")
+local PowerUpsTypes = require("libs/extender/Types")
+local GroupReturns = require("libs/extender/GroupReturns")
+local PowerupReturns = require("libs/extender/PowerupReturns")
+
+local createObject = require("libs/ObjectWrapper")
 
 local M = {}
 M.Traits = PowerUpsTraits.Traits
 M.TraitsLookup = Util.tableVToK(M.Traits)
 --M.TraitBounds = PowerUpsTraits.TraitBounds
 M.Types = PowerUpsTypes.Types
+M.GroupReturns = GroupReturns
+M.PowerupReturns = PowerupReturns
 
 local SUBJECT_SINGLEPLAYER = "!singleplayer"
 local SUBJECT_TRAFFIC = "!traffic"
 local SUBJECT_UNKNOWN = "!unknown"
 
+
+M.defaultImports = function() -- do not change order
+	-- local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
+
+	return require("libs/PowerUps"), require("libs/Util"), require("libs/Sets"), require("libs/Sounds"), require("libs/MathUtil"), require("libs/Pot"), require("libs/Log"), require("libs/TimedTrigger"), require("libs/CollisionsLib"), require("mp_libs/MPUtil"), require("mp_libs/PauseTimer"), require("libs/Particles"), require("libs/Sfx")
+end
+
+M.defaultPowerupVars = function() -- do not change order
+	-- local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
+	
+	return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject
+end
+
+M.defaultGroupVars = function()
+	-- local Type, onPickup, createObject = Extender.defaultGroupVars()
+	
+	return M.Types, GroupReturns.onPickup, createObject
+end
 
 M.defaultPowerupCreator = function(trigger_obj, shape_path, color_point)
 	local pos = trigger_obj:getPosition()
@@ -145,12 +172,19 @@ end
 
 -- also Calls the traits
 M.cleanseTargetsWithTraits = function(targets, origin_vehicle_id, ...)
-	for index, target_id in pairs(targets) do
-		if M.hasTraitCalls(target_id, origin_vehicle_id, ...) then
-			targets[index] = nil
+	local new_targets = {}
+	for index, target_id in ipairs(targets) do
+		targets[index] = nil
+		if not M.hasTraitCalls(target_id, origin_vehicle_id, ...) then
+			table.insert(new_targets, target_id)
 		end
 	end
-	return targets
+	
+	for index, target_id in ipairs(new_targets) do
+		targets[index] = target_id
+	end
+	
+	return new_targets
 end
 
 M.isPlayerVehicle = function(game_vehicle_id)
@@ -217,8 +251,40 @@ else
 	end
 end
 
+M.getVehicleRotation = function(vehicle)
+	return quatFromDir(
+		-vec3(vehicle:getDirectionVector()),
+		vec3(vehicle:getDirectionVectorUp())
+	)
+end
+
 M.updatePowerUpsLib = function(this)
 	PowerUps = this
+end
+
+M.ghostVehicleAutoUnghost = function(vehicle, time)
+	vehicle:queueLuaCommand('obj:setGhostEnabled(true)')
+	vehicle:setMeshAlpha(0.5, "", false)
+	
+	local trigger_name = TimedTrigger.getUnused('extender_unghost')
+	TimedTrigger.new(
+		trigger_name,
+		time,
+		0,
+		function(vehicle, trigger_name)
+			if #MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), 5, vehicle:getId()) > 0 then
+				TimedTrigger.updateTriggerEvery(trigger_name, 100)
+				return
+			end
+			
+			vehicle:setMeshAlpha(1, "", false)
+			vehicle:queueLuaCommand('obj:setGhostEnabled(false)')
+			
+			TimedTrigger.remove(trigger_name)
+		end,
+		vehicle,
+		trigger_name
+	)
 end
 
 

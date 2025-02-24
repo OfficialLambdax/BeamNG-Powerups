@@ -56,11 +56,15 @@ M.getPlayerIDFromServerID = function(server_vehicle_id)
 end
 
 M.gameVehicleIDToServerVehicleID = function(game_vehicle_id)
-	return MPVehicleGE.getServerVehicleID(game_vehicle_id)
+	local server_vehicle_id = MPVehicleGE.getServerVehicleID(game_vehicle_id)
+	if not server_vehicle_id or server_vehicle_id == -1 then return end
+	return server_vehicle_id
 end
 
 M.serverVehicleIDToGameVehicleID = function(server_vehicle_id)
-	return MPVehicleGE.getGameVehicleID(server_vehicle_id)
+	local game_vehicle_id = MPVehicleGE.getGameVehicleID(server_vehicle_id)
+	if not game_vehicle_id or game_vehicle_id == -1 then return end
+	return game_vehicle_id
 end
 
 M.getPosition = function(player_id, vehicle_id)

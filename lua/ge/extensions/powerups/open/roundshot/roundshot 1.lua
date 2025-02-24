@@ -1,10 +1,6 @@
-local PowerUps = require("libs/PowerUps")
 local Extender = require("libs/PowerUpsExtender")
-local Util = require("libs/Util")
-local MathUtil = require("libs/MathUtil")
-local Sets = require("libs/Sets")
-local Trait = Extender.Traits
-local Sound = require("libs/Sounds")
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
+local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 
 local M = {
 	-- Clear name of the powerup
@@ -29,7 +25,7 @@ local M = {
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
-	lib_version = "mp_init",
+	lib_version = "enums",
 	
 	-- autofilled
 	file_path = "",
@@ -48,7 +44,7 @@ local M = {
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/roundshot_1_double.ogg', 6)
+	M.activate_sound = Sound(M.file_path .. 'sounds/roundshot_1_double.ogg', 3)
 	M.hit_sound = Sound(M.file_path .. 'sounds/energy_bullet_hit.ogg', 6)
 end
 
@@ -59,13 +55,13 @@ end
 
 -- When the powerup is activated
 M.onActivate = function(vehicle)
-	M.activate_sound:playVE(vehicle:getId())
-	return {
+	M.activate_sound:smartSFX(vehicle:getId())
+	return onActivate.Success({
 		projectiles = {},
 		shoot_timer = hptimer(),
 		shot_projectiles = 0,
 		degrees = 0
-	}
+	})
 end
 
 -- only called once
@@ -97,7 +93,7 @@ M.whileActive = function(data, origin_id, dt)
 			init_vel = MathUtil.velocity(origin_vehicle:getVelocity())
 		}
 		
-		return nil, target_info
+		return whileActive.TargetInfo(target_info)
 	end
 	
 	local target_hits = {}
@@ -122,10 +118,15 @@ M.whileActive = function(data, origin_id, dt)
 	end
 	
 	-- return new hits
-	if #target_hits > 0 then return 3, nil, target_hits end
-	
-	if Util.tableHasContent(data.projectiles) then return end
-	if data.shot_projectiles == M.max_projectiles then return 1 end
+	if #target_hits > 0 then
+		return whileActive.TargetHits(target_hits)
+	else
+		if Util.tableHasContent(data.projectiles) then
+			return whileActive.Continue()
+		elseif data.shot_projectiles == M.max_projectiles then
+			return whileActive.Stop()
+		end
+	end
 end
 
 -- Called once one or multiple targets have been chosen.
@@ -145,6 +146,21 @@ M.onTargetSelect = function(data, target_info)
 	
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)
+	
+	Sfx(M.file_path .. 'sounds/bullet_flying.ogg', target_info.start_pos)
+		:bind(marker):follow(marker)
+		:is3D(true)
+		:volume(0.3)
+		:minDistance(5)
+		:maxDistance(15)
+		:isLooping(true)
+		:spawn()
+	
+	Particle("BNGP_27", target_info.start_pos)
+		:active(true)
+		:velocity(0)
+		:follow(marker)
+		:bind(marker)
 	
 	target_info.projectile = marker
 	table.insert(data.projectiles, target_info)

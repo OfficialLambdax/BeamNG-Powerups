@@ -18,8 +18,6 @@ local function mathRandom(from, to)
 end
 
 local function stir(table) -- consumes input
-	initSeed()
-
 	local stirred = {}
 	while true do
 		local max = #table
@@ -48,14 +46,17 @@ return function()
 	end
 	
 	function pot:stir(amount)
+		initSeed()
 		for i = 1, (amount or 1), 1 do
 			self.int.tickets = stir(self.int.tickets)
 		end
+		return self
 	end
 	
 	function pot:surprise()
-		initSeed()
-		return self.int.tickets[math.random(1, #self.int.tickets)]
+		local max = #self.int.tickets
+		if max == 0 then return end
+		return self.int.tickets[mathRandom(1, max)]
 	end
 	
 	return pot

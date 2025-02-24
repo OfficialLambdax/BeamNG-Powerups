@@ -63,6 +63,8 @@ end
 local function onTargetInfo(data)
 	local data = jsonDecode(data)
 	local game_vehicle_id = MPUtil.serverVehicleIDToGameVehicleID(data.server_vehicle_id)
+	if game_vehicle_id == nil then return end
+	
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle == nil then return end
 	if vehicle.powerup_active == nil then return end
@@ -73,6 +75,8 @@ end
 local function onTargetHit(data)
 	local data = jsonDecode(data)
 	local game_vehicle_id = MPUtil.serverVehicleIDToGameVehicleID(data.server_vehicle_id)
+	if game_vehicle_id == nil then return end
+	
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle == nil then return end
 	if vehicle.powerup_active == nil then return end
@@ -126,6 +130,7 @@ local function onLocationsPowerupUpdate(locations)
 			location.powerup = POWERUP_DEFS[location_update.powerup_group]
 			if location.powerup then
 				location.data = location.powerup.onCreate(location.obj)
+				location.is_rendered = true
 			end
 			
 		else
@@ -181,7 +186,7 @@ end
 -- Init
 local REGISTERED_EVENTS = false
 M.init = function()
-	if not REGISTERED_EVENTS then
+	if not REGISTERED_EVENTS then -- beammp doing beammp things
 		AddEventHandler("onCompleteReset", onCompleteReset)
 		AddEventHandler("onPowerupActivate", onPowerupActivate)
 		AddEventHandler("onActivePowerupDisable", onActivePowerupDisable)

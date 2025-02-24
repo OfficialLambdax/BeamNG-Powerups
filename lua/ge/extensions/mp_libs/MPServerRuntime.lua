@@ -5,14 +5,12 @@ local Util = require("libs/Util")
 local MPUtil = require("mp_libs/MPUtil")
 local PowerUps = require("libs/PowerUps")
 local TimedTrigger = require("libs/TimedTrigger")
-local PowerUpsTraits = require("libs/PowerUpsTraits")
-local PowerUpsTypes = require("libs/PowerUpsTypes")
+local PowerUpsTypes = require("libs/extender/Types")
 local PauseTimer = require("mp_libs/PauseTimer")
 local TriggerClientEvent = require("mp_libs/TriggerClientEvent") -- is_synced when onPlayerReady
 local Log = require("libs/Log")
 local CompileLua = require("mp_libs/CompileLua")
 
-local Traits = PowerUpsTraits.Traits
 local Types = PowerUpsTypes.Types
 
 local LOCATIONS = PowerUps.locations
@@ -168,50 +166,6 @@ end
 
 -- ------------------------------------------------------------------------------------------------
 -- Common
-local function takePowerup(server_vehicle_id, location_name)
-	local location = LOCATIONS[location_name]
-	if location == nil or location.powerup == nil then return end
-	
-	local player_id = MPUtil.getPlayerIDFromServerID(server_vehicle_id)
-	
-	local vehicle = VEHICLES[server_vehicle_id]
-	if vehicle == nil then
-		Log.warn('Vehicle of ' .. MP.GetPlayerName(player_id) .. ' is unknown')
-		return
-	end
-	
-	local type = location.powerup.type
-	if type == Types.Charge then
-		vehicle.charge = math.min(vehicle.charge + 1, PowerUps.getMaxCharge())
-		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name, location.powerup.name):send()
-		location.powerup = nil
-		location.respawn_timer:stopAndReset()
-		
-		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" now has ' .. vehicle.charge .. ' charges')
-		
-	elseif type == Types.Negative then
-		-- swap ownership
-		vehicle.powerup = location.powerup
-		location.powerup = nil
-		location.respawn_timer:stopAndReset()
-		
-		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up negative ' .. vehicle.powerup.name)
-		
-		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
-		tryActivatePowerup(player_id, server_vehicle_id)
-		
-	else
-		-- swap ownership
-		vehicle.powerup = location.powerup
-		location.powerup = nil
-		location.respawn_timer:stopAndReset()
-		
-		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up ' .. vehicle.powerup.name)
-		
-		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
-	end
-end
-
 local function givePowerup(server_vehicle_id, group_name)
 	local vehicle = VEHICLES[server_vehicle_id]
 	if vehicle == nil then return end
@@ -315,6 +269,59 @@ local function disableActivePowerup(server_vehicle_id, from_client)
 	else
 		Build:new():all():onActivePowerupDisable(server_vehicle_id):send()
 	end
+end
+
+local function takePowerup(server_vehicle_id, location_name)
+	local location = LOCATIONS[location_name]
+	if location == nil or location.powerup == nil then return end
+	
+	local player_id = MPUtil.getPlayerIDFromServerID(server_vehicle_id)
+	
+	local vehicle = VEHICLES[server_vehicle_id]
+	if vehicle == nil then
+		Log.warn('Vehicle of ' .. MP.GetPlayerName(player_id) .. ' is unknown')
+		return
+	end
+	
+	local type = location.powerup.type
+	if type == Types.Charge then
+		vehicle.charge = math.min(vehicle.charge + 1, PowerUps.getMaxCharge())
+		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name, location.powerup.name):send()
+		location.powerup = nil
+		location.respawn_timer:stopAndReset()
+		
+		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" now has ' .. vehicle.charge .. ' charges')
+		
+	elseif type == Types.Negative then
+		-- swap ownership
+		vehicle.powerup = location.powerup
+		location.powerup = nil
+		location.respawn_timer:stopAndReset()
+		
+		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up negative ' .. vehicle.powerup.name)
+		
+		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
+		activatePowerup(server_vehicle_id)
+		
+	else
+		if vehicle.powerup then
+			if vehicle.powerup.name == location.powerup.name then
+				vehicle.charge = vehicle.charge + 1
+				Log.info(server_vehicle_id .. ' from ' .. MP.GetPlayerName(player_id) .. ' got extra charge. Because picked up same powerup')
+			end
+		end
+		
+		-- swap ownership
+		vehicle.powerup = location.powerup
+		location.powerup = nil
+		location.respawn_timer:stopAndReset()
+		
+		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up ' .. vehicle.powerup.name)
+		
+		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
+	end
+	
+	Build:new():all():onLocationsPowerupUpdate(location_name):send()
 end
 
 -- ------------------------------------------------------------------------------------------------
@@ -546,14 +553,14 @@ function onVehicleSpawn(player_id, vehicle_id, data)
 end
 
 function onVehicleDeleted(player_id, vehicle_id)
-	Log.info('Deleted vehicle from "' .. MP.GetPlayerName(player_id) .. '"')
+	Log.info('Deleted vehicle ' .. player_id .. '-' .. vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '"')
 	PowerUps.onVehicleDestroyed(player_id .. '-' .. vehicle_id)
 end
 
 function onPlayerDisconnected(player_id)
 	Log.info('Player "' .. MP.GetPlayerName(player_id) .. '" disconnected')
-	for _, vehicle_id in ipairs(MP.GetPlayerVehicles(player_id) or {}) do
-		PowerUps.onVehicleDestroyed(player_id .. '-' .. vehicle_id)
+	for vehicle_id, _ in ipairs(MP.GetPlayerVehicles(player_id) or {}) do
+		onVehicleDeleted(player_id, vehicle_id)
 	end
 	TriggerClientEvent:remove(player_id)
 end
@@ -693,8 +700,10 @@ M.init = function()
 		my_path,
 		my_path .. 'libs/TimedTrigger.lua',
 		my_path .. 'libs/Sets.lua',
-		my_path .. 'mp_libs/CompileLua.lua'
+		my_path .. 'mp_libs/CompileLua.lua',
+		my_path .. 'libs/PowerUpsExtender.lua'
 	)
+	package.loaded["mp_libs/CompileLua"].init = nil
 	
 	PowerUps.init()
 	PowerUps.updateMPServerRuntime(M)
