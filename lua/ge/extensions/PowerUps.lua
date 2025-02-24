@@ -219,8 +219,8 @@ local function onInit()
 		PowerUps.loadPowerUpDefs("lua/ge/extensions/powerups/open")
 	end
 	
-	TimedTrigger.new("powerups_measurement", 10000, 0, measureAverage)
-	TimedTrigger.new("powerups_dt_measurement", 1000, 0, measureDtAverage)
+	TimedTrigger.new("PowerUps_measurement", 10000, 0, measureAverage)
+	TimedTrigger.new("PowerUps_dt_measurement", 1000, 0, measureDtAverage)
 	
 	INITIALIZED = true
 end
@@ -285,8 +285,8 @@ M.onClientEndMission = function()
 	PowerUps.unload()
 	ForceField.unload()
 	
-	TimedTrigger.remove("powerups_measurement")
-	TimedTrigger.remove("powerups_dt_measurement")
+	TimedTrigger.remove("PowerUps_measurement")
+	TimedTrigger.remove("PowerUps_dt_measurement")
 	INITIALIZED = false
 end
 

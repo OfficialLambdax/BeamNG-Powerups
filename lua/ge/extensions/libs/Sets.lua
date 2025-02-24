@@ -405,8 +405,8 @@ local function newSet(name, set_array)
 	end
 	
 	function set:resetBlock(plus_time)
-		local r = TimedTrigger.new(
-			"setlib_limiter_" .. Util.randomName(),
+		local r = TimedTrigger.newF(
+			"setlib_limiter",
 			self:maxTime() + (plus_time or 0),
 			1,
 			core_input_actionFilter.addAction,
@@ -430,8 +430,8 @@ local function newSet(name, set_array)
 			return self
 		end
 		
-		local r = TimedTrigger.new(
-			"setlib_unghost_" .. Util.randomName(),
+		local r = TimedTrigger.newF(
+			"setlib_unghost",
 			1000,
 			0,
 			unghost,
@@ -546,8 +546,8 @@ local function newSet(name, set_array)
 	
 	function set:lock()
 		if self.ve_target == nil then return end
-		local r = TimedTrigger.new(
-			"setlib_unlock_" .. Util.randomName(),
+		local r = TimedTrigger.newF(
+			"setlib_unlock",
 			self:maxTime(),
 			1,
 			remLock,

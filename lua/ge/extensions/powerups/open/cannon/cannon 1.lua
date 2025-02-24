@@ -157,12 +157,14 @@ M.onTargetSelect = function(data, target_info)
 		:selfDisable(80)
 		:selfDestruct(10000)
 	
-	--[[
-	Particle("BNGP_51", data.start_pos)
+	local life_time = math.random(500, 1000)
+	Particle("BNGP_26", data.start_pos)
 		:active(true)
-		:follow(marker)
-		:bind(marker, 10000)
-	]]
+		:velocity(0)
+		:follow(marker, life_time)
+		:bind(marker, 500)
+		:selfDisable(life_time)
+		:selfDestruct(life_time + 500)
 	
 	Sfx(M.file_path .. M.follow_sound, data.start_pos)
 		:is3D(true)
