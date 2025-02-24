@@ -66,7 +66,8 @@ return function(file_path, pos_vec)
 	obj:setPosition(pos_vec or vec3(0, 0, 0))
 	
 	local sfx = {int = {
-			obj = obj
+			obj = obj,
+			name = Util.fileName(file_path)
 		}
 	}
 	
@@ -142,8 +143,8 @@ return function(file_path, pos_vec)
 	-- ------------------------------------------------------------------
 	-- Set and forget stuff
 	function sfx:selfDestruct(after)
-		local r = TimedTrigger.new(
-			'sfx_destruct_' .. Util.randomName(),
+		local r = TimedTrigger.newF(
+			'Sfx_selfDestruct_' .. self.int.name,
 			after,
 			1,
 			selfDestruct,
@@ -159,7 +160,7 @@ return function(file_path, pos_vec)
 	
 	-- obj must have :getPosition() method and return a vec3
 	function sfx:follow(obj, for_time)
-		local trigger_name = 'sfx_follow_' .. Util.randomName()
+		local trigger_name = TimedTrigger.getUnused('Sfx_follow_' .. self.int.name)
 		TimedTrigger.new(
 			trigger_name,
 			0,
@@ -185,7 +186,7 @@ return function(file_path, pos_vec)
 			)
 	]]
 	function sfx:followC(obj, for_time, callback)
-		local trigger_name = 'sfx_follow_' .. Util.randomName()
+		local trigger_name = TimedTrigger.getUnused('Sfx_followC_' .. self.int.name)
 		TimedTrigger.new(
 			trigger_name,
 			0,
@@ -204,11 +205,12 @@ return function(file_path, pos_vec)
 	
 	-- Requires that the obj has the :isDeleted() method.
 	-- Vehicles dont have that!
+	-- All objects from the ObjectWrapper have it.
 	function sfx:bind(obj, delete_after)
-		local trigger_name = 'sfx_bind_' .. Util.randomName()
+		local trigger_name = TimedTrigger.getUnused('Sfx_bind_' .. self.int.name)
 		TimedTrigger.new(
 			trigger_name,
-			0,
+			100,
 			0,
 			bind,
 			trigger_name,

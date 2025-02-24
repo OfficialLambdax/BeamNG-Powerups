@@ -84,10 +84,10 @@ local PrecisionTimer = hptimer or HighPerfTimer or require("mp_libs/PauseTimer")
 -- BeamMP server only requirement
 -- Only loaded in init if this library has been loaded on the BeamMP Server where no log() is present
 local Log = require("libs/Log")
-
+local Util = require("libs/Util")
 
 local M = {
-	VERSION = 0.2 -- 19.02.2025 (DD.MM.YYYY)
+	VERSION = 0.21 -- 24.02.2025 (DD.MM.YYYY)
 }
 local ID_LOOKUP = {}
 local TRIGGERS = {}
@@ -457,6 +457,14 @@ local function updateTriggerEvery(name, trigger_every)
 	return true
 end
 
+local function getUnused(postfix)
+	local name = (postfix or '') .. '_SNF_' .. Util.randomName()
+	while findIndex(name) ~= nil do
+		name = (postfix or '') .. '_SNF_' .. Util.randomName()
+	end
+	return name
+end
+
 local function new(name, trigger_every, trigger_for, exec, ...)
 	local trigger, err = (reuseTake() or newTriggerClass()):update(
 					name,
@@ -552,7 +560,32 @@ local function newVEAllExcept(name, except, trigger_every, trigger_for, exec, ..
 	return trigger
 end
 
--- must be hooked to eg updateGFX
+-- For set and forget. Where the trigger handles itself (can delete itself if infinite)
+local function newF(postfix, trigger_every, trigger_for, exec, ...)
+	local trigger, err = (reuseTake() or newTriggerClass()):update(
+					getUnused(postfix),
+					{
+						target_env = 0
+					},
+					trigger_every,
+					trigger_for,
+					exec,
+					...
+	)
+	
+	
+	if not trigger then
+		-- display error
+		Log.error(err)
+		
+		return nil
+	end
+	
+	accept(trigger)
+	return trigger
+end
+
+-- must be hooked to eg updateGFX. If trigger draw to the screen then onPreRender is better suited
 local function tick()
 	local dt = TICK_TIMER:stopAndReset()
 	
@@ -603,6 +636,8 @@ M.new = new
 M.newVE = newVE
 M.newVEAll = newVEAll
 M.newVEAllExcept = newVEAllExcept
+M.newF = newF
+M.getUnused = getUnused
 M.updateTriggerEvery = updateTriggerEvery
 M.count = count
 M.getChunk = getChunk

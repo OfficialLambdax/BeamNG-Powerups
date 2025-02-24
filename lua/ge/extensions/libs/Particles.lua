@@ -69,17 +69,19 @@ return function(emitter_name, pos_vec, rot_quat)
 	obj:registerObject('particle_emitter_' .. Util.randomName())
 	
 	local particle = {int = {
-			obj = obj
+			obj = obj,
+			name = emitter_name
 		}
 	}
 	
 	-- Requires that the obj has the :isDeleted() method.
 	-- Vehicles dont have that!
+	-- All objects from the ObjectWrapper have it.
 	function particle:bind(obj, delete_after)
-		local trigger_name = 'particle_bind_' .. Util.randomName()
+		local trigger_name = TimedTrigger.getUnused('Particle_bind_' .. self.int.name)
 		TimedTrigger.new(
 			trigger_name,
-			0,
+			100,
 			0,
 			bind,
 			trigger_name,
@@ -93,7 +95,7 @@ return function(emitter_name, pos_vec, rot_quat)
 	
 	-- obj must have :getPosition() method and return a vec3
 	function particle:follow(obj, for_time)
-		local trigger_name = 'particle_follow_' .. Util.randomName()
+		local trigger_name = TimedTrigger.getUnused('Particle_follow_' .. self.int.name)
 		TimedTrigger.new(
 			trigger_name,
 			0,
@@ -119,7 +121,7 @@ return function(emitter_name, pos_vec, rot_quat)
 			)
 	]]
 	function particle:followC(obj, for_time, callback)
-		local trigger_name = 'particle_follow_' .. Util.randomName()
+		local trigger_name = TimedTrigger.getUnused('Particle_followC_' .. self.int.name)
 		TimedTrigger.new(
 			trigger_name,
 			0,
@@ -169,8 +171,8 @@ return function(emitter_name, pos_vec, rot_quat)
 	end
 	
 	function particle:selfDisable(after)
-		local r = TimedTrigger.new(
-			'particle_disable_' .. Util.randomName(),
+		local r = TimedTrigger.newF(
+			'Particle_selfdisable_' .. self.int.name,
 			after,
 			1,
 			selfDisable,
@@ -185,8 +187,8 @@ return function(emitter_name, pos_vec, rot_quat)
 	end
 	
 	function particle:selfDestruct(after)
-		local r = TimedTrigger.new(
-			'particle_destruct_' .. Util.randomName(),
+		local r = TimedTrigger.newF(
+			'Particle_selfdestruct_' .. self.int.name,
 			after,
 			1,
 			selfDestruct,

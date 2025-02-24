@@ -138,8 +138,8 @@ table.insert(randoms, {
 	volume = 5,
 	block_reset = true,
 	ghost = false,
-	minDistance = 50,
-	maxDistance = 250,
+	minDistance = 150,
+	maxDistance = 400,
 	probability = 5,
 })
 table.insert(randoms, {
@@ -149,8 +149,8 @@ table.insert(randoms, {
 	volume = 3,
 	block_reset = true,
 	ghost = false,
-	minDistance = 50,
-	maxDistance = 250,
+	minDistance = 150,
+	maxDistance = 400,
 	probability = 5,
 })
 table.insert(randoms, {

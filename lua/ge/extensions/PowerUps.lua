@@ -91,6 +91,48 @@ local TRIGGER_ADJUST = false
 ]]
 
 -- ----------------------------------------------------------------------------
+-- For debug
+M.displayClientState = function(show)
+	local vehicles = PowerUps.getKnownVehicleCount()
+	local triggers = TimedTrigger.count()
+	local reuse = TimedTrigger.getReuseCount()
+	local spawned = PowerUps.getTotalSpawnedPowerups()
+	local owned = PowerUps.getTotalOwnedPowerups()
+	local active = PowerUps.getTotalActivePowerups()
+	local locations = PowerUps.getTotalLocations()
+	local rotation = math.floor(PowerUps.getRotationTime() / 1000)
+	local rotation_routine = PowerUps.getRotationRoutineTime()
+	local restock = math.floor(PowerUps.getRestockTime() / 1000)
+	
+	local info = string.format([[
+	General   _
+		Triggers        : %s		Reuse   : %s
+		Vehicles        : %s
+	Locations _
+		Total           : %s
+		Restock Time    : %s s
+		Rotation        : %s s
+		Rotation Routine: %s ms
+	Powerups  _
+		Spawned         : %s
+		Owned           : %s
+		Active          : %s
+	List      _]],
+		triggers, reuse, vehicles,
+		locations, restock, rotation, rotation_routine,
+		spawned, owned, active
+	)
+	for _, group in ipairs(PowerUps.getPowerupGroups()) do
+		local total = PowerUps.getSpawnCountByGroup(group)
+		local percentil = math.floor((total / spawned) * 100)
+		info = info .. '\n' ..
+			'\t\t' .. total .. ' (' .. percentil .. ' %)\t: ' .. group
+	end
+	
+	Log.info(info)
+end
+
+-- ----------------------------------------------------------------------------
 -- Runtime Measurement
 local MEASURE_TIMER = PauseTimer.new()
 local MEASURE_BUFFER, MEASURE_INDEX = {}, 1
@@ -338,6 +380,7 @@ end
 M.pu = PowerUps
 M.ff = ForceField
 M.sets = Sets
+M.tt = TimedTrigger
 
 -- ----------------------------------------------------------------------------
 -- Singleplayer Only
