@@ -905,6 +905,8 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 	
 	-- run only ingame, but not matter if mp session or singleplayer
 	if not IS_BEAMMP_SERVER then
+		Extender.defaultPowerupMaterialPatch()
+		
 		local r = TimedTrigger.new(
 			"PowerUps_checkRenderDist",
 			ROUTINE_POWERUPS_CHECK_RENDER_DISTANCE,

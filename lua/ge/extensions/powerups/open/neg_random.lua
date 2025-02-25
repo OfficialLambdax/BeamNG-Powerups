@@ -79,7 +79,7 @@ end
 
 -- While the powerup is in someones inventory. Can have it hover above the vehicle or play sounds.
 M.whilePickup = function(data)
-	--print("while pickup")
+	
 end
 
 -- When the powerup is dropped by a vehicle. Happens once the powerup is activated, swapped or if it looses the powerup through any other means
