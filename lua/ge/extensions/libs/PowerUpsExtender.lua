@@ -8,6 +8,7 @@ local Util = require("libs/Util")
 local MPUtil = require("mp_libs/MPUtil")
 local TimedTrigger = require("libs/TimedTrigger")
 local MathUtil = require("libs/MathUtil")
+local Log = require("libs/Log")
 
 local PowerUpsTraits = require("libs/extender/Traits")
 local PowerUpsTypes = require("libs/extender/Types")
@@ -81,7 +82,7 @@ end
 
 M.defaultPowerupCreator = function(trigger_obj, shape_path, color_point)
 	local pos = trigger_obj:getPosition()
-
+	
 	local marker = createObject("TSStatic")
 	marker.shapeName = shape_path
 	marker.useInstanceRenderData = 1
@@ -111,6 +112,28 @@ end
 
 M.defaultPowerupDelete = function(marker_obj)
 	if marker_obj then marker_obj:delete() end
+end
+
+M.defaultPowerupMaterialPatch = function()
+	if true then return end -- DISABLED. "lod_vertcol" is used by alot
+	
+	local non_emissive_material = scenetree.findObject("lod_vertcol")
+	if non_emissive_material == nil then
+		Log.error('Patching failed. Cannot find "log_vertcol" material')
+		return
+	end
+	
+	if non_emissive_material:getField("version", 0) ~= "1" then return end
+	Log.warn('Patching default powerups "lod_vertcol" material to pbr version 1.5 and applying emissive properties.\nThis change is not permanent.\nIf you have weird glowing texture glitches, try disabling the mod and restart the game!')
+	
+	non_emissive_material:setField("glow", 0, "0") -- according to the materialEditor.lua this must be done!
+	non_emissive_material:setField("version", 0, "1.5")
+	non_emissive_material:setField("emissiveMap", 0, "/art/shapes/collectible/collectible_sphere_b.color.DDS")
+	non_emissive_material:setField("emissiveFactor", 0, "0.5 0.5 0.5")
+	non_emissive_material:setField("instanceEmissive", 0, "1")
+	non_emissive_material:reload()
+	
+	Log.info('Patch successfull')
 end
 
 M.getTraitName = function(value)
