@@ -55,7 +55,7 @@ end
 -- When the powerup is activated
 M.onActivate = function(vehicle)
 	M.activate_sound:smartSFX(vehicle:getId())
-	return onActivate.Success({projectiles = {}, shoot_timer = hptimer(), shot_projectiles = 0})
+	return onActivate.Success({projectiles = {}, shoot_timer = hptimer(), shot_projectiles = 0, origin_id = vehicle:getId()})
 end
 
 -- only called once
@@ -114,17 +114,23 @@ M.whileActive = function(data, origin_id, dt)
 		
 		projectile.projectile:setPosRot(new_pos.x, new_pos.y, new_pos.z, 0, 0, 0, 0)
 		
-		-- check collision
-		local new_hit = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 2, origin_id)
-		Extender.cleanseTargetsWithTraits(new_hit, origin_id, Trait.Ghosted)
-		if #new_hit > 0 then
-			Util.tableArrayMerge(target_hits, new_hit)
+		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) then
 			projectile.projectile:delete()
 			data.projectiles[index] = nil
 		
-		elseif projectile.life_time:stop() > 2500 then
-			projectile.projectile:delete()
-			data.projectiles[index] = nil
+		else
+			-- check collision
+			local new_hit = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 2, origin_id)
+			Extender.cleanseTargetsWithTraits(new_hit, origin_id, Trait.Ghosted)
+			if #new_hit > 0 then
+				Util.tableArrayMerge(target_hits, new_hit)
+				projectile.projectile:delete()
+				data.projectiles[index] = nil
+			
+			elseif projectile.life_time:stop() > 2500 then
+				projectile.projectile:delete()
+				data.projectiles[index] = nil
+			end
 		end
 	end
 	
@@ -165,7 +171,7 @@ M.onTargetSelect = function(data, target_info)
 		:minDistance(5)
 		:maxDistance(15)
 		:isLooping(true)
-		:spawn()
+		:spawnIn(100)
 	
 	local life_time = math.random(300, 400)
 	Particle("BNGP_67", data.start_pos)

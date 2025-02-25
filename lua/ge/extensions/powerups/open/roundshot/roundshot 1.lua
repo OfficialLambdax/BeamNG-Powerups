@@ -37,6 +37,7 @@ local M = {
 	hit_sound = nil,
 	
 	max_projectiles = 28,
+	--max_projectiles = 280,
 	shoot_downtime = 125,
 }
 
@@ -60,7 +61,8 @@ M.onActivate = function(vehicle)
 		projectiles = {},
 		shoot_timer = hptimer(),
 		shot_projectiles = 0,
-		degrees = 0
+		degrees = 0,
+		vehicle = vehicle
 	})
 end
 
@@ -103,17 +105,23 @@ M.whileActive = function(data, origin_id, dt)
 		
 		projectile.projectile:setPosRot(new_pos.x, new_pos.y, new_pos.z, 0, 0, 0, 0)
 		
-		-- check collision
-		local new_hit = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
-		Extender.cleanseTargetsWithTraits(new_hit, origin_id, Trait.Ghosted)
-		if #new_hit > 0 then
-			Util.tableArrayMerge(target_hits, new_hit)
+		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) then
 			projectile.projectile:delete()
 			data.projectiles[index] = nil
-		
-		elseif projectile.life_time:stop() > 2500 then
-			projectile.projectile:delete()
-			data.projectiles[index] = nil
+			
+		else		
+			-- check collision
+			local new_hit = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
+			Extender.cleanseTargetsWithTraits(new_hit, origin_id, Trait.Ghosted)
+			if #new_hit > 0 then
+				Util.tableArrayMerge(target_hits, new_hit)
+				projectile.projectile:delete()
+				data.projectiles[index] = nil
+			
+			elseif projectile.life_time:stop() > 2500 then
+				projectile.projectile:delete()
+				data.projectiles[index] = nil
+			end
 		end
 	end
 	
@@ -147,6 +155,11 @@ M.onTargetSelect = function(data, target_info)
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)
 	
+	local blast_dir = quatFromDir(
+		data.vehicle:getDirectionVectorUp(),
+		target_info.target_dir
+	)
+	
 	Sfx(M.file_path .. 'sounds/bullet_flying.ogg', target_info.start_pos)
 		:bind(marker):follow(marker)
 		:is3D(true)
@@ -156,11 +169,11 @@ M.onTargetSelect = function(data, target_info)
 		:isLooping(true)
 		:spawn()
 	
-	Particle("BNGP_27", target_info.start_pos)
+	Particle("BNGP_27", target_info.start_pos, blast_dir)
 		:active(true)
-		:velocity(0)
+		:velocity(-5)
 		:follow(marker)
-		:bind(marker)
+		:bind(marker, 1000)
 	
 	target_info.projectile = marker
 	table.insert(data.projectiles, target_info)

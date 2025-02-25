@@ -191,6 +191,18 @@ M.getCollisionsAlongSideLine = function(from_vec, to_vec, radius, ...)
 	return M.getVehiclesInsideRadius(to_vec, radius, ...)
 end
 
+-- for collisions with statics
+M.raycastAlongSideLine = function(from_vec, to_vec)
+	-- castRayStatic(cornerPos, dirTemp, dirLength)
+	local dir_vec = (to_vec - from_vec):normalized()
+	local length = Util.dist3d(from_vec, to_vec)
+	
+	local hit_dist = castRayStatic(from_vec, dir_vec, length)
+	if hit_dist < length then
+		return hit_dist
+	end
+end
+
 M.rotateVectorByDegrees = function(for_vec, up_vec, degrees) -- where degree is 
 	local a = for_vec
 	local b = up_vec

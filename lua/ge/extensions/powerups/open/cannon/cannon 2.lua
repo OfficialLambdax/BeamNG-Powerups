@@ -56,7 +56,7 @@ end
 
 -- When the powerup is activated
 M.onActivate = function(vehicle)
-	return onActivate.Success({projectiles = {}, shoot_timer = hptimer(), shot_projectiles = 0})
+	return onActivate.Success({projectiles = {}, shoot_timer = hptimer(), shot_projectiles = 0, vehicle = vehicle})
 end
 
 -- only called once
@@ -117,17 +117,23 @@ M.whileActive = function(data, origin_id, dt)
 		
 		projectile.projectile:setPosRot(new_pos.x, new_pos.y, new_pos.z, 0, 0, 0, 0)
 		
-		-- check collision
-		local new_hit = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
-		Extender.cleanseTargetsWithTraits(new_hit, origin_id, Trait.Ghosted)
-		if #new_hit > 0 then
-			Util.tableArrayMerge(target_hits, new_hit)
+		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) then
 			projectile.projectile:delete()
 			data.projectiles[index] = nil
-		
-		elseif projectile.life_time:stop() > 2500 then
-			projectile.projectile:delete()
-			data.projectiles[index] = nil
+			
+		else
+			-- check collision
+			local new_hit = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
+			Extender.cleanseTargetsWithTraits(new_hit, origin_id, Trait.Ghosted)
+			if #new_hit > 0 then
+				Util.tableArrayMerge(target_hits, new_hit)
+				projectile.projectile:delete()
+				data.projectiles[index] = nil
+			
+			elseif projectile.life_time:stop() > 2500 then
+				projectile.projectile:delete()
+				data.projectiles[index] = nil
+			end
 		end
 	end
 	
@@ -160,21 +166,26 @@ M.onTargetSelect = function(data, target_info)
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)
 	
-	Particle("BNGP_51", target_info.start_pos)
-		:active(true)
-		:selfDisable(math.random(100, 300))
-		:selfDestruct(10000)
+	local blast_dir = quatFromDir(
+		data.vehicle:getDirectionVectorUp(),
+		target_info.target_dir
+	)
 	
-	Particle("BNGP_51", target_info.start_pos)
+	Particle("BNGP_51", data.start_pos, blast_dir)
 		:active(true)
-		:follow(marker, 100)
-		:selfDisable(80)
+		:followC(data.vehicle, nil, 
+			function(self, obj, emitter)
+				self:setPosition(MathUtil.getPosInFront(obj:getPosition(), obj:getDirectionVector(), 3))
+				self:velocity(MathUtil.velocity(obj:getVelocity()) * 1.5)
+			end
+		)
+		:selfDisable(math.random(200, 400))
 		:selfDestruct(10000)
 	
 	local life_time = math.random(500, 1000)
-	Particle("BNGP_26", data.start_pos)
+	Particle("BNGP_26", data.start_pos, blast_dir)
 		:active(true)
-		:velocity(0)
+		:velocity(-5)
 		:follow(marker, life_time)
 		:bind(marker, 500)
 		:selfDisable(life_time)
