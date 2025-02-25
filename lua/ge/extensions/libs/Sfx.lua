@@ -14,6 +14,10 @@ local function selfDestruct(self)
 	self.int.obj:delete()
 end
 
+local function spawnIn(self)
+	self:spawn()
+end
+
 local function selfDisable(self)
 	self:active(false)
 end
@@ -73,6 +77,17 @@ return function(file_path, pos_vec)
 	
 	function sfx:spawn()
 		self.int.obj:registerObject("sfx_" .. Util.randomName())
+		return self
+	end
+	
+	function sfx:spawnIn(after)
+		TimedTrigger.newF(
+			'Sfx_spawnin_' .. self.int.name,
+			after,
+			1,
+			spawnIn,
+			self
+		)
 		return self
 	end
 	

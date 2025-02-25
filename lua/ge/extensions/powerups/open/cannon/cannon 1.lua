@@ -79,7 +79,8 @@ M.onActivate = function(vehicle)
 		start_pos = nil,
 		projectile = nil,
 		life_time = nil,
-		init_vel = nil
+		init_vel = nil,
+		vehicle = vehicle
 	}
 	
 	local target_info = {
@@ -118,8 +119,13 @@ M.whileActive = function(data, origin_id, dt)
 	local target_hits = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
 	Extender.cleanseTargetsWithTraits(target_hits, origin_id, Trait.Ghosted)
 	
+	if MathUtil.raycastAlongSideLine(proj_pos, new_pos) then
+		return whileActive.Stop()
+	end
+	
 	if #target_hits > 0 then
 		return whileActive.StopAfterExec(nil, target_hits)
+
 	elseif data.life_time:stop() > 2500 then
 		return whileActive.Stop()
 	else
@@ -146,21 +152,26 @@ M.onTargetSelect = function(data, target_info)
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)
 	
-	Particle("BNGP_51", data.start_pos)
-		:active(true)
-		:selfDisable(math.random(100, 300))
-		:selfDestruct(10000)
+	local blast_dir = quatFromDir(
+		data.vehicle:getDirectionVectorUp(),
+		data.target_dir
+	)
 	
-	Particle("BNGP_51", data.start_pos)
+	Particle("BNGP_51", data.start_pos, blast_dir)
 		:active(true)
-		:follow(marker, 100)
-		:selfDisable(80)
+		:followC(data.vehicle, nil, 
+			function(self, obj, emitter)
+				self:setPosition(MathUtil.getPosInFront(obj:getPosition(), obj:getDirectionVector(), 3))
+				self:velocity(MathUtil.velocity(obj:getVelocity()) * 1.5)
+			end
+		)
+		:selfDisable(math.random(200, 400))
 		:selfDestruct(10000)
 	
 	local life_time = math.random(500, 1000)
-	Particle("BNGP_26", data.start_pos)
+	Particle("BNGP_26", data.start_pos, blast_dir)
 		:active(true)
-		:velocity(0)
+		:velocity(-5)
 		:follow(marker, life_time)
 		:bind(marker, 500)
 		:selfDisable(life_time)

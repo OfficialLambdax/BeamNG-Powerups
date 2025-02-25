@@ -195,7 +195,7 @@ local function measureDtAverage()
 		Log.warn('FPS recovered. Disabled frame skipping')
 		
 	elseif FRAME_SKIPPING then
-		local frame_step = math.min(math.ceil(math.max((avg / 30) * 1.75, 1)), 5)
+		local frame_step = math.min(math.ceil(math.max((avg / 30) * 1, 1)), 5)
 		if frame_step ~= FRAME_SKIPPING_LIMIT then
 			FRAME_SKIPPING_LIMIT = frame_step
 			Log.warn('Skipping: ' .. frame_step .. ' frames')

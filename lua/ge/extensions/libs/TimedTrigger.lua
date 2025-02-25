@@ -87,7 +87,7 @@ local Log = require("libs/Log")
 local Util = require("libs/Util")
 
 local M = {
-	VERSION = 0.21 -- 24.02.2025 (DD.MM.YYYY)
+	VERSION = 0.22 -- 25.02.2025 (DD.MM.YYYY)
 }
 local ID_LOOKUP = {}
 local TRIGGERS = {}
@@ -254,6 +254,10 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 		local int = self.int
 		if int.timer:stop() >= int.trigger_every then
 			local r = self:exec()
+			
+			-- trigger was removed and retaken during exec
+			if name ~= self.int.name then return false end
+			
 			self.int.timer:stopAndReset()
 			
 			if r == 1 then return true end
@@ -276,7 +280,12 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 		local int = self.int
 		int.timer_manual = int.timer_manual + ms
 		if int.timer_manual >= int.trigger_every then
+			local name = self.int.name
 			local r = self:exec()
+			
+			-- trigger was removed and retaken during exec
+			if name ~= self.int.name then return false end
+			
 			self.int.timer_manual = 0
 			self.int.timer:stopAndReset() -- !
 			
@@ -446,7 +455,6 @@ local function accept(trigger)
 			setLargeListOptimization(false):setLargeListOptimizationLock(true)
 		end
 	end
-	
 end
 
 local function updateTriggerEvery(name, trigger_every)
@@ -592,12 +600,15 @@ local function tick()
 	if LARGE_LIST_OPT then
 		if NEXT_POS == 0 then return end
 		while CHUNK_CHECK < NEXT_POS do
-			if TRIGGERS[CHUNK_CHECK]:check() then
-				removeByIndex(CHUNK_CHECK, TRIGGERS[CHUNK_CHECK]:name())
+			local trigger = TRIGGERS[CHUNK_CHECK]
+			if trigger:check() then
+				--removeByIndex(CHUNK_CHECK, TRIGGERS[CHUNK_CHECK]:name())
+				remove(trigger:name())
+			else
+				CHUNK_CHECK = CHUNK_CHECK + 1
+				if CHUNK_CHECK % CHUNK_CHECK_SIZE == 0 then break end
 			end
 			
-			CHUNK_CHECK = CHUNK_CHECK + 1
-			if CHUNK_CHECK % CHUNK_CHECK_SIZE == 0 then break end
 		end
 		if CHUNK_CHECK >= NEXT_POS then CHUNK_CHECK = 0 end
 	
@@ -607,9 +618,11 @@ local function tick()
 		while index < NEXT_POS do
 			local trigger = TRIGGERS[index]
 			if trigger:check_manual(dt) then
-				removeByIndex(index, trigger:name())
+				--removeByIndex(index, trigger:name())
+				remove(trigger:name())
+			else
+				index = index + 1
 			end
-			index = index + 1
 		end
 	end
 end
@@ -646,7 +659,7 @@ M.tick = tick
 M.setLargeListOptimization = setLargeListOptimization
 M.setLargeListOptimizationLock = setLargeListOptimizationLock
 M.remove = remove
-M.removeByIndex = removeByIndex
+--M.removeByIndex = removeByIndex
 M.find = find
 M.findIndex = findIndex
 M.setChunkCheckSize = setChunkCheckSize
