@@ -359,6 +359,8 @@ end
 local function onVehicleDestroyed(game_vehicle_id)
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle == nil then return end
+
+	VEHICLES[game_vehicle_id] = nil
 	
 	if not IS_BEAMMP_SERVER then
 		-- drop powerup
@@ -372,8 +374,6 @@ local function onVehicleDestroyed(game_vehicle_id)
 			MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
 		end
 	end
-
-	VEHICLES[game_vehicle_id] = nil
 end
 
 -- ------------------------------------------------------------------------------------------------

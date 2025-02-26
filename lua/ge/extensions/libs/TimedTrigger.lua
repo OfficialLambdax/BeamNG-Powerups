@@ -87,7 +87,7 @@ local Log = require("libs/Log")
 local Util = require("libs/Util")
 
 local M = {
-	VERSION = 0.23 -- 25.02.2025 (DD.MM.YYYY)
+	VERSION = 0.24 -- 26.02.2025 (DD.MM.YYYY)
 }
 local ID_LOOKUP = {}
 local TRIGGERS = {}
@@ -304,11 +304,17 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 	
 	function trigger:exec()
 		if self.int.target_env == 0 then
-			local r
+			local r, ok
 			if type(self.int.exec) == "function" then
-				r = self.int.exec(UNPACK(self.int.args))
+				ok, r = pcall(self.int.exec, UNPACK(self.int.args))
 			else
-				r = self:compileAndRun()
+				r, ok = self:compileAndRun()
+			end
+			
+			if not ok then
+				if r then Log.error(r) end
+				Log.error('Removing trigger "' .. self:name() .. '" as it fatals')
+				return 1
 			end
 			
 			return r
@@ -335,21 +341,25 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 		local func, err = load(self.int.exec)
 		if err ~= nil then
 			Log.error(err)
-			return
+			return nil, false
 		end
 		
 		local args = UNPACK(self.int.args)
-		local success, r = pcall(func, args)
-		if not success then
+		local ok, r = pcall(func, args)
+		if not ok then
 			Log.error(r)
-			return
+			return nil, false
 		end
 		
 		if type(r) == "function" then
-			r = r(args)
+			ok, r = pcall(r, args)
+			if not ok then
+				Log.error(err)
+				return nil, false
+			end
 		end
 		
-		return r
+		return r, true
 	end
 	
 	--return trigger:update(name, target_env, trigger_every, trigger_for, exec, ...)
