@@ -35,9 +35,7 @@ local function followCallback(trigger_name, timer, for_time, self, obj, callback
 end
 
 local function bind(trigger_name, self, obj, delete_after)
-	--print(trigger_name)
 	if obj:isDeleted() or self.int.obj:isDeleted() then
-		--print(self.int.dbg .. '\t' .. tostring(obj:isDeleted()) .. '\t' .. tostring(self.int.obj:isDeleted()))
 		TimedTrigger.remove(trigger_name)
 		if delete_after > 0 then
 			self:active(false)

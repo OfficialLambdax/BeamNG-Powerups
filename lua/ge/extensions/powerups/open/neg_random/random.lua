@@ -2,6 +2,14 @@ local Extender = require("libs/PowerUpsExtender")
 local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
 local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 
+--[[
+	Quite alot of negative effects have been inspired by JulianStaps StreamerVsChat mod!
+	https://github.com/SaltySnail/BeamMP-StreamersVsChat
+	
+	Check him out on twitch!
+	https://www.twitch.tv/julianstap
+]]
+
 local M = {
 	-- Shown to the user
 	clear_name = "????",
@@ -35,7 +43,7 @@ local M = {
 	-- Add extra variables here if needed. Constants only!
 	sets = {}, -- [1..n] = ~
 	pot = Pot(),
-	--test = "techno",
+	--test = "backwards",
 }
 
 -- Called once when the powerup is loaded
@@ -74,6 +82,7 @@ M.whileActive = function(data, origin_id, dt)
 	if not data.running then
 		local set_def = data.set_def
 		local set = Sets.getSet(set_def.file):VETarget(origin_id)
+		if set == nil then return whileActive.Stop() end
 		
 		if set_def.delay then set:delayAll(set_def.delay) end
 		if set_def.block_reset and Extender.isSpectating(origin_id) then set:resetBlock(2000) end

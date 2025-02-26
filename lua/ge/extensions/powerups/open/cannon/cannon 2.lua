@@ -159,7 +159,7 @@ M.onTargetSelect = function(data, target_info)
 	local marker = createObject("TSStatic")
 	marker.shapeName = "art/shapes/collectible/s_trashbag_collectible.cdae"
 	marker.useInstanceRenderData = 1
-	marker.instanceColor = Point4F(0, 0, 0, 0)
+	marker.instanceColor = Point4F(0, 0, 0, 1)
 	marker:setPosRot(target_info.start_pos.x, target_info.start_pos.y, target_info.start_pos.z, 0, 0, 0, 1)
 	marker.scale = vec3(1, 1, 1)
 	

@@ -230,6 +230,9 @@ end
 M.onPreRender = function(dt_real) -- , dt_sim, dt_raw
 	if not INITIALIZED then return end
 	
+	-- NOT SUPPORTED. for picture taking only
+	--if simTimeAuthority.getPause() then return end
+	
 	local dt = dt_real
 	if FRAME_SKIPPING then
 		FRAME_SKIPPING_DT = FRAME_SKIPPING_DT + dt_real
