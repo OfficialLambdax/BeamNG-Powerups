@@ -20,7 +20,7 @@ local Sound = require("libs/Sounds")
 local Pot = require("libs/Pot")
 
 local M = {
-	_VERSION = 0.4, -- 19.02.2025 DD.MM.YYYY
+	_VERSION = 0.5, -- 26.02.2025 DD.MM.YYYY
 	_BRANCH = "alpha",
 	_NAME = "enums"
 }
@@ -815,7 +815,7 @@ local function loadLocations(triggers)
 				obj = trigger,
 				powerup = nil,
 				data = nil,
-				is_rendered = true,
+				is_rendered = false,
 				respawn_timer = PauseTimer.new(),
 				rotation_timer = PauseTimer.new()
 			}
@@ -962,6 +962,7 @@ M.unload = function()
 		
 		for game_vehicle_id, vehicle in pairs(VEHICLES) do
 			if vehicle.powerup ~= nil then
+				vehicle.powerup.onDrop(vehicle.data, game_vehicle_id, vehicle.is_rendered)
 				vehicle.powerup.onDespawn(vehicle.data)
 			end
 			if vehicle.powerup_active ~= nil then
