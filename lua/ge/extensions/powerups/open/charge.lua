@@ -46,13 +46,16 @@ M.onVehicleInit = function(game_vehicle_id)
 end
 
 -- Spawn the powerup visual. Keep in mind that there can always be multiple
-M.onCreate = function(trigger)
+M.onCreate = function(trigger, is_rendered)
 	-- Whatever you return here is given to all other callbacks too. So if you need the trigger, then also add that.
 	return {
-		trigger = trigger,
 		--marker = Extender.defaultPowerupCreator(trigger, "art/shapes/collectible/s_collect_medikit.cdae", Point4F(1, 1, 1, 1)),
-		marker = Extender.defaultPowerupCreator(trigger, "art/shapes/collectible/s_marker_BNG.cdae", Point4F(1, 1, 1, 1)),
-		vehicle = nil
+		marker = Extender.defaultPowerupCreator(
+			trigger,
+			"art/shapes/collectible/s_marker_BNG.cdae",
+			Point4F(1, 1, 1, 1),
+			is_rendered
+		)
 	}
 end
 
@@ -71,26 +74,25 @@ M.onLoad = function(data)
 end
 
 -- When the powerup is picked up by a vehicle
-M.onPickup = function(data, vehicle)
-	data.vehicle = vehicle
-	
-	Particle("BNGP_waterfallspray", data.marker:getPosition())
-		:active(true)
-		:velocity(0)
-		:selfDisable(1000)
-		:selfDestruct(3000)
-	
+M.onPickup = function(data, vehicle, is_rendered)
+	if is_rendered then
+		Particle("BNGP_waterfallspray", data.marker:getPosition())
+			:active(true)
+			:velocity(0)
+			:selfDisable(1000)
+			:selfDestruct(3000)
+	end
 	M.onDespawn(data)
 	return onPickup.Success()
 end
 
 -- While the powerup is in someones inventory. Can have it hover above the vehicle or play sounds.
-M.whilePickup = function(data)
+M.whilePickup = function(data, origin_id, dt)
 	--print("while pickup")
 end
 
 -- When the powerup is dropped by a vehicle. Happens once the powerup is activated, swapped or if it looses the powerup through any other means
-M.onDrop = function(data)
+M.onDrop = function(data, origin_id, is_rendered)
 	--print("drop")
 end
 

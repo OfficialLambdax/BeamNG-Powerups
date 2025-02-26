@@ -356,7 +356,8 @@ local function onVehicleDestroyed(game_vehicle_id)
 	if not IS_BEAMMP_SERVER then
 		-- drop powerup
 		if vehicle.powerup then
-			vehicle.powerup.onDrop(vehicle.data)
+			vehicle.powerup.onDrop(vehicle.data, game_vehicle_id, vehicle.is_rendered)
+			vehicle.powerup.onDespawn(vehicle.data)
 		end
 		
 		if vehicle.powerup_active then
@@ -545,7 +546,8 @@ local function activatePowerup(game_vehicle_id, from_server, charge_overwrite) -
 	local powerup_type = vehicle.powerup.type
 	
 	-- drop powerup
-	vehicle.powerup.onDrop(vehicle.data)
+	vehicle.powerup.onDrop(vehicle.data, game_vehicle_id, vehicle.is_rendered)
+	vehicle.powerup.onDespawn(vehicle.data, vehicle.is_rendered)
 	
 	-- consume powerup and charge
 	if charge_overwrite == nil then vehicle.charge = 1 end
@@ -606,8 +608,9 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 		
 		location = {
 			powerup = powerup,
-			data = powerup.onCreate(fake_location),
-			respawn_timer = PauseTimer.new()
+			data = powerup.onCreate(fake_location, false),
+			respawn_timer = PauseTimer.new(),
+			is_rendered = false
 		}
 		
 		is_fake_location = true
@@ -615,7 +618,7 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 	
 	local type = powerup.type
 	local vehicle = VEHICLES[game_vehicle_id]
-	local response = powerup.onPickup(location.data, origin_vehicle)
+	local response = powerup.onPickup(location.data, origin_vehicle, location.is_rendered)
 	if response == nil or response.IsError then
 		local reason = 'No reason given'
 		if r then reason = response.reason end
@@ -633,7 +636,8 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 			-- check current powerup
 			if vehicle.powerup then
 				Log.info("PowerUp: " .. game_vehicle_id .. " dropped " .. vehicle.powerup.name)
-				vehicle.powerup.onDrop(vehicle.data)
+				vehicle.powerup.onDrop(vehicle.data, game_vehicle_id, vehicle.is_rendered)
+				vehicle.powerup.onDespawn(vehicle.data)
 			end
 					
 			-- swap ownership
@@ -651,7 +655,8 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 		else
 			if vehicle.powerup then
 				Log.info('PowerUP: ' .. game_vehicle_id .. ' dropped ' .. vehicle.powerup.name)
-				vehicle.powerup.onDrop(vehicle.data)
+				vehicle.powerup.onDrop(vehicle.data, game_vehicle_id, vehicle.is_rendered)
+				vehicle.powerup.onDespawn(vehicle.data)
 				
 				-- if the previous taken powerup matches the new then consider this like as if a charge was picked up
 				if vehicle.powerup.name == location.powerup.name then
@@ -668,7 +673,7 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 	else
 		Log.error('Unknown return type from powerup action of "' .. location.powerup.name .. '"')
 			
-		if is_fake_location then location.powerup.onDrop(location.data) end
+		if is_fake_location then location.powerup.onDespawn(location.data) end
 		return
 	end
 	
@@ -734,7 +739,7 @@ local function restockPowerups(instant)
 				end
 				
 				if not IS_BEAMMP_SERVER then
-					location.data = location.powerup.onCreate(location.obj)
+					location.data = location.powerup.onCreate(location.obj, location.is_rendered)
 				else
 					MPServerRuntime.syncLocationUpdate(location_name)
 				end
@@ -750,12 +755,12 @@ local function checkLocationRotation()
 			location.powerup = selectPowerup()
 			if location.powerup ~= nil then
 				location.rotation_timer:stopAndReset()
-				location.is_rendered = true
+				--location.is_rendered = true
 				
 				--Log.info('Restocked "' .. location_name .. '" with "' .. location.powerup.name .. '"')
 				
 				if not IS_BEAMMP_SERVER then
-					location.data = location.powerup.onCreate(location.obj)
+					location.data = location.powerup.onCreate(location.obj, location.is_rendered)
 				else
 					MPServerRuntime.syncLocationUpdate(location_name)
 				end
@@ -998,8 +1003,9 @@ M.testExec = function(game_vehicle_id, group, charge)
 	-- create fake location
 	local location = {
 		powerup = powerup,
-		data = powerup.onCreate(be:getObjectByID(game_vehicle_id)), -- incorrect, needs a trigger
-		respawn_timer = PauseTimer.new()
+		data = powerup.onCreate(be:getObjectByID(game_vehicle_id), false), -- incorrect, needs a trigger
+		respawn_timer = PauseTimer.new(),
+		is_rendered = false
 	}
 	
 	-- take ownership
@@ -1175,7 +1181,8 @@ M.dropPowerup = function(game_vehicle_id)
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle == nil or vehicle.powerup == nil then return end
 	
-	vehicle.powerup.onDrop(vehicle.data)
+	vehicle.powerup.onDrop(vehicle.data, game_vehicle_id, vehicle.is_rendered)
+	vehicle.powerup.onDespawn(vehicle.data)
 	vehicle.powerup = nil
 	vehicle.data = nil
 end

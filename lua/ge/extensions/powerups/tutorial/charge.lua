@@ -42,12 +42,13 @@ M.onInit = function() end
 M.onVehicleInit = function(game_vehicle_id) end
 
 -- Trigger: lua trigger
-M.onCreate = function(trigger)
+M.onCreate = function(trigger, is_rendered)
 	return {
 		marker = Extender.defaultPowerupCreator(
 			trigger,
 			"art/shapes/collectible/s_collect_medikit.cdae",
-			Point4F(1, 1, 1, 1)
+			Point4F(1, 1, 1, 1),
+			is_rendered
 		)
 	}
 end
@@ -58,20 +59,20 @@ M.whileActive = function(data, dt)
 end
 
 -- Vehicle that wants to pick this powerup up
-M.onPickup = function(data, vehicle)
+M.onPickup = function(data, vehicle, is_rendered)
 	M.onDespawn(data)
 	return onPickup.Success()
 end
 
 -- Hooked to the onPreRender tick
-M.whilePickup = function(data) end
+M.whilePickup = function(data, origin_id, dt) end
 
 M.onDespawn = function(data)
 	data.marker = Extender.defaultPowerupDelete(data.marker)
 end
 
 -- When the vehicle drops the powerup. Eg because it picked up another
-M.onDrop = function(data) end
+M.onDrop = function(data, origin_id, is_rendered) end
 
 -- Render Distance related
 M.onUnload = function(data)

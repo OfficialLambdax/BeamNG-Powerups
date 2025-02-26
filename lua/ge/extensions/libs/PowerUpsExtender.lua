@@ -81,7 +81,7 @@ M.defaultGroupVars = function()
 	return M.Types, GroupReturns.onPickup, createObject
 end
 
-M.defaultPowerupCreator = function(trigger_obj, shape_path, color_point)
+M.defaultPowerupCreator = function(trigger_obj, shape_path, color_point, is_rendered)
 	local pos = trigger_obj:getPosition()
 	
 	local marker = createObject("TSStatic")
@@ -95,12 +95,18 @@ M.defaultPowerupCreator = function(trigger_obj, shape_path, color_point)
 	marker.scale = vec3(2, 2, 2)
 	marker:registerObject("lib_default_powerup_" .. Util.randomName())
 	
-	Particle("DefaultEmitter", vec3(pos.x, pos.y, pos.z - 1))
-		:active(true)
-		:velocity(5)
-		:selfDisable(1000)
-		:selfDestruct(3000)
-	
+	if is_rendered == nil then is_rendered = true end
+	if is_rendered then
+		Particle("DefaultEmitter", vec3(pos.x, pos.y, pos.z - 1))
+			:active(true)
+			:velocity(5)
+			:selfDisable(1000)
+			:selfDestruct(3000)
+			
+	else
+		marker:setHidden(true)
+	end
+
 	return marker
 end
 
