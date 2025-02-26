@@ -279,19 +279,26 @@ local function checkRenderDistance()
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		if (vehicle.powerup and not vehicle.powerup.do_not_unload) or (vehicle.powerup_active and not vehicle.powerup_active.do_not_unload) then
 			
-			if dist3d(be:getObjectByID(game_vehicle_id):getPosition(), camera_position) < RENDER_DISTANCE or not Extender.isActive(game_vehicle_id) then
-				if not vehicle.is_rendered then
-					vehicle.is_rendered = true
-					if vehicle.powerup then vehicle.powerup.onLoad(vehicle.data) end
-					if vehicle.powerup_active then vehicle.powerup_active.onLoad(vehicle.powerup_active) end
+			local veh = be:getObjectByID(game_vehicle_id)
+			if veh then
+				if dist3d(veh:getPosition(), camera_position) < RENDER_DISTANCE or not Extender.isActive(game_vehicle_id) then
+					if not vehicle.is_rendered then
+						vehicle.is_rendered = true
+						if vehicle.powerup then vehicle.powerup.onLoad(vehicle.data) end
+						if vehicle.powerup_active then vehicle.powerup_active.onLoad(vehicle.powerup_active) end
+					end
+					
+				else
+					if vehicle.is_rendered and ((vehicle.powerup and not vehicle.powerup.do_not_unload) or (vehicle.powerup_active and not vehicle.powerup_active.do_not_unload)) then
+						vehicle.is_rendered = false
+						if vehicle.powerup then vehicle.powerup.onUnload(vehicle.data) end
+						if vehicle.powerup_active then vehicle.powerup_active.onUnload(vehicle.powerup_active) end
+					end
 				end
 				
 			else
-				if vehicle.is_rendered and ((vehicle.powerup and not vehicle.powerup.do_not_unload) or (vehicle.powerup_active and not vehicle.powerup_active.do_not_unload)) then
-					vehicle.is_rendered = false
-					if vehicle.powerup then vehicle.powerup.onUnload(vehicle.data) end
-					if vehicle.powerup_active then vehicle.powerup_active.onUnload(vehicle.powerup_active) end
-				end
+				-- this should never happen as VEHICLES is a match to getAllVehicles(), but it did
+				vehicle.is_rendered = false
 			end
 		end
 	end
