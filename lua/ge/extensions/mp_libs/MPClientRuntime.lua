@@ -129,8 +129,8 @@ local function onLocationsPowerupUpdate(locations)
 			
 			location.powerup = POWERUP_DEFS[location_update.powerup_group]
 			if location.powerup then
-				location.data = location.powerup.onCreate(location.obj)
-				location.is_rendered = true
+				location.data = location.powerup.onCreate(location.obj, location.is_rendered)
+				--location.is_rendered = true
 			end
 			
 		else
@@ -151,7 +151,8 @@ local function onVehiclesPowerupUpdate(vehicles)
 				
 				if vehicle_update.powerup_group == nil then
 					if vehicle.powerup then
-						vehicle.powerup.onDrop(vehicle.powerup.data)
+						vehicle.powerup.onDrop(vehicle.powerup.data, game_vehicle_id, vehicle.is_rendered)
+						vehicle.powerup.onDespawn(vehicle.powerup.data)
 						vehicle.powerup = nil
 					end
 					
