@@ -1,6 +1,8 @@
 
+For version 0.4
+
 /lua/ge/extensions/*
-	DoNotTouch.lua
+	PowerUps.lua
 		Entrypoint for the client side. It loads and unloads everything relevant for this mod and depending on if its a multiplayer session or not auto load locations and the "open" powerup set if its available for the map the player has loaded into.
 		
 	ServerSide.lua
@@ -24,35 +26,54 @@
 				
 			MathUtil.lua
 				Mostly covers things like "hey tell me how many cars are in this space", "hey rotate this vector for me", "hey check along this line if there have been vehicles". aka "the tedious math stuff"
+				
+			ObjectWrapper.lua
+				Wraps around the game own createObject function and safe guards otherwise game crashing object interactions
+			
+			Particles.lua
+				A "set and forget" wrapper for the game own particle emitter
 			
 			PowerUps.lua
 				The core of this entire mod. Essentially only provides a definition, trait, sync and event system for powerups to use.
 			
 			PowerUpsExtender.lua
 				Provides functions for vehicle and powerup interaction, mostly for the trait system. And a default powerup renderer.
+			
+			Sets.lua
+				A wrapper for the TimedTriggers.lua library. Pretty powerfull library in my mind that isnt much used yet. Essentially makes it possible to create sets of triggers that can be executed at any time along side various conditions.
 				
-			PowerUpsTraits.lua
-				Defines the traits.
-				
-			PowerUpsTypes.lua
-				Defines powerup group types.
+			Sfx.lua
+				A "set and forget" wrapper for the game own sfx emitter
+			
+			TriggerLoad.lua
+				Think of the game own prefab loader, but dedicated to lua triggers only. Is a bare bones library.
 
 			TimedTriggers.lua
 				Is a library that can run in VE, GE and on the BeamMP lua server.
 				Its essentially a high performance job library that allows queing rudimentary tasks and time sensitive executions.
 			
-			Sets.lua
-				A wrapper for the TimedTriggers.lua library. Pretty powerfull library in my mind that isnt much used yet. Essentially makes it possible to create sets of triggers that can be executed at any time along side various conditions.
-			
-			TriggerLoad.lua
-				Think of the game own prefab loader, but dedicated to lua triggers only. Is a bare bones library.
-			
 			Util.lua
 				Think of additional table functions, a better math.random etc
-
+			
+			/extender/*
+				GroupReturns.lua
+					Defines the powerup group return enums
+				
+				PowerupReturns.lua
+					Defines the active powerup return enums
+				
+				Traits.lua
+					Defines the traits
+					
+				Types.lua
+					Defines powerup group types
+				
 		/mp_libs/*
 			colors.lua
 				Essentially a converter to display beammp chat color codes colored for a CUI (eg a beammp server cui)
+				
+			compileLua.lua
+				Adds a server only wrapper for luas load() mechanism. DISABLED at the moment.
 			
 			MPClientRuntime.lua
 				Handles the multiplayer communication between the client and server from the client side.
@@ -66,6 +87,15 @@
 			PauseTimer.lua
 				A compatibility library that makes the hptimer()/HighPerfTimer() interface available in the beammp server. Wraps around either hptimer()/HighPerfTimer() or MP.CreateTimer()
 				When a library imports this it will be able to use stop()/stopAndReset()/start() no matter if in the games environment or a beammp server
+				
+			ServerConfig.lua
+				Provides a getter method for settings when the used server version doesnt have MP.Get() available
+				
+			Settings.lua
+				A settings lib providing describtive and self patching settings. WIP
+				
+			toml.lua
+				A non standard and completly outdated toml encoder and decoder
 				
 			TriggerClientEvent.lua
 				A better MP.TriggerClientEvent class
@@ -87,6 +117,25 @@
 	PowerUpExtender.lua
 		Provides extra ve utility.
 	
-	PowerUpSounds.lua
-		Lib loading/storing/playing.. at vehicle locations. Either its me or the game sound engine is just buggy. This was giving me headaches. And there are still issues.
-
+	SoundsLib.lua
+		Company lua for the Sounds lib from /lua/ge/extensions/libs/Sounds.lua
+		Loading/storing/playing of sounds.. at vehicle locations
+	
+	/extender/*
+		Bridge.lua
+			Work in progress. Will make it possible to make VE data available in GE.
+				eg
+				in a powerup definition
+				local M = {
+					-- [...]
+					
+					mass_bridge = Bridge("vehicle_mass" [[
+						local total_vehicle_mass = 0
+						-- calc vehicle mass
+						
+						return total_vehicle_mass
+					]])
+				}
+				
+				-- in any function of that powerup
+				local mass = M.mass_bridge:get() or 0
