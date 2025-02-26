@@ -73,6 +73,13 @@ end
 -- When the powerup is picked up by a vehicle
 M.onPickup = function(data, vehicle)
 	data.vehicle = vehicle
+	
+	Particle("BNGP_waterfallspray", data.marker:getPosition())
+		:active(true)
+		:velocity(0)
+		:selfDisable(1000)
+		:selfDestruct(3000)
+	
 	M.onDespawn(data)
 	return onPickup.Success()
 end

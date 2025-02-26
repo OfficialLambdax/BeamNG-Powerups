@@ -87,7 +87,7 @@ local Log = require("libs/Log")
 local Util = require("libs/Util")
 
 local M = {
-	VERSION = 0.22 -- 25.02.2025 (DD.MM.YYYY)
+	VERSION = 0.23 -- 25.02.2025 (DD.MM.YYYY)
 }
 local ID_LOOKUP = {}
 local TRIGGERS = {}
@@ -253,6 +253,7 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 	function trigger:check()
 		local int = self.int
 		if int.timer:stop() >= int.trigger_every then
+			local name = self.int.name
 			local r = self:exec()
 			
 			-- trigger was removed and retaken during exec
@@ -389,6 +390,10 @@ local function setLargeListOptimization(state)
 		for index, trigger in pairs(TRIGGERS) do
 			trigger:setTimerManual(trigger:getTime())
 		end
+		
+		Log.warn('Disabled large list optimization')
+	else
+		Log.warn('Enabled large list optimization')
 	end
 	return M
 end
