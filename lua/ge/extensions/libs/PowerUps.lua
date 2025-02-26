@@ -370,7 +370,7 @@ local function onVehicleDestroyed(game_vehicle_id)
 		end
 		
 		if vehicle.powerup_active then
-			vehicle.powerup_active.onDeactivate(vehicle.data, game_vehicle_id)
+			vehicle.powerup_active.onDeactivate(vehicle.powerup_data, game_vehicle_id)
 			MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
 		end
 	end

@@ -163,6 +163,21 @@ local function fileName(string)
 	return str:sub(pos + 1, -1)
 end
 
+local function fatalTriggerRemove(trigger)
+	local str = 'A trigger failed to execute. Removed.\n\n\n"' .. trigger:name() .. '"'
+	guihooks.trigger('toastrMsg', {
+		type = "error",
+		--label = "", -- ??
+		--context = "", -- ??
+		title = "TimedTrigger",
+		msg = str,
+		config = {
+			timeOut = 0,
+			--extendedTimeOut = 0, -- ??
+		},
+	})
+end
+
 -- ------------------------------------------------------------------------------------------------
 -- Init
 local function init()
@@ -312,8 +327,9 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 			end
 			
 			if not ok then
-				if r then Log.error(r) end
 				Log.error('Removing trigger "' .. self:name() .. '" as it fatals')
+				if r then Log.error(r) end
+				fatalTriggerRemove(self)
 				return 1
 			end
 			
