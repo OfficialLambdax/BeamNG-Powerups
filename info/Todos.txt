@@ -7,8 +7,6 @@ General
 New
 	- Add shield 4 that is charge based
 	- Negative that activates current powerup in the vehicle inv immediatly
-	- Add funny sounds to negatives
-	- Health Powerup
 
 -- -------------------------------------------------------------------------------------------------
 -- Libs
@@ -52,9 +50,10 @@ PowerupsLib
 		This could go further by adding a new var into the group definitions where groups can implement logic that decides if this powerup should be chosen.
 
 SetsLib
-	- Add setting for Sets to only exec triggers if vehicle is own (mp)
 	- (oversight) revert() doesnt revert ghosting or the reset blocker
-	- Add possibility to stack triggers. Where the next trigger in the set is enlisted after the previous was fully executed
+	- Leave SetsLib as is and rewrite it into Sets2.lua.
+		- Add setting for Sets to only exec triggers if vehicle is own (mp)
+		- Add possibility to stack triggers. Where the next trigger in the set is enlisted after the previous was fully executed
 
 TimedTriggers
 	- VE to GE calls
@@ -63,7 +62,3 @@ TimedTriggers
 ForceField
 	- Must account for differently sized vehicles
 	- Marker updates are not fluid! even hooking into onPreRender and disabling the update limit doesnt help it :/
-
-MathUtil
-	- MathUtil needs method to check if a from_vec to to_vec goes through terrain or other statics
-
