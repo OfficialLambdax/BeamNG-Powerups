@@ -9,6 +9,7 @@ local MPUtil = require("mp_libs/MPUtil")
 local TimedTrigger = require("libs/TimedTrigger")
 local MathUtil = require("libs/MathUtil")
 local Log = require("libs/Log")
+local Particle = require("libs/Particles")
 
 local PowerUpsTraits = require("libs/extender/Traits")
 local PowerUpsTypes = require("libs/extender/Types")
@@ -92,8 +93,13 @@ M.defaultPowerupCreator = function(trigger_obj, shape_path, color_point)
 	marker:setPosRot(pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w)
 	--marker.scale = trigger_obj:getScale()
 	marker.scale = vec3(2, 2, 2)
+	marker:registerObject("lib_default_powerup_" .. Util.randomName())
 	
-	marker:registerObject("my_powerup_" .. Util.randomName())
+	Particle("DefaultEmitter", vec3(pos.x, pos.y, pos.z - 1))
+		:active(true)
+		:velocity(5)
+		:selfDisable(1000)
+		:selfDestruct(3000)
 	
 	return marker
 end
@@ -111,7 +117,9 @@ M.defaultPowerupRender = function(marker_obj, dt)
 end
 
 M.defaultPowerupDelete = function(marker_obj)
-	if marker_obj then marker_obj:delete() end
+	if marker_obj then
+		marker_obj:delete()
+	end
 end
 
 M.defaultPowerupMaterialPatch = function()

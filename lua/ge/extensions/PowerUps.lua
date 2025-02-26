@@ -32,7 +32,7 @@ require("libs/PowerUps").unload()
 require("libs/TriggerLoad").unload()
 
 -- force reload of these
-package.loaded["libs/TimedTrigger"] = nil
+--package.loaded["libs/TimedTrigger"] = nil -- only enable the reload of this if you dev the TimedTriggers. Otherwise you may endup with memory leaks
 package.loaded["libs/CollisionsLib"] = nil
 package.loaded["libs/Sets"] = nil
 package.loaded["libs/ForceField"] = nil
