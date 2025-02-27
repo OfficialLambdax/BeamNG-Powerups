@@ -60,9 +60,10 @@ M.onActivate = function(vehicle)
 		
 	vehicle:queueLuaCommand('PowerUpExtender.jump(1)')
 	
-	return onActivate.TargetHits(
-		MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), M.effect_radius, vehicle_id)
-	)
+	local targets = MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), M.effect_radius, vehicle_id)
+	targets = Extender.cleanseTargetsBehindStatics(vehicle:getPosition(), targets)
+	
+	return onActivate.TargetHits(targets)
 end
 
 -- only called once
