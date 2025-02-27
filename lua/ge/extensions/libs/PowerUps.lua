@@ -1216,6 +1216,14 @@ M.getLibVersion = function()
 	return {version = M._VERSION, branch = M._BRANCH, name = M._NAME}
 end
 
+M.getRenderDistance = function()
+	return RENDER_DISTANCE
+end
+
+M.getRenderDistanceRoutineTime = function()
+	return ROUTINE_POWERUPS_CHECK_RENDER_DISTANCE
+end
+
 M.setRenderDistance = function(distance) -- in meters
 	RENDER_DISTANCE = distance
 end
@@ -1229,6 +1237,16 @@ M.getRenderedLocationsCount = function()
 	local total = 0
 	for _, location in pairs(LOCATIONS) do
 		if location.is_rendered and location.powerup then
+			total = total + 1
+		end
+	end
+	return total
+end
+
+M.getRenderedVehiclesCount = function()
+	local total = 0
+	for _, vehicle in pairs(VEHICLES) do
+		if vehicle.is_rendered and (vehicle.powerup or vehicle.powerup_active) then
 			total = total + 1
 		end
 	end
