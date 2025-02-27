@@ -69,6 +69,18 @@ local INITIALIZED = false
 local TRIGGER_DEBUG = false
 local TRIGGER_ADJUST = false
 
+local MEASURE_TIMER = PauseTimer.new()
+local MEASURE_BUFFER, MEASURE_INDEX = {}, 1
+local MEASURE_PRINT = false
+local MEASURE_DT_BUFFER, MEASURE_DT_INDEX = {}, 1
+local AVG_DT = 0
+local AVG_RUNTIME = 0
+
+local FRAME_SKIPPING = false
+local FRAME_SKIPPING_DT = 0
+local FRAME_SKIPPING_COUNT = 0
+local FRAME_SKIPPING_LIMIT = 1
+
 --[[
 	Notes
 		extensions.reload("PowerUps")
@@ -93,6 +105,9 @@ local TRIGGER_ADJUST = false
 -- ----------------------------------------------------------------------------
 -- For debug
 M.displayClientState = function(show)
+	Log.info("PowerUps version: " .. PowerUps._VERSION .. "\tBranch: " .. PowerUps._BRANCH .. "\tApi name: " .. PowerUps._NAME)
+	Log.info("TimedTrigger version: " .. TimedTrigger._VERSION)
+	
 	local vehicles = PowerUps.getKnownVehicleCount()
 	local triggers = TimedTrigger.count()
 	local reuse = TimedTrigger.getReuseCount()
@@ -103,11 +118,25 @@ M.displayClientState = function(show)
 	local rotation = math.floor(PowerUps.getRotationTime() / 1000)
 	local rotation_routine = PowerUps.getRotationRoutineTime()
 	local restock = math.floor(PowerUps.getRestockTime() / 1000)
+	local rendered_locations = PowerUps.getRenderedLocationsCount()
+	local rendered_vehicles = PowerUps.getRenderedVehiclesCount()
+	local avg_runtime = Util.mathRound(AVG_RUNTIME, 3)
+	local avg_dt = Util.mathRound(AVG_DT, 3)
+	local fps = math.floor((1 / AVG_DT) * 1000)
+	local work_partition = math.floor(((avg_runtime / FRAME_SKIPPING_LIMIT) / avg_dt) * 100) .. ' %'
+	local render_dis = PowerUps.getRenderDistance()
+	local render_dis_check = PowerUps.getRenderDistanceRoutineTime()
 	
 	local info = string.format([[
 	General   _
+		Frame skipping  : %s	Current : %s
 		Triggers        : %s		Reuse   : %s
 		Vehicles        : %s
+	Render    _
+		Distance        : %s m	Update : %s ms
+		Locations       : %s
+		Vehicles        : %s
+		Mod load        : %s @ %s FPS	Runtime avg: %s ms	Frame Delta avg: %s ms
 	Locations _
 		Total           : %s
 		Restock Time    : %s s
@@ -118,7 +147,8 @@ M.displayClientState = function(show)
 		Owned           : %s
 		Active          : %s
 	List      _]],
-		triggers, reuse, vehicles,
+		FRAME_SKIPPING, FRAME_SKIPPING_LIMIT, triggers, reuse, vehicles,
+		render_dis, render_dis_check, rendered_locations, rendered_vehicles, work_partition, fps, avg_runtime, avg_dt,
 		locations, restock, rotation, rotation_routine,
 		spawned, owned, active
 	)
@@ -134,9 +164,6 @@ end
 
 -- ----------------------------------------------------------------------------
 -- Runtime Measurement
-local MEASURE_TIMER = PauseTimer.new()
-local MEASURE_BUFFER, MEASURE_INDEX = {}, 1
-local MEASURE_PRINT = false
 local function measure()
 	MEASURE_BUFFER[MEASURE_INDEX] = MEASURE_TIMER:stop()
 	MEASURE_INDEX = MEASURE_INDEX + 1
@@ -150,6 +177,8 @@ local function measureAverage()
 	end
 	local avg = total / 100
 	
+	AVG_RUNTIME = avg
+	
 	--if avg > 5 then
 	--	Log.warn('PowerUps runtime is taking alot of time! Average: ' .. Util.mathRound(avg, 3) .. ' ms\nIf you are experiencing heavy lag, this might be why')
 	--end
@@ -161,13 +190,6 @@ end
 
 -- ----------------------------------------------------------------------------
 -- Delta time Measurement for auto frame skipping
-local MEASURE_DT_BUFFER, MEASURE_DT_INDEX = {}, 1
-
-local FRAME_SKIPPING = false
-local FRAME_SKIPPING_DT = 0
-local FRAME_SKIPPING_COUNT = 0
-local FRAME_SKIPPING_LIMIT = 1
-
 local function measureDt(dt)
 	MEASURE_DT_BUFFER[MEASURE_INDEX] = dt
 	MEASURE_DT_INDEX = MEASURE_DT_INDEX + 1
@@ -180,6 +202,8 @@ local function measureDtAverage()
 		total = total + (MEASURE_DT_BUFFER[i] or 0)
 	end
 	local avg = (total / 100) * 1000
+	
+	AVG_DT = avg
 	
 	-- enables frame skipping when <30 fps
 	if not FRAME_SKIPPING and avg > 30 then -- ~30fps
@@ -209,20 +233,33 @@ end
 -- Init
 -- only to be called once a map has been loaded or is already loaded
 local function onInit()
+	Log.info("Loading PowerUps lib wrapper mod")
+	
 	PowerUps.init()
 	
 	local level_name = core_levels.getLevelName(getMissionFilename())
 	local prefab_name = 'lua/ge/extensions/prefabs/' .. level_name .. '.prefab.json'
 	
-	if not MPUtil.isBeamMPSession() and FS:fileExists(prefab_name) then
-		PowerUps.loadLocationPrefab(prefab_name)
-		PowerUps.loadPowerUpDefs("lua/ge/extensions/powerups/open")
+	if MPUtil.isBeamMPSession() then
+		Log.info("Detected Multiplayer session")
+	else
+		Log.info("Detected Singleplayer session")
+		if not FS:fileExists(prefab_name) then
+			Log.warn('There is no location prefab available for this map "' .. level_name .. '"')
+			Log.warn('Looked at: ' .. prefab_name)
+		else
+			Log.info('Found location prefab for this map "' .. level_name .. '". Loading')
+			PowerUps.loadLocationPrefab(prefab_name)
+			PowerUps.loadPowerUpDefs("lua/ge/extensions/powerups/open")
+		end
 	end
 	
-	TimedTrigger.new("PowerUps_measurement", 10000, 0, measureAverage)
+	TimedTrigger.new("PowerUps_measurement", 1000, 0, measureAverage)
 	TimedTrigger.new("PowerUps_dt_measurement", 1000, 0, measureDtAverage)
 	
 	INITIALIZED = true
+	
+	M.displayClientState()
 end
 
 -- ----------------------------------------------------------------------------

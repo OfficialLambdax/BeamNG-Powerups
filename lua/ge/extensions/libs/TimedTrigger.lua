@@ -87,7 +87,7 @@ local Log = require("libs/Log")
 local Util = require("libs/Util")
 
 local M = {
-	VERSION = 0.25 -- 26.02.2025 (DD.MM.YYYY)
+	_VERSION = 0.26 -- 27.02.2025 (DD.MM.YYYY)
 }
 local ID_LOOKUP = {}
 local TRIGGERS = {}
@@ -99,6 +99,7 @@ local CHUNK_CHECK = 0
 local CHUNK_CHECK_SIZE = 300
 local LARGE_LIST_OPT = false
 local LARGE_LIST_OPT_FORCED = false
+local LIMIT_TO_CASCADE = 150000
 local TICK_TIMER = PrecisionTimer()
 local UNPACK = unpack or table.unpack
 
@@ -160,6 +161,7 @@ end
 local function fileName(string)
 	local str = string:sub(1):gsub("\\", "/")
 	local _, pos = str:find(".*/")
+	if pos == nil then return string end
 	return str:sub(pos + 1, -1)
 end
 
@@ -176,6 +178,37 @@ local function fatalTriggerRemove(trigger)
 			--extendedTimeOut = 0, -- ??
 		},
 	})
+end
+
+local function callTrace()
+	local call_trace = ''
+	local index = 4
+	while debug.getinfo(index) do
+		local get_info = debug.getinfo(index)
+		local source = get_info.source or ""
+		if source == '=[C]' then source = "builtin" end
+		
+		local name = get_info.name
+		if name == nil then name = '-' else name = name .. '()' end
+		
+		local currentline = get_info.currentline
+		if currentline < 1 then currentline = '-' end
+		
+		local spacer = ''
+		if index > 4 then spacer = ' ^ ' end
+		
+		call_trace = call_trace .. spacer ..
+			fileName(source) .. '@' .. name .. ':' .. currentline .. '\n'
+		
+		index = index + 1
+		
+		if index > 14 then
+			call_trace = call_trace .. '[...]'
+			break
+		end
+	end
+
+	return call_trace
 end
 
 -- ------------------------------------------------------------------------------------------------
@@ -198,12 +231,37 @@ local function init()
 end
 
 -- ------------------------------------------------------------------------------------------------
--- TriggerClass
+-- Cascade
+local function onCascade()
+	local str = 'CASCADE DETECTED. Shutting down to prevent ram overflow. Printing last 100 triggers to log. This is a fatal. Triggers will no longer be executed'
+	
+	guihooks.trigger('toastrMsg', {type = 'error', title = 'TimedTrigger', msg = str, config = {timeOut = 0}})
+	Log.error(str)
+	
+	M.tick = function() end
+	M.new = function() end
+	M.newF = function() end
+	M.newVE = function() end
+	M.newVEAll = function() end
+	M.newVEAllExcept = function() end
+	
+	for index = NEXT_POS - 1, NEXT_POS - 100, -1 do
+		if index < 0 then break end
+		
+		local trigger = TRIGGERS[index]
+		Log.error('-> ' .. trigger:name())
+		Log.warn('Creation trace:\n' .. trigger:getCallTrace())
+	end
+end
 
+-- ------------------------------------------------------------------------------------------------
+-- TriggerClass
 -- call self:update() to fill the obj
 local function newTriggerClass() -- name, target_env, trigger_every, trigger_for, exec, ...
 	local trigger = {int = {
 			name = "",
+			in_exec = false,
+			from = "",
 			timer_manual = 0, -- as int for "manual" count
 			timer = PrecisionTimer(), -- much slower then "manual" counting, but allows chunk checking
 			trigger_every = 0, -- ms
@@ -246,6 +304,8 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 		end
 		
 		self.int.name = name
+		self.int.in_exec = false
+		self.int.from = callTrace()
 		self.int.timer_manual = 0
 		self.int.timer:stopAndReset()
 		self.int.trigger_every = trigger_every
@@ -263,16 +323,24 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 	function trigger:getTime() return self.int.timer:stop() end
 	function trigger:resetTime() self.int.timer:stopAndReset() end
 	function trigger:setTimerManual(ms) self.int.timer_manual = ms end
+	function trigger:getCallTrace() return self.int.from end
+	function trigger:reset()
+		self.int.in_exec = false
+	end
+	
+	function trigger:updateTriggerEvery(ms)
+		self.int.trigger_every = ms
+	end
 	
 	-- returns true once trigger_count >= trigger_for to let the caller know that the trigger can be removed
 	function trigger:check()
 		local int = self.int
 		if int.timer:stop() >= int.trigger_every then
-			local name = self.int.name
+			self.int.in_exec = true
 			local r = self:exec()
 			
 			-- trigger was removed and retaken during exec
-			if name ~= self.int.name then return false end
+			if not self.int.in_exec then return end
 			
 			self.int.timer:stopAndReset()
 			
@@ -288,19 +356,15 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 		return false
 	end
 	
-	function trigger:updateTriggerEvery(ms)
-		self.int.trigger_every = ms
-	end
-	
 	function trigger:check_manual(ms)
 		local int = self.int
 		int.timer_manual = int.timer_manual + ms
 		if int.timer_manual >= int.trigger_every then
-			local name = self.int.name
+			self.int.in_exec = true
 			local r = self:exec()
 			
 			-- trigger was removed and retaken during exec
-			if name ~= self.int.name then return false end
+			if not self.int.in_exec then return end
 			
 			self.int.timer_manual = 0
 			self.int.timer:stopAndReset() -- !
@@ -386,6 +450,9 @@ end
 -- Reuse group
 local function reusePut(trigger)
 	if REUSE_NEXT_POS == REUSE_MAX_SIZE then return end
+	
+	trigger:reset()
+	
 	REUSE_TRIGGERS[REUSE_NEXT_POS] = trigger
 	REUSE_NEXT_POS = REUSE_NEXT_POS + 1
 end
@@ -479,6 +546,11 @@ local function accept(trigger)
 		TRIGGERS[NEXT_POS] = trigger
 		ID_LOOKUP[trigger:name()] = NEXT_POS
 		NEXT_POS = NEXT_POS + 1
+		
+		if NEXT_POS > LIMIT_TO_CASCADE then
+			onCascade()
+			return
+		end
 	end
 
 	--[[
