@@ -7,8 +7,20 @@ local LOCATIONS
 local VEHICLES
 local POWERUP_DEFS
 
+local R_PCALL = pcall
+
 local M = {}
 
+-- ------------------------------------------------------------------------------------------------
+-- Basics
+local function pcall(func, ...)
+	local ok, r = R_PCALL(func, ...)
+	if not ok then
+		Log.error(r)
+		return nil, true
+	end
+	return r
+end
 
 -- ------------------------------------------------------------------------------------------------
 -- To server
@@ -98,7 +110,7 @@ local function onActivePowerupDisable(server_vehicle_id)
 	
 	if vehicle.powerup_active == nil then return end
 	
-	vehicle.powerup_active.onDeactivate(vehicle.powerup_data, game_vehicle_id)
+	pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
 	vehicle.powerup_active = nil
 	vehicle.powerup_data = nil
 end
@@ -125,12 +137,14 @@ local function onLocationsPowerupUpdate(locations)
 	for _, location_update in ipairs(locations) do
 		local location = LOCATIONS[location_update.name]
 		if location then
-			if location.powerup then location.powerup.onDespawn(location.data) end
+			if location.powerup then pcall(location.powerup.onDespawn, location.data) end
 			
 			location.powerup = POWERUP_DEFS[location_update.powerup_group]
 			if location.powerup then
-				location.data = location.powerup.onCreate(location.obj, location.is_rendered)
-				--location.is_rendered = true
+				local data, err = pcall(location.powerup.onCreate, location.obj, location.is_rendered)
+				if not err then
+					location.data = data
+				end
 			end
 			
 		else
@@ -151,8 +165,8 @@ local function onVehiclesPowerupUpdate(vehicles)
 				
 				if vehicle_update.powerup_group == nil then
 					if vehicle.powerup then
-						vehicle.powerup.onDrop(vehicle.powerup.data, game_vehicle_id, vehicle.is_rendered)
-						vehicle.powerup.onDespawn(vehicle.powerup.data)
+						pcall(vehicle.powerup.onDrop, vehicle.powerup.data, game_vehicle_id, vehicle.is_rendered)
+						pcall(vehicle.powerup.onDespawn, vehicle.powerup.data)
 						vehicle.powerup = nil
 					end
 					

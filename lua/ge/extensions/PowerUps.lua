@@ -120,10 +120,10 @@ M.displayClientState = function(show)
 	local restock = math.floor(PowerUps.getRestockTime() / 1000)
 	local rendered_locations = PowerUps.getRenderedLocationsCount()
 	local rendered_vehicles = PowerUps.getRenderedVehiclesCount()
-	local avg_runtime = Util.mathRound(AVG_RUNTIME, 3)
-	local avg_dt = Util.mathRound(AVG_DT, 3)
+	local avg_runtime = Util.mathRound(AVG_RUNTIME, 2)
+	local avg_dt = Util.mathRound(AVG_DT, 2)
 	local fps = math.floor((1 / AVG_DT) * 1000)
-	local work_partition = math.floor(((avg_runtime / FRAME_SKIPPING_LIMIT) / avg_dt) * 100) .. ' %'
+	local work_partition = Util.mathRound(((AVG_RUNTIME / FRAME_SKIPPING_LIMIT) / AVG_DT) * 100, 2) .. ' %'
 	local render_dis = PowerUps.getRenderDistance()
 	local render_dis_check = PowerUps.getRenderDistanceRoutineTime()
 	
