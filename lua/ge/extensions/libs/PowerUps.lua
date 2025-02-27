@@ -911,7 +911,7 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 			checkLocationRotation
 		)
 		if r == nil then
-			Log.error('Cannot initialize restock routine')
+			Log.error('Cannot initialize rotation routine')
 		end
 	end
 	
@@ -926,7 +926,7 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 			checkRenderDistance
 		)
 		if r == nil then
-			Log.error('Cannot initialize render check routine')
+			Log.error('Cannot initialize render dist check routine')
 		end
 		
 		local r = TimedTrigger.new(
@@ -946,7 +946,7 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 			simplePowerUpDisplay
 		)
 		if r == nil then
-			Log.error('Cannot initialize traffic check routine')
+			Log.error('Cannot initialize simple display routine')
 		end
 	end
 	
