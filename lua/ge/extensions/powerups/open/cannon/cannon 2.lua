@@ -79,10 +79,13 @@ M.whileActive = function(data, origin_id, dt)
 		local veh_pos = origin_vehicle:getPosition()
 		veh_pos.z = veh_pos.z + 0.5
 		
+		local start_pos = MathUtil.getPosInFront(veh_pos, veh_dir, 2)
+		
 		local veh_id = origin_vehicle:getId()
 		local box_center = MathUtil.getPosInFront(veh_pos, veh_dir, 70)
 		local box = MathUtil.createBox(box_center, veh_dir, 60, 30, 40)
 		local targets = MathUtil.getVehiclesInsideBox(box, veh_id) or {}
+		targets = Extender.cleanseTargetsBehindStatics(start_pos, targets)
 		
 		local target_dir = veh_dir
 		local _, target_id = Util.tablePickRandom(targets)
@@ -96,7 +99,7 @@ M.whileActive = function(data, origin_id, dt)
 		
 		local target_info = {
 			target_dir = target_dir,
-			start_pos = MathUtil.getPosInFront(veh_pos, veh_dir, 3),
+			start_pos = start_pos,
 			init_vel = MathUtil.velocity(origin_vehicle:getVelocity())
 		}
 		

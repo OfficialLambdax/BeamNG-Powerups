@@ -256,6 +256,17 @@ M.cleanseTargetsWithTraits = function(targets, origin_vehicle_id, ...)
 	return new_targets
 end
 
+M.cleanseTargetsBehindStatics = function(origin_pos, targets)
+	local new_targets = {}
+	for _, target_id in ipairs(targets) do
+		local target_pos = be:getObjectByID(target_id):getPosition()
+		if not MathUtil.raycastAlongSideLine(origin_pos, target_pos) then
+			table.insert(new_targets, target_id)
+		end
+	end
+	return new_targets
+end
+
 M.isPlayerVehicle = function(game_vehicle_id)
 	local vehicle = PowerUps.vehicles[game_vehicle_id]
 	if vehicle then
