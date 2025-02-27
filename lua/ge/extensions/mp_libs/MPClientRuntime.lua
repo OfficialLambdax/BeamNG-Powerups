@@ -142,7 +142,9 @@ local function onLocationsPowerupUpdate(locations)
 			location.powerup = POWERUP_DEFS[location_update.powerup_group]
 			if location.powerup then
 				local data, err = pcall(location.powerup.onCreate, location.obj, location.is_rendered)
-				if not err then
+				if err then
+					location.powerup = nil
+				else
 					location.data = data
 				end
 			end
@@ -168,6 +170,7 @@ local function onVehiclesPowerupUpdate(vehicles)
 						pcall(vehicle.powerup.onDrop, vehicle.powerup.data, game_vehicle_id, vehicle.is_rendered)
 						pcall(vehicle.powerup.onDespawn, vehicle.powerup.data)
 						vehicle.powerup = nil
+						vehicle.data = nil
 					end
 					
 				else
