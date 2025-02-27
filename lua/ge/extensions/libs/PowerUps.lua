@@ -120,6 +120,7 @@ local VEHICLES = {}
 local function pcall(func, ...)
 	local ok, r = R_PCALL(func, ...)
 	if not ok then
+		Log.error('Call to powerup failed')
 		Log.error(r)
 		return nil, true
 	end
@@ -193,7 +194,12 @@ end
 -- ------------------------------------------------------------------------------------------------
 -- Powerup render que
 local function targetInfoExec(vehicle, target_info)
-	pcall(vehicle.powerup_active.onTargetSelect, vehicle.powerup_data, target_info)
+	local _, err = pcall(vehicle.powerup_active.onTargetSelect, vehicle.powerup_data, target_info)
+	if err then
+		pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data)
+		vehicle.powerup_active = nil
+		vehicle.powerup_data = nil
+	end
 end
 
 local function targetHitExec(game_vehicle_id, vehicle, targets, deactivate)
@@ -202,9 +208,11 @@ local function targetHitExec(game_vehicle_id, vehicle, targets, deactivate)
 	-- must use "pairs" as MPClientRuntime.onTargetHit() can nilify entries of unknown vehicles
 	for _, target_id in pairs(targets) do
 		if is_spectating then -- needs testing
-			pcall(vehicle.powerup_active.onTargetHit, vehicle.powerup_data, game_vehicle_id, target_id)
+			local _, err = pcall(vehicle.powerup_active.onTargetHit, vehicle.powerup_data, game_vehicle_id, target_id)
+			if err then deactivate = true end
 		end
-		pcall(vehicle.powerup_active.onHit, vehicle.powerup_data, game_vehicle_id, target_id)
+		local _, err = pcall(vehicle.powerup_active.onHit, vehicle.powerup_data, game_vehicle_id, target_id)
+		if err then deactivate = true end
 	end
 	
 	if deactivate then
@@ -219,7 +227,12 @@ end
 local function tickRenderQue(dt)
 	for _, location in pairs(LOCATIONS) do
 		if location.is_rendered and location.powerup then
-			pcall(location.powerup.whileActive, location.data, dt)
+			local _, err = pcall(location.powerup.whileActive, location.data, dt)
+			if err then
+				pcall(location.powerup.onDespawn, location.data)
+				location.powerup = nil
+				location.data = nil
+			end
 		end
 	end
 	
@@ -229,11 +242,23 @@ local function tickRenderQue(dt)
 	
 		if vehicle.is_rendered and Extender.isActive(game_vehicle_id) then
 			if vehicle.powerup then
-				pcall(vehicle.powerup.whilePickup, vehicle.data, game_vehicle_id, dt)
+				local _, err = pcall(vehicle.powerup.whilePickup, vehicle.data, game_vehicle_id, dt)
+				if err then
+					pcall(vehicle.powerup.onDrop, vehicle.data, game_vehicle_id, vehicle.is_rendered)
+					pcall(vehicle.powerup.onDespawn, vehicle.data)
+					vehicle.powerup = nil
+					vehicle.data = nil
+				end
 			end
 			
 			if vehicle.powerup_active then
 				local response, err = pcall(vehicle.powerup_active.whileActive, vehicle.powerup_data, game_vehicle_id, dt)
+				
+				if err then
+					pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data)
+					vehicle.powerup_active = nil
+					vehicle.powerup_data = nil
+				end
 				
 				if is_own and response then
 					if response.IsStop then
@@ -627,9 +652,12 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 			return VEC3(3, 3, 3)
 		end
 		
+		local data, err = pcall(powerup.onCreate, fake_location, false)
+		if err then return end
+		
 		location = {
 			powerup = powerup,
-			data = powerup.onCreate(fake_location, false),
+			data = data,
 			respawn_timer = PauseTimer.new(),
 			is_rendered = false
 		}
@@ -762,7 +790,9 @@ local function restockPowerups(instant)
 				
 				if not IS_BEAMMP_SERVER then
 					local data, err = pcall(location.powerup.onCreate, location.obj, location.is_rendered)
-					if not err then
+					if err then
+						location.powerup = nil
+					else
 						location.data = data
 					end
 				else
@@ -786,7 +816,9 @@ local function checkLocationRotation()
 				
 				if not IS_BEAMMP_SERVER then
 					local data, err = pcall(location.powerup.onCreate, location.obj, location.is_rendered)
-					if not err then
+					if err then
+						location.powerup = nil
+					else
 						location.data = data
 					end
 				else
