@@ -106,6 +106,13 @@ M.tableReset = function(table)
 	end
 end
 
+M.tableContains = function(table, this)
+	for _, v in ipairs(table) do
+		if v == this then return true end
+	end
+	return false
+end
+
 M.dist3d = function(p1, p2)
 	return math.sqrt((p2.x - p1.x)^2 + (p2.y - p1.y)^2 + (p2.z - p1.z)^2)
 end

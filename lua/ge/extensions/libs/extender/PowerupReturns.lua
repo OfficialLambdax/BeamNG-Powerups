@@ -37,5 +37,23 @@ return {
 		TargetHits = function(target_hits)
 			return {IsContinue = true, target_hits = target_hits}
 		end,
+	},
+	
+	onHKey = {
+		Stop = function()
+			return {IsStop = true}
+		end,
+		
+		StopAfterExec = function(target_info, target_hits)
+			return {IsStopAfterExec = true, target_info = target_info, target_hits = target_hits}
+		end,
+		
+		TargetInfo = function(target_info)
+			return {IsContinue = true, target_info = target_info}
+		end,
+		
+		TargetHits = function(target_hits)
+			return {IsContinue = true, target_hits = target_hits}
+		end,
 	}
 }

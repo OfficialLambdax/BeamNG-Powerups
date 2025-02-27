@@ -79,8 +79,8 @@ M.defaultPowerupVars = function(version) -- do not change order
 		return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject
 		
 	elseif version == 1 then
-		-- local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState = Extender.defaultPowerupVars(1)
-		return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject, M.ActiveHotkeys, M.ActiveHotkeyStates
+		-- local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
+		return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject, M.ActiveHotkeys, M.ActiveHotkeyStates, PowerupReturns.onHKey
 	end
 end
 
@@ -381,5 +381,21 @@ M.ghostVehicleAutoUnghost = function(vehicle, time)
 	)
 end
 
+M.targetChange = function(possible_targets, current_selected)
+	if not possible_targets or #possible_targets == 0 then return nil end
+	
+	-- if none selected so far choose first valid
+	if current_selected == nil then return possible_targets[1] end
+	
+	-- if one selected before, choose next in the list
+	for index, target_id in ipairs(possible_targets) do
+		if current_selected == target_id then
+			return possible_targets[index + 1] or possible_targets[1]
+		end
+	end
+	
+	-- couldnt find the previous target in the list? choose first
+	return possible_targets[1]
+end
 
 return M
