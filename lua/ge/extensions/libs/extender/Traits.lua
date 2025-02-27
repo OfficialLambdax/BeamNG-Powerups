@@ -59,7 +59,7 @@ local Traits = {
 		This powerup would like the vehicle to be ignored from other powerups target selecting.
 		When your powerup chooses a target or the next target ignore this vehicle. If your active powerup has already chosen this target then dont ignore this vehicle. This is supposed to prevent the vehicle to become a new target, not from being already a target.
 	]]
-	Ignore = "onGhosted",
+	Ignore = "onIgnore",
 	
 	--[[
 		Offensive

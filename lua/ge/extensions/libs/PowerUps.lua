@@ -908,6 +908,27 @@ function onPowerUpActivateHotkey()
 	end
 end
 
+-- for active powerups. they can listen to hotkeys
+function onCustomActivePowerUpHotkey(hotkey_id, state)
+	local event = Extender.ActiveHotkeys[hotkey_id]
+	if event == nil then
+		Log.error('Unknown hotkey event "' .. hotkey_id .. '"')
+		return
+	end
+	
+	local search_for = MPUtil.getMyPlayerName() or SUBJECT_SINGLEPLAYER
+	local spectated_vehicle = getPlayerVehicle(0)
+	if spectated_vehicle == nil then return end 
+	for game_vehicle_id, vehicle in pairs(VEHICLES) do
+		if vehicle.player_name == search_for and game_vehicle_id == spectated_vehicle:getId() then
+			if vehicle.powerup_active and vehicle.powerup_active[event] then
+				pcall(vehicle.powerup_active[event], state)
+			end
+			return
+		end
+	end
+end
+
 -- ------------------------------------------------------------------------------------------------
 -- Inter lib interface
 M.locations = LOCATIONS
