@@ -199,6 +199,7 @@ local function targetInfoExec(vehicle, target_info)
 		pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data)
 		vehicle.powerup_active = nil
 		vehicle.powerup_data = nil
+		MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
 	end
 end
 
@@ -258,6 +259,7 @@ local function tickRenderQue(dt)
 					pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data)
 					vehicle.powerup_active = nil
 					vehicle.powerup_data = nil
+					MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
 				end
 				
 				if is_own and response then
@@ -922,7 +924,40 @@ function onCustomActivePowerUpHotkey(hotkey_id, state)
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		if vehicle.player_name == search_for and game_vehicle_id == spectated_vehicle:getId() then
 			if vehicle.powerup_active and vehicle.powerup_active[event] then
-				pcall(vehicle.powerup_active[event], state)
+				local response, err = pcall(vehicle.powerup_active[event], vehicle.powerup_data, state)
+				if err then
+					pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
+					vehicle.powerup_active = nil
+					vehicle.powerup_data = nil
+					MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+					
+				else
+					if response then
+						if response.IsStop then
+							pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
+							vehicle.powerup_active = nil
+							vehicle.powerup_data = nil
+							MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+							
+						else
+							if response.target_info then
+								if not IS_BEAMMP_SESSION then
+									targetInfoExec(vehicle, response.target_info)
+								else
+									MPClientRuntime.tryTargetInfo(game_vehicle_id, response.target_info)
+								end
+							end
+							
+							if response.target_hits then
+								if not IS_BEAMMP_SESSION then
+									targetHitExec(game_vehicle_id, vehicle, response.target_hits, response.IsStopAfterExec)
+								else
+									MPClientRuntime.tryTargetHit(game_vehicle_id, response.target_hits, response.IsStopAfterExec)
+								end
+							end
+						end
+					end
+				end
 			end
 			return
 		end
