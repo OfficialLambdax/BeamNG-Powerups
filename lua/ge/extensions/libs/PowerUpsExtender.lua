@@ -15,6 +15,7 @@ local PowerUpsTraits = require("libs/extender/Traits")
 local PowerUpsTypes = require("libs/extender/Types")
 local GroupReturns = require("libs/extender/GroupReturns")
 local PowerupReturns = require("libs/extender/PowerupReturns")
+local Hotkeys = require("libs/extender/Hotkeys")
 
 local createObject = require("libs/ObjectWrapper")
 
@@ -25,6 +26,9 @@ M.TraitsLookup = Util.tableVToK(M.Traits)
 M.Types = PowerUpsTypes.Types
 M.GroupReturns = GroupReturns
 M.PowerupReturns = PowerupReturns
+M.ActiveHotkeys = Hotkeys.ActivePowerupHotkeys
+M.ActiveHotkeyStates = Hotkeys.ActivePowerupHotkeyStates
+--M.GroupHotkeys = Hotkeys.PowerupHotKeys
 
 local SUBJECT_SINGLEPLAYER = "!singleplayer"
 local SUBJECT_TRAFFIC = "!traffic"
@@ -69,16 +73,26 @@ M.defaultImports = function() -- do not change order
 	]]
 end
 
-M.defaultPowerupVars = function() -- do not change order
-	-- local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
-	
-	return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject
+M.defaultPowerupVars = function(version) -- do not change order
+	if version == nil then
+		-- local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
+		return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject
+		
+	elseif version == 1 then
+		-- local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState = Extender.defaultPowerupVars(1)
+		return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject, M.ActiveHotkeys, M.ActiveHotkeyStates
+	end
 end
 
-M.defaultGroupVars = function()
-	-- local Type, onPickup, createObject = Extender.defaultGroupVars()
-	
-	return M.Types, GroupReturns.onPickup, createObject
+M.defaultGroupVars = function(version)
+	if version == nil then -- enums
+		-- local Type, onPickup, createObject = Extender.defaultGroupVars()
+		return M.Types, GroupReturns.onPickup, createObject
+		
+	elseif version == 1 then
+		-- local Type, onPickup, createObject = Extender.defaultGroupVars(1)
+		return M.Types, GroupReturns.onPickup, createObject
+	end
 end
 
 M.defaultPowerupCreator = function(trigger_obj, shape_path, color_point, is_rendered)

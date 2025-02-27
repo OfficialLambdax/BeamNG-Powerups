@@ -21,7 +21,7 @@ local M = {
 	--[[
 		eg. {Trait.Consuming, Trait.Reflective}
 	]]
-	respects_traits = {Trait.Consuming, Trait.Ghosted},
+	respects_traits = {Trait.Consuming, Trait.Ghosted, Trait.Ignore},
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
@@ -84,6 +84,7 @@ M.whileActive = function(data, origin_id, dt)
 		local box_center = MathUtil.getPosInFront(veh_pos, veh_dir, 60)
 		local box = MathUtil.createBox(box_center, veh_dir, 60, 10, 40)
 		local targets = MathUtil.getVehiclesInsideBox(box, veh_id) or {}
+		targets = Extender.cleanseTargetsWithTraits(targets, veh_id, Trait.Ignore)
 		targets = Extender.cleanseTargetsBehindStatics(start_pos, targets)
 		
 		local target_dir = veh_dir
