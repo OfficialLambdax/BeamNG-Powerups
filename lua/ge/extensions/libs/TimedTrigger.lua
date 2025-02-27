@@ -87,14 +87,14 @@ local Log = require("libs/Log")
 local Util = require("libs/Util")
 
 local M = {
-	VERSION = 0.24 -- 26.02.2025 (DD.MM.YYYY)
+	VERSION = 0.25 -- 26.02.2025 (DD.MM.YYYY)
 }
 local ID_LOOKUP = {}
 local TRIGGERS = {}
 local NEXT_POS = 0
 local REUSE_TRIGGERS = {}
 local REUSE_NEXT_POS = 0
-local REUSE_MAX_SIZE = 10000
+local REUSE_MAX_SIZE = 100000
 local CHUNK_CHECK = 0
 local CHUNK_CHECK_SIZE = 300
 local LARGE_LIST_OPT = false
@@ -431,6 +431,13 @@ local function setLargeListOptimizationLock(state)
 	return M
 end
 
+local function prefillReuse(amount)
+	for i = REUSE_NEXT_POS, amount, 1 do
+		reusePut(newTriggerClass())
+	end
+	return M
+end
+
 local function find(name)
 	local index = ID_LOOKUP[name]
 	if index == nil then return nil end
@@ -483,7 +490,7 @@ local function accept(trigger)
 		if NEXT_POS < 100000 then
 			setLargeListOptimization(true)
 		else -- OVERFLOW. Disabling chunk checking to prevent ram overload. Game will start to stutter really bad
-			setLargeListOptimization(false):setLargeListOptimizationLock(true)
+			setLargeListOptimization(false).setLargeListOptimizationLock(true)
 		end
 	end
 end
@@ -628,6 +635,8 @@ end
 local function tick()
 	local dt = TICK_TIMER:stopAndReset()
 	
+	--print('Total: ' .. NEXT_POS .. '\tOpt: ' .. tostring(LARGE_LIST_OPT) .. '\tF: ' .. tostring(LARGE_LIST_OPT_FORCED) .. '\tDT: ' .. math.floor(dt) .. '\tChunk: ' .. CHUNK_CHECK)
+	
 	if LARGE_LIST_OPT then
 		if NEXT_POS == 0 then return end
 		while CHUNK_CHECK < NEXT_POS do
@@ -689,6 +698,7 @@ M.getReuseCount = getReuseCount
 M.tick = tick
 M.setLargeListOptimization = setLargeListOptimization
 M.setLargeListOptimizationLock = setLargeListOptimizationLock
+M.prefillReuse = prefillReuse
 M.remove = remove
 --M.removeByIndex = removeByIndex
 M.find = find

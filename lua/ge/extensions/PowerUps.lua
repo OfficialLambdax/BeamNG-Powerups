@@ -54,7 +54,7 @@ package.loaded["libs/ObjectWrapper"] = nil
 package.loaded["mp_libs/MPUtil"] = nil
 package.loaded["mp_libs/MPClientRuntime"] = nil
 
-local TimedTrigger = require("libs/TimedTrigger")
+local TimedTrigger = require("libs/TimedTrigger").prefillReuse(200)
 local CollisionsLib = require("libs/CollisionsLib")
 local Sets = require("libs/Sets")
 local ForceField = require("libs/ForceField")
