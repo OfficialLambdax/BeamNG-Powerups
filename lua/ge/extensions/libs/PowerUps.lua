@@ -924,7 +924,7 @@ function onCustomActivePowerUpHotkey(hotkey_id, state)
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		if vehicle.player_name == search_for and game_vehicle_id == spectated_vehicle:getId() then
 			if vehicle.powerup_active and vehicle.powerup_active[event] then
-				local response, err = pcall(vehicle.powerup_active[event], vehicle.powerup_data, state)
+				local response, err = pcall(vehicle.powerup_active[event], vehicle.powerup_data, game_vehicle_id, state)
 				if err then
 					pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
 					vehicle.powerup_active = nil
@@ -932,7 +932,10 @@ function onCustomActivePowerUpHotkey(hotkey_id, state)
 					MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
 					
 				else
-					if response then
+					local is_own = MPUtil.isOwn(game_vehicle_id)
+					if is_own == nil then is_own = true end -- if singleplayer
+					
+					if is_own and response then
 						if response.IsStop then
 							pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
 							vehicle.powerup_active = nil
