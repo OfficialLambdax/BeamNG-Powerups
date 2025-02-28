@@ -288,6 +288,21 @@ M.rotateVectorByDegrees = function(for_vec, up_vec, degrees) -- where degree is
 	)
 end
 
+M.getPredictedPosition = function(origin_vehicle, target_vehicle, proj_speed)
+	local org_pos = origin_vehicle:getSpawnWorldOOBB():getCenter()
+	
+	local tar_pos = target_vehicle:getSpawnWorldOOBB():getCenter()
+	local tar_vel = target_vehicle:getVelocity()
+	
+	local dist = Util.dist3d(org_pos, tar_pos)
+	local time = dist / proj_speed
+	
+	local new_pos = tar_pos + (tar_vel * time)
+	--debugDrawer:drawSphere(new_pos, 1, ColorF(1,1,1,1))
+	
+	return new_pos
+end
+
 M.disperseVec = function(dir_vec, strength)
 	dir_vec = dir_vec:normalized()
 	dir_vec.x = dir_vec.x + (math.random(0 - strength, 0 + strength) / 100)
