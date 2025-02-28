@@ -4,7 +4,7 @@ local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey
 
 local M = {
 	-- Shown to the user
-	clear_name = "Tire Sniper",
+	clear_name = "Engine Sniper",
 	
 	-- Turn true to not be affected by the render distance
 	do_not_unload = true,
@@ -34,10 +34,10 @@ local M = {
 	
 	-- Add extra variables here if needed. Constants only!
 	max_ammo = 5,
-	aim_time = 2000,
+	aim_time = 4000,
 	aim_range = 1500,
 	aim_angle = 500,
-	min_precision_error = 0.05,
+	min_precision_error = 0.2,
 	projectile_speed = 400,
 	projectile_life_time = 3000,
 	reload_sound = nil,
@@ -164,6 +164,7 @@ M[Hotkey.Fire] = function(data, origin_id, state)
 	scope = scope + M.min_precision_error
 	
 	data.charging_timer:stopAndReset()
+	data.stand_still_timer:stopAndReset()
 	data.is_reloading = false
 	data.ammo = data.ammo - 1
 	
@@ -196,7 +197,7 @@ M.onTargetSelect = function(data, target_info)
 	
 	table.insert(data.projectiles, projectile)
 	
-	data.vehicle:queueLuaCommand('PowerUpExtender.pushForward(-1)')
+	data.vehicle:queueLuaCommand('PowerUpExtender.pushForward(-3)')
 	
 	local blast_dir = quatFromDir(
 		data.vehicle:getDirectionVectorUp(),
@@ -316,7 +317,22 @@ end
 M.onHit = function(data, origin_id, target_id)
 	if Extender.hasTraitCalls(target_id, origin_id, Trait.Consuming) then return end
 	local target_vehicle = be:getObjectByID(target_id)
-	target_vehicle:queueLuaCommand('beamstate.deflateRandomTire()')
+	local exec = [[
+		local device = powertrain.getDevice("mainEngine")
+		if device then
+			if device.damageFrictionCoef > 1 then
+				device:lockUp()
+			else
+				for index = 1, 5, 1 do
+					device:applyDeformGroupDamage(1, "main")
+					device:applyDeformGroupDamage(1, "radiator")
+					device:applyDeformGroupDamage(1, "oilPan")
+				end
+			end
+		end
+	]]
+	
+	target_vehicle:queueLuaCommand(exec)
 end
 
 -- When the powerup has ended or is destroyed by any means
