@@ -9,6 +9,7 @@ M.BINDINGS = {} -- {"event" = title}
 local ActivePowerupHotkeys = {
 	Fire = "onHKeyFire",
 	TargetChange = "onHKeyTargetChange",
+	Cancel = "onHKeyCancel",
 	--TargetAim = "onHKeyTargetAim", -- TODO
 	
 	Action1 = "onHKeyAction1",
