@@ -38,7 +38,8 @@ return function(file_path, volume, pitch)
 	-- plays the sound in GE if vehicle is spectated, otherwise in VE
 	function sound:smart(target_id, volume, pitch)
 		local spectated = getPlayerVehicle(0)
-		if spectated and spectated:getId() == target_id then
+		if (spectated and spectated:getId() == target_id) and
+		(Util.dist3d(spectated:getPosition(), core_camera:getPosition()) < 30) then
 			self:play(volume)
 		else
 			self:playVE(target_id, volume, pitch)
@@ -48,13 +49,33 @@ return function(file_path, volume, pitch)
 	-- 50 to 250 meter is the default sound effect distance
 	function sound:smartSFX(target_id, volume, distance, max_time)
 		local spectated = getPlayerVehicle(0)
-		if spectated and spectated:getId() == target_id then
+		if (spectated and spectated:getId() == target_id) and
+		(Util.dist3d(spectated:getPosition(), core_camera:getPosition()) < 30) then
 			self:play(volume or self.int.volume)
 		else
 			local target_vehicle = be:getObjectByID(target_id)
 			Sfx(self.int.file_path, target_vehicle:getPosition())
 				:minDistance(distance or 50)
 				:maxDistance((distance or 150) + 100)
+				:is3D(true)
+				:volume(1)
+				:follow(target_vehicle, max_time or 10000)
+				:selfDestruct(max_time or 10000)
+				:spawn()
+		end
+	end
+	
+	-- 50 to 250 meter is the default sound effect distance
+	function sound:smartSFX2(target_id, volume, max_time, min_distance, max_distance)
+		local spectated = getPlayerVehicle(0)
+		if (spectated and spectated:getId() == target_id) and
+		(Util.dist3d(spectated:getPosition(), core_camera:getPosition()) < 30) then
+			self:play(volume or self.int.volume)
+		else
+			local target_vehicle = be:getObjectByID(target_id)
+			Sfx(self.int.file_path, target_vehicle:getPosition())
+				:minDistance(min_distance or 50)
+				:maxDistance(max_distance or 250)
 				:is3D(true)
 				:volume(1)
 				:follow(target_vehicle, max_time or 10000)

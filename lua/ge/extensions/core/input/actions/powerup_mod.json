@@ -1,5 +1,6 @@
 {
     "activate_powerup": {
+		"internal_name": "",
         "cat": "powerup_mod",
         "order": 0,
         "ctx": "tlua",
@@ -11,75 +12,82 @@
 	
 	
 	"fire_powerup": {
+		"internal_name": "onHKeyFire",
         "cat": "powerup_mod",
         "order": 1,
         "ctx": "tlua",
         "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Fire', 2) end",
         "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Fire', 3) end",
         "isBasic": true,
-        "title": "Fire [Custom]",
+        "title": "Fire",
         "desc": "Some powerups may require you to use this"
     },
 	"targetchange_powerup": {
+		"internal_name": "onHKeyTargetChange",
         "cat": "powerup_mod",
         "order": 2,
         "ctx": "tlua",
         "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('TargetChange', 2) end",
         "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('TargetChange', 3) end",
         "isBasic": true,
-        "title": "Target Change [Custom]",
+        "title": "Target Change",
         "desc": "Some powerups may require you to use this"
     },
 	
 	
 	"action_1_powerup": {
+		"internal_name": "onHKeyAction1",
         "cat": "powerup_mod",
         "order": 4,
         "ctx": "tlua",
         "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action1', 2) end",
         "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action1', 3) end",
         "isBasic": true,
-        "title": "Action 1 [Custom]",
+        "title": "Action 1",
         "desc": "Some powerups may require you to use this"
     },
 	"action_2_powerup": {
+		"internal_name": "onHKeyAction2",
         "cat": "powerup_mod",
         "order": 5,
         "ctx": "tlua",
         "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action2', 2) end",
         "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action2', 3) end",
         "isBasic": true,
-        "title": "Action 2 [Custom]",
+        "title": "Action 2",
         "desc": "Some powerups may require you to use this"
     },
 	"action_3_powerup": {
+		"internal_name": "onHKeyAction3",
         "cat": "powerup_mod",
         "order": 6,
         "ctx": "tlua",
         "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action3', 2) end",
         "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action3', 3) end",
         "isBasic": true,
-        "title": "Action 3 [Custom]",
+        "title": "Action 3",
         "desc": "Some powerups may require you to use this"
     },
 	"action_4_powerup": {
+		"internal_name": "onHKeyAction4",
         "cat": "powerup_mod",
         "order": 7,
         "ctx": "tlua",
         "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action4', 2) end",
         "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action4', 3) end",
         "isBasic": true,
-        "title": "Action 4 [Custom]",
+        "title": "Action 4",
         "desc": "Some powerups may require you to use this"
     },
 	"action_5_powerup": {
+		"internal_name": "onHKeyAction5",
         "cat": "powerup_mod",
         "order": 8,
         "ctx": "tlua",
         "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action5', 2) end",
         "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action5', 3) end",
         "isBasic": true,
-        "title": "Action 5 [Custom]",
+        "title": "Action 5",
         "desc": "Some powerups may require you to use this"
     }
 }

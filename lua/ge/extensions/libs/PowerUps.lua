@@ -78,6 +78,8 @@ local R_PCALL = pcall
 				[max_len] = the max amount of time this active will run
 				[max_len_timer] = nil/hptimer (server only)
 				[target_info_descriptor] = todo
+				[hotkeys] = table
+					["internal_name"] = assigned hotkey clear name
 				[onInit] = When the powerup has been loaded
 				[onVehicleInit] = Called for each vehicle
 				[onActivate] = When the powerup is activated
@@ -189,6 +191,28 @@ local function simpleDisplayActivatedPowerup(game_vehicle_id, clear_name, type)
 			--extendedTimeOut = 0, -- ??
 		},
 	})	
+end
+
+local function simpleDisplayHotkeyRequirement(hotkeys)
+	if not Util.tableHasContent(hotkeys) then return end
+	
+	local str = 'This powerup makes use of special hotkeys: '
+	for _, clear_name in pairs(hotkeys) do
+		str = str .. clear_name .. ', '
+	end
+	str = str:sub(1, -3)
+	
+	guihooks.trigger('toastrMsg', {
+		type = "info",
+		--label = "", -- ??
+		--context = "", -- ??
+		title = "",
+		msg = str,
+		config = {
+			timeOut = 8000,
+			--extendedTimeOut = 0, -- ??
+		},
+	})
 end
 
 -- ------------------------------------------------------------------------------------------------
@@ -507,6 +531,13 @@ local function loadPowerups(set_path, group_path, group)
 				powerup.max_len = powerup.max_len + 1000 -- safety
 			end
 			
+			powerup.hotkeys = {}
+			for _, hkey in pairs(Extender.ActiveHotkeys) do
+				if powerup[hkey] then
+					powerup.hotkeys[hkey] = Extender.hotkeyResolveClearName(hkey)
+				end
+			end
+			
 			powerup.internal_name = powerup_name
 			powerup.file_path = Util.filePath(file_path)
 			
@@ -607,6 +638,8 @@ local function activatePowerup(game_vehicle_id, from_server, charge_overwrite) -
 		Log.error('Powerup "' .. powerup_active.internal_name .. '" failed to activate "' .. response.reason .. '"')
 		return
 	end
+	
+	simpleDisplayHotkeyRequirement(powerup_active.hotkeys)
 	
 	vehicle.powerup_active = powerup_active
 	vehicle.powerup_data = response.data -- can be nil
