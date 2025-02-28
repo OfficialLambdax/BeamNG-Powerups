@@ -62,18 +62,18 @@ M.onActivate = function(vehicle)
 	local start_pos = MathUtil.getPosInFront(veh_pos, veh_dir, 2)
 	
 	local veh_id = vehicle:getId()
-	local box_center = MathUtil.getPosInFront(veh_pos, veh_dir, 70)
-	local box = MathUtil.createBox(box_center, veh_dir, 60, 30, 40)
-	local targets = MathUtil.getVehiclesInsideBox(box, veh_id) or {}
-	targets = Extender.cleanseTargetsWithTraits(targets, veh_id, Trait.Ignore)
+	local cone = MathUtil.createCone(start_pos, veh_dir, 300, 200)
+	local targets = MathUtil.getVehiclesInsideCone(cone, origin_id)
+	targets = Extender.cleanseTargetsWithTraits(targets, origin_id, Trait.Ignore)
 	targets = Extender.cleanseTargetsBehindStatics(start_pos, targets)
+	local projectile_speed = MathUtil.velocity(vehicle:getVelocity()) + 100
 	
 	local target_dir = veh_dir
 	local _, target_id = Util.tablePickRandom(targets)
 	if target_id then
 		local target_vehicle = be:getObjectByID(target_id)
 		local pos1 = vehicle:getPosition()
-		local pos2 = target_vehicle:getPosition()
+		local pos2 = MathUtil.getPredictedPosition(vehicle, target_vehicle, projectile_speed)
 		
 		target_dir = pos2 - pos1
 	end
@@ -90,7 +90,7 @@ M.onActivate = function(vehicle)
 	local target_info = {
 		target_dir = target_dir,
 		start_pos = start_pos,
-		init_vel = MathUtil.velocity(vehicle:getVelocity())
+		init_vel = projectile_speed
 	}
 	
 	M.activate_sound:smartSFX(vehicle:getId())
@@ -115,22 +115,25 @@ M.whileActive = function(data, origin_id, dt)
 	if not data.target_dir then return nil end
 	
 	local proj_pos = data.projectile:getPosition()
-	local new_pos = MathUtil.getPosInFront(proj_pos, data.target_dir, (100 + data.init_vel) * dt)
+	local new_pos = MathUtil.getPosInFront(proj_pos, data.target_dir, data.init_vel * dt)
 	
 	data.projectile:setPosRot(new_pos.x, new_pos.y, new_pos.z, 0, 0, 0, 0)
-	
-	-- check collision
+
 	local target_hits = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
-	Extender.cleanseTargetsWithTraits(target_hits, origin_id, Trait.Ghosted)
-	
-	if MathUtil.raycastAlongSideLine(proj_pos, new_pos) then
-		return whileActive.Stop()
+	local target_hits = Extender.cleanseTargetsWithTraits(target_hits, origin_id, Trait.Ghosted)
+	local target_hits = Extender.cleanseTargetsBehindStatics(proj_pos, target_hits)
+		
+	if MathUtil.raycastAlongSideLine(proj_pos, new_pos) or #target_hits > 0 then
+		data.projectile:delete()
+			
+		if #target_hits > 0 then
+			return whileActive.StopAfterExec(nil, target_hits)
+		end
+	elseif data.life_time:stop() > 2500 then
+		data.projectile:delete()
 	end
 	
-	if #target_hits > 0 then
-		return whileActive.StopAfterExec(nil, target_hits)
-
-	elseif data.life_time:stop() > 2500 then
+	if data.projectile:isDeleted() then
 		return whileActive.Stop()
 	else
 		return whileActive.Continue()

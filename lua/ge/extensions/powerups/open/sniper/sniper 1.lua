@@ -20,13 +20,13 @@ local M = {
 	-- Server related below
 	
 	-- Define the maximum length this powerup is active. The server will end it after this time.
-	max_len = 1000,
+	max_len = 60000,
 	
 	-- TODO
 	target_info_descriptor = nil,
 	
 	-- Configure traits this powerup respects. Required for trait call sync
-	respects_traits = {Trait.Ignore, Trait.Ghosted},
+	respects_traits = {Trait.Ignore, Trait.Ghosted, Trait.Consuming},
 	
 	-- Auto filled
 	-- Contains the dir path to this powerup
@@ -106,7 +106,7 @@ local function whileSelecting(data, origin_id, dt)
 	
 	data.possible_targets = targets
 	
-	--if Extender.isSpectating(origin_id) then
+	if Extender.isSpectating(origin_id) then
 		if data.selected_id then
 			local target_vehicle = be:getObjectByID(data.selected_id)
 			if target_vehicle == nil then
@@ -133,7 +133,7 @@ local function whileSelecting(data, origin_id, dt)
 		else
 			MathUtil.drawConeLikeTarget(cone)
 		end
-	--end
+	end
 end
 
 M[Hotkey.Fire] = function(data, origin_id, state)
@@ -309,6 +309,7 @@ end
 
 -- When a target was hit, called on every client
 M.onHit = function(data, origin_id, target_id)
+	if Extender.hasTraitCalls(target_id, origin_id, Trait.Consuming) then return end
 	local target_vehicle = be:getObjectByID(target_id)
 	target_vehicle:queueLuaCommand('beamstate.deflateRandomTire()')
 end

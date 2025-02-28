@@ -54,7 +54,7 @@ end
 
 -- When the powerup is activated
 M.onActivate = function(vehicle)
-	M.activate_sound:smartSFX(vehicle:getId())
+	M.activate_sound:smartSFX2(vehicle:getId(), nil, 10000, 50, 600)
 	return onActivate.Success({projectiles = {}, shoot_timer = hptimer(), shot_projectiles = 0, origin_id = vehicle:getId()})
 end
 
@@ -81,18 +81,18 @@ M.whileActive = function(data, origin_id, dt)
 		local start_pos = MathUtil.getPosInFront(veh_pos, veh_dir, 2)
 		
 		local veh_id = origin_vehicle:getId()
-		local box_center = MathUtil.getPosInFront(veh_pos, veh_dir, 60)
-		local box = MathUtil.createBox(box_center, veh_dir, 60, 10, 40)
-		local targets = MathUtil.getVehiclesInsideBox(box, veh_id) or {}
-		targets = Extender.cleanseTargetsWithTraits(targets, veh_id, Trait.Ignore)
+		local cone = MathUtil.createCone(start_pos, veh_dir, 600, 300)
+		local targets = MathUtil.getVehiclesInsideCone(cone, origin_id)
+		targets = Extender.cleanseTargetsWithTraits(targets, origin_id, Trait.Ignore)
 		targets = Extender.cleanseTargetsBehindStatics(start_pos, targets)
+		local projectile_speed = MathUtil.velocity(origin_vehicle:getVelocity()) + 200
 		
 		local target_dir = veh_dir
 		local _, target_id = Util.tablePickRandom(targets)
 		if target_id then
 			local target_vehicle = be:getObjectByID(target_id)
 			local pos1 = origin_vehicle:getPosition()
-			local pos2 = target_vehicle:getPosition()
+			local pos2 = MathUtil.getPredictedPosition(origin_vehicle, target_vehicle, projectile_speed)
 			
 			target_dir = pos2 - pos1
 		end
@@ -100,7 +100,7 @@ M.whileActive = function(data, origin_id, dt)
 		local target_info = {
 			target_dir = MathUtil.disperseVec(target_dir, 2),
 			start_pos = start_pos,
-			init_vel = MathUtil.velocity(origin_vehicle:getVelocity())
+			init_vel = projectile_speed
 		}
 		
 		data.shoot_timer:stopAndReset()
@@ -114,27 +114,24 @@ M.whileActive = function(data, origin_id, dt)
 	local target_hits = {}
 	for index, projectile in pairs(data.projectiles) do
 		local proj_pos = projectile.projectile:getPosition()
-		local new_pos = MathUtil.getPosInFront(proj_pos, projectile.target_dir, (200 + projectile.init_vel) * dt)
+		local new_pos = MathUtil.getPosInFront(proj_pos, projectile.target_dir, projectile.init_vel * dt)
 		
 		projectile.projectile:setPosRot(new_pos.x, new_pos.y, new_pos.z, 0, 0, 0, 0)
 		
-		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) then
+		local try = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
+		local try = Extender.cleanseTargetsWithTraits(try, origin_id, Trait.Ghosted)
+		local try = Extender.cleanseTargetsBehindStatics(proj_pos, try)
+			
+		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) or #try > 0 then
 			projectile.projectile:delete()
 			data.projectiles[index] = nil
 			
-		else		
-			-- check collision
-			local new_hit = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 2, origin_id)
-			Extender.cleanseTargetsWithTraits(new_hit, origin_id, Trait.Ghosted)
-			if #new_hit > 0 then
-				Util.tableArrayMerge(target_hits, new_hit)
-				projectile.projectile:delete()
-				data.projectiles[index] = nil
-			
-			elseif projectile.life_time:stop() > 2500 then
-				projectile.projectile:delete()
-				data.projectiles[index] = nil
+			if #try > 0 then
+				Util.tableArrayMerge(target_hits, try)
 			end
+		elseif projectile.life_time:stop() > 2500 then
+			projectile.projectile:delete()
+			data.projectiles[index] = nil
 		end
 	end
 	
