@@ -35,6 +35,11 @@ local M = {
 	-- Add extra variables here if needed. Constants only!
 	max_ammo = 5,
 	aim_time = 2000,
+	aim_range = 1500,
+	aim_angle = 500,
+	min_precision_error = 0.1,
+	projectile_speed = 400,
+	projectile_life_time = 3000,
 	reload_sound = nil,
 	follow_sound = nil,
 	ontarget_hit_sound = nil,
@@ -94,14 +99,14 @@ local function whileSelecting(data, origin_id, dt)
 	local veh_pos = origin_vehicle:getSpawnWorldOOBB():getCenter()
 	local start_pos = MathUtil.getPosInFront(veh_pos, veh_dir, 2)
 	
-	local cone = MathUtil.createCone(start_pos, veh_dir, 500, 500)
+	local cone = MathUtil.createCone(start_pos, veh_dir, M.aim_range, M.aim_angle)
 	local targets = MathUtil.getVehiclesInsideCone(cone, origin_id)
 	targets = Extender.cleanseTargetsWithTraits(targets, origin_id, Trait.Ignore)
 	targets = Extender.cleanseTargetsBehindStatics(start_pos, targets)
 	
 	data.possible_targets = targets
 	
-	if Extender.isSpectating(origin_id) then
+	--if Extender.isSpectating(origin_id) then
 		if data.selected_id then
 			local target_vehicle = be:getObjectByID(data.selected_id)
 			if target_vehicle == nil then
@@ -119,16 +124,16 @@ local function whileSelecting(data, origin_id, dt)
 				local stand_still_time = data.stand_still_timer:stop()
 				local scope = 90 - math.min((stand_still_time / M.aim_time) * 80, 80)
 				
-				local target_pos = target_vehicle:getSpawnWorldOOBB():getCenter()
+				local target_pos = MathUtil.getPredictedPosition(origin_vehicle, target_vehicle, M.projectile_speed)
 				local target_dir = target_pos - veh_pos
 				local dist = Util.dist3d(target_pos, veh_pos)
 				local cone = MathUtil.createCone(start_pos, target_dir, dist, scope)
-				MathUtil.drawConeLikeTarget(cone)				
+				MathUtil.drawConeLikeTarget(cone)
 			end
 		else
 			MathUtil.drawConeLikeTarget(cone)
 		end
-	end
+	--end
 end
 
 M[Hotkey.Fire] = function(data, origin_id, state)
@@ -150,11 +155,12 @@ M[Hotkey.Fire] = function(data, origin_id, state)
 	
 	if data.selected_id and data.is_valid_target then
 		local target_vehicle = be:getObjectByID(data.selected_id)
-		target_dir = target_vehicle:getPosition() - origin_pos
+		target_dir = MathUtil.getPredictedPosition(origin_vehicle, target_vehicle, M.projectile_speed) - origin_pos
 	end
 	
 	local stand_still_time = data.stand_still_timer:stop()
-	local scope = 3.01 - math.min((stand_still_time / M.aim_time) * 3, 3)
+	local scope = 3 - math.min((stand_still_time / M.aim_time) * 3, 3)
+	scope = scope + M.min_precision_error
 	
 	return onHKey.TargetInfo({
 			target_dir = MathUtil.disperseVec(target_dir:normalized(), scope),
@@ -202,7 +208,7 @@ M.onTargetSelect = function(data, target_info)
 		projectile.target_dir:cross(-data.vehicle:getDirectionVector())
 	)
 	
-	M.fire_sounds:surprise():smartSFX2(data.vehicle:getId(), nil, 5000, 50, 1000)
+	M.fire_sounds:surprise():smartSFX2(data.vehicle:getId(), nil, 5000, 50, M.aim_range + 200)
 	
 	-- forward
 	Particle("BNGP_22", start_pos, blast_dir)
@@ -251,22 +257,24 @@ local function whileFiring(data, origin_id, dt)
 	local target_hits = {}
 	for index, projectile in pairs(data.projectiles) do
 		local proj_pos = projectile.obj:getPosition()
-		local new_pos = MathUtil.getPosInFront(proj_pos, projectile.target_dir, 800 * dt)
+		local new_pos = MathUtil.getPosInFront(proj_pos, projectile.target_dir, M.projectile_speed * dt)
 		projectile.obj:setPosition(new_pos)
 		
 		local try = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
-		Extender.cleanseTargetsWithTraits(try, origin_id, Trait.Ghosted)
+		local try = Extender.cleanseTargetsWithTraits(try, origin_id, Trait.Ghosted)
+		local try = Extender.cleanseTargetsBehindStatics(proj_pos, try)
 		
-		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) or projectile.life_time:stop() > 2500 then
+		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) or #try > 0 then
 			projectile.obj:delete()
 			data.projectiles[index] = nil
 			
-		else
 			if #try > 0 then
-				Util.tableMerge(target_hits, try) -- this could create multiple hits on the same target. but ok. got hit by multiple bullets
-				projectile.obj:delete()
-				data.projectiles[index] = nil
+				Util.tableMerge(target_hits, try)
 			end
+		elseif projectile.life_time:stop() > M.projectile_life_time then
+			projectile.obj:delete()
+			data.projectiles[index] = nil
+			
 		end
 	end
 	
