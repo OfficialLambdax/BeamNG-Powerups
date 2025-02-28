@@ -41,7 +41,7 @@
         "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Cancel', 2) end",
         "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Cancel', 3) end",
         "isBasic": true,
-        "title": "Target Change",
+        "title": "Cancel",
         "desc": "Some powerups may require you to use this"
     },
 	

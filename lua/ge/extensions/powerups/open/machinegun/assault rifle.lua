@@ -81,7 +81,7 @@ M.whileActive = function(data, origin_id, dt)
 		local start_pos = MathUtil.getPosInFront(veh_pos, veh_dir, 2)
 		
 		local veh_id = origin_vehicle:getId()
-		local cone = MathUtil.createCone(start_pos, veh_dir, 600, 300)
+		local cone = MathUtil.createCone(start_pos, veh_dir, 600, 400)
 		local targets = MathUtil.getVehiclesInsideCone(cone, origin_id)
 		targets = Extender.cleanseTargetsWithTraits(targets, origin_id, Trait.Ignore)
 		targets = Extender.cleanseTargetsBehindStatics(start_pos, targets)

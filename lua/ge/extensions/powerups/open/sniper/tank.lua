@@ -4,7 +4,7 @@ local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey
 
 local M = {
 	-- Shown to the user
-	clear_name = "Tire Sniper",
+	clear_name = "Tank",
 	
 	-- Turn true to not be affected by the render distance
 	do_not_unload = true,
@@ -33,12 +33,12 @@ local M = {
 	file_path = "",
 	
 	-- Add extra variables here if needed. Constants only!
-	max_ammo = 5,
-	aim_time = 2000,
+	max_ammo = 3,
+	aim_time = 8000,
 	aim_range = 1500,
 	aim_angle = 500,
-	min_precision_error = 0.05,
-	projectile_speed = 400,
+	min_precision_error = 0.2,
+	projectile_speed = 600,
 	projectile_life_time = 3000,
 	reload_sound = nil,
 	follow_sound = nil,
@@ -48,17 +48,10 @@ local M = {
 
 -- Called once when the powerup is loaded
 M.onInit = function(group_defs)
-	M.reload_sound = Sound(M.file_path .. 'sounds/sniper_reload_1.ogg', 3)
+	M.reload_sound = Sound(M.file_path .. 'sounds/tank_reload.ogg', 3)
 	M.ontarget_hit_sound = Sound(M.file_path .. 'sounds/hit_sound.ogg', 15)
 	
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_1.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_2.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_3.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_4.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_5.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_6.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_7.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_8.ogg', 3), 1)
+	M.fire_sounds:add(Sound(M.file_path .. 'sounds/tank_shot_2.ogg', 3), 1)
 	
 	M.fire_sounds:stir(5)
 end
@@ -145,7 +138,7 @@ M[Hotkey.Fire] = function(data, origin_id, state)
 	if state ~= HKeyState.Down then return end
 	
 	local origin_vehicle = be:getObjectByID(origin_id)
-	if data.charging_timer:stop() < 2000 or data.ammo == 0 or data.stand_still_timer:stop() < 1000 then
+	if data.charging_timer:stop() < 3000 or data.ammo == 0 or data.stand_still_timer:stop() < 1000 then
 		return
 	end
 	
@@ -164,6 +157,7 @@ M[Hotkey.Fire] = function(data, origin_id, state)
 	scope = scope + M.min_precision_error
 	
 	data.charging_timer:stopAndReset()
+	data.stand_still_timer:stopAndReset()
 	data.is_reloading = false
 	data.ammo = data.ammo - 1
 	
@@ -189,14 +183,15 @@ M.onTargetSelect = function(data, target_info)
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 0, 0, 1)
 	marker:setPosRot(start_pos.x, start_pos.y, start_pos.z, 0, 0, 0, 1)
-	marker.scale = vec3(0.1, 0.1, 0.1)
+	marker.scale = vec3(0.3, 0.3, 0.3)
 	
 	marker:registerObject("my_powerup_" .. Util.randomName())
 	projectile.obj = marker
 	
 	table.insert(data.projectiles, projectile)
 	
-	data.vehicle:queueLuaCommand('PowerUpExtender.pushForward(-1)')
+	data.vehicle:queueLuaCommand('PowerUpExtender.pushForward(-5)')
+	data.vehicle:queueLuaCommand('PowerUpExtender.jump(1.5)')
 	
 	local blast_dir = quatFromDir(
 		data.vehicle:getDirectionVectorUp(),
@@ -213,7 +208,7 @@ M.onTargetSelect = function(data, target_info)
 		projectile.target_dir:cross(-data.vehicle:getDirectionVector())
 	)
 	
-	M.fire_sounds:surprise():smartSFX2(data.vehicle:getId(), nil, 5000, 50, M.aim_range + 200)
+	M.fire_sounds:surprise():smartSFX2(data.vehicle:getId(), nil, 10000, 50, M.aim_range + 200)
 	
 	-- forward
 	Particle("BNGP_22", start_pos, blast_dir)
@@ -241,7 +236,7 @@ M.onTargetSelect = function(data, target_info)
 		:selfDestruct(2000)
 	
 	-- tracer
-	Particle("BNGP_26", start_pos, blast_dir)
+	Particle("BNGP_29", start_pos, blast_dir)
 		:active(true)
 		:velocity(-20)
 		:bind(marker, 500)
@@ -315,8 +310,18 @@ end
 -- When a target was hit, called on every client
 M.onHit = function(data, origin_id, target_id)
 	if Extender.hasTraitCalls(target_id, origin_id, Trait.Consuming) then return end
+	local origin_vehicle = be:getObjectByID(origin_id)
 	local target_vehicle = be:getObjectByID(target_id)
-	target_vehicle:queueLuaCommand('beamstate.deflateRandomTire()')
+	local exec = [[
+		fire.explodeVehicle()
+		fire.igniteVehicle()
+		beamstate.breakAllBreakgroups()
+	]]
+	
+	local push = (target_vehicle:getPosition() - origin_vehicle:getPosition()):normalized() * 12
+	
+	target_vehicle:queueLuaCommand(exec)
+	target_vehicle:applyClusterVelocityScaleAdd(target_vehicle:getRefNodeId(), 1, push.x, push.y, push.z)
 end
 
 -- When the powerup has ended or is destroyed by any means
