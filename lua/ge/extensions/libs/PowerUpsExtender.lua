@@ -28,7 +28,7 @@ M.GroupReturns = GroupReturns
 M.PowerupReturns = PowerupReturns
 M.ActiveHotkeys = Hotkeys.ActivePowerupHotkeys
 M.ActiveHotkeyStates = Hotkeys.ActivePowerupHotkeyStates
---M.GroupHotkeys = Hotkeys.PowerupHotKeys
+M.hotkeyResolveClearName = Hotkeys.resolveClearName
 
 local SUBJECT_SINGLEPLAYER = "!singleplayer"
 local SUBJECT_TRAFFIC = "!traffic"

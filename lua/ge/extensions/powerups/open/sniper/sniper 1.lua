@@ -35,13 +35,14 @@ local M = {
 	-- Add extra variables here if needed. Constants only!
 	reload_sound = nil,
 	follow_sound = nil,
+	ontarget_hit_sound = nil,
 	fire_sounds = Pot(),
 }
 
 -- Called once when the powerup is loaded
 M.onInit = function(group_defs)
 	M.reload_sound = Sound(M.file_path .. 'sounds/sniper_reload_1.ogg', 3)
-	--M.follow_sound = Sound(M.file_path .. 'sounds/bullet_flying2.ogg', 3)
+	M.ontarget_hit_sound = Sound(M.file_path .. 'sounds/hit_sound.ogg', 15)
 	
 	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_1.ogg', 3), 1)
 	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_2.ogg', 3), 1)
@@ -51,7 +52,6 @@ M.onInit = function(group_defs)
 	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_6.ogg', 3), 1)
 	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_7.ogg', 3), 1)
 	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_8.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_9.ogg', 3), 1)
 	
 	M.fire_sounds:stir(5)
 end
@@ -122,7 +122,8 @@ end
 M[Hotkey.Fire] = function(data, origin_id, state)
 	if state ~= HKeyState.Down then return end
 	
-	if data.charging_timer:stop() < 2000 or data.ammo == 0 then
+	local origin_vehicle = be:getObjectByID(origin_id)
+	if data.charging_timer:stop() < 2000 or data.ammo == 0 or MathUtil.velocity(origin_vehicle:getVelocity()) > 3 then
 		return
 	end
 	
@@ -130,9 +131,9 @@ M[Hotkey.Fire] = function(data, origin_id, state)
 	data.is_reloading = false
 	data.ammo = data.ammo - 1
 	
-	local origin_vehicle = be:getObjectByID(origin_id)
-	local origin_pos = origin_vehicle:getPosition()
+	local origin_pos = origin_vehicle:getSpawnWorldOOBB():getCenter()
 	local target_dir = origin_vehicle:getDirectionVector()
+	target_dir.z = target_dir.z + 0.01
 	local start_pos = MathUtil.getPosInFront(origin_pos, target_dir, 2)
 	
 	if data.selected_id and data.is_valid_target then
@@ -141,7 +142,7 @@ M[Hotkey.Fire] = function(data, origin_id, state)
 	end
 	
 	return onHKey.TargetInfo({
-			target_dir = target_dir,
+			target_dir = target_dir:normalized(),
 			start_pos = start_pos
 		}
 	)
@@ -173,39 +174,52 @@ M.onTargetSelect = function(data, target_info)
 	
 	local blast_dir = quatFromDir(
 		data.vehicle:getDirectionVectorUp(),
-		data.target_dir
+		projectile.target_dir
 	)
 	
-	local sound = M.fire_sounds:surprise()
-	if Extender.isSpectating(data.vehicle:getId()) then
-		sound:play()
-	else
-		Sfx(sound:getFilePath(), data.vehicle:getPosition())
-			:minDistance(50)
-			:maxDistance(1000)
-			:is3D(true)
-			:volume(1)
-			:selfDestruct(5000)
-			:spawn()
-	end
+	local left_blast_dir = quatFromDir(
+		data.vehicle:getDirectionVectorUp(),
+		projectile.target_dir:cross(data.vehicle:getDirectionVector())
+	)
 	
-	Particle("BNGP_51", start_pos, blast_dir)
+	local right_blast_dir = quatFromDir(
+		data.vehicle:getDirectionVectorUp(),
+		projectile.target_dir:cross(-data.vehicle:getDirectionVector())
+	)
+	
+	M.fire_sounds:surprise():smartSFX2(data.vehicle:getId(), nil, 5000, 50, 1000)
+	
+	-- forward
+	Particle("BNGP_22", start_pos, blast_dir)
 		:active(true)
-		:followC(data.vehicle, nil, 
-			function(self, obj, emitter)
-				self:setPosition(MathUtil.getPosInFront(obj:getPosition(), obj:getDirectionVector(), 3))
-				self:velocity(MathUtil.velocity(obj:getVelocity()) * 1.5)
-			end
-		)
-		:selfDisable(math.random(200, 400))
-		:selfDestruct(10000)
+		:velocity(20)
+		:selfDisable(500)
+		:selfDestruct(3000)
 	
+	-- sideways
+	Particle("BNGP_22", start_pos, left_blast_dir)
+		:active(true)
+		:velocity(10)
+		:selfDisable(250)
+		:selfDestruct(3000)
+	Particle("BNGP_22", start_pos, right_blast_dir)
+		:active(true)
+		:velocity(10)
+		:selfDisable(250)
+		:selfDestruct(3000)
+	
+	Particle("BNGP_20", vec3(start_pos.x, start_pos.y, start_pos.z - 0.3))
+		:active(true)
+		:velocity(5)
+		:selfDisable(300)
+		:selfDestruct(2000)
+	
+	-- tracer
 	Particle("BNGP_26", start_pos, blast_dir)
 		:active(true)
 		:velocity(-20)
 		:bind(marker, 500)
 		:follow(marker)
-	
 	
 	Sfx(M.file_path .. 'sounds/bullet_flying2.ogg', data.start_pos)
 		:is3D(true)
@@ -228,7 +242,7 @@ local function whileFiring(data, origin_id, dt)
 		local try = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
 		Extender.cleanseTargetsWithTraits(try, origin_id, Trait.Ghosted)
 		
-		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) or projectile.life_time:stop() > 5000 then
+		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) or projectile.life_time:stop() > 2500 then
 			projectile.obj:delete()
 			data.projectiles[index] = nil
 			
@@ -246,7 +260,7 @@ end
 
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, origin_id, dt)
-	if not data.is_reloading and data.charging_timer:stop() > 600 then
+	if not data.is_reloading and data.ammo > 0 and data.charging_timer:stop() > 600 then
 		data.is_reloading = true
 		M.reload_sound:smart(origin_id)
 	end
@@ -279,7 +293,9 @@ M.onDeactivate = function(data, origin_id)
 end
 
 -- When a target was hit, only called on players spectating origin_id
-M.onTargetHit = function(data, origin_id, target_id) end
+M.onTargetHit = function(data, origin_id, target_id)
+	M.ontarget_hit_sound:play()
+end
 
 -- Render Distance related
 M.onUnload = function(data) end
