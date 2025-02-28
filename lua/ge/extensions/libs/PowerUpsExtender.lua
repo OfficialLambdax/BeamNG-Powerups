@@ -390,7 +390,7 @@ M.targetChange = function(possible_targets, current_selected)
 	-- if one selected before, choose next in the list
 	for index, target_id in ipairs(possible_targets) do
 		if current_selected == target_id then
-			return possible_targets[index + 1] or possible_targets[1]
+			return possible_targets[index + 1] -- or possible_targets[1]
 		end
 	end
 	
