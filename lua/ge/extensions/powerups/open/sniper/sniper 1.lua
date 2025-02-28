@@ -33,6 +33,8 @@ local M = {
 	file_path = "",
 	
 	-- Add extra variables here if needed. Constants only!
+	max_ammo = 5,
+	aim_time = 2000,
 	reload_sound = nil,
 	follow_sound = nil,
 	ontarget_hit_sound = nil,
@@ -64,16 +66,18 @@ M.onVehicleInit = function(game_vehicle_id) end
 M.onActivate = function(vehicle)
 	return onActivate.Success({
 			vehicle = vehicle,
+			stand_still_timer = Timer.new(),
+			
 			-- while selection
 			possible_targets = {},
 			selected_id = nil,
 			is_valid_target = false,
 			
 			-- while shooting
-			ammo = 5,
+			ammo = M.max_ammo,
 			is_reloading = false,
 			charging_timer = Timer.new(),
-			projectiles = {}, -- {[1..n] = {obj = markerObj, target_dir = vec3, life_timer = timer}]}
+			projectiles = {}, -- {[1..n] = {obj = markerObj, target_dir = vec3, life_time = timer}]}
 		}
 	)
 end
@@ -81,41 +85,49 @@ end
 M[Hotkey.TargetChange] = function(data, origin_id, state)
 	if state ~= HKeyState.Down then return end
 	data.selected_id = Extender.targetChange(data.possible_targets, data.selected_id)
+	data.stand_still_timer:stopAndReset()
 end
 
 local function whileSelecting(data, origin_id, dt)
 	local origin_vehicle = be:getObjectByID(origin_id)
 	local veh_dir = origin_vehicle:getDirectionVector()
-	local veh_pos = origin_vehicle:getPosition()
+	local veh_pos = origin_vehicle:getSpawnWorldOOBB():getCenter()
 	local start_pos = MathUtil.getPosInFront(veh_pos, veh_dir, 2)
 	
-	local box_center = MathUtil.getPosInFront(veh_pos, veh_dir, 550)
-	local box = MathUtil.createBox(box_center, veh_dir, 500, 40, 300)
-	
-	local targets = MathUtil.getVehiclesInsideBox(box, origin_id) or {}
+	local cone = MathUtil.createCone(start_pos, veh_dir, 500, 500)
+	local targets = MathUtil.getVehiclesInsideCone(cone, origin_id)
 	targets = Extender.cleanseTargetsWithTraits(targets, origin_id, Trait.Ignore)
 	targets = Extender.cleanseTargetsBehindStatics(start_pos, targets)
 	
-	MathUtil.drawBox(box)
-	
 	data.possible_targets = targets
 	
-	if data.selected_id and Extender.isSpectating(origin_id) then
-		local target_vehicle = be:getObjectByID(data.selected_id)
-		if target_vehicle == nil then
-			data.selected_id = nil
-			return
+	if Extender.isSpectating(origin_id) then
+		if data.selected_id then
+			local target_vehicle = be:getObjectByID(data.selected_id)
+			if target_vehicle == nil then
+				data.selected_id = nil
+				return
+			end
+			
+			data.is_valid_target = Util.tableContains(targets, data.selected_id)
+			local color = ColorF(0,1,0,1)
+			if not data.is_valid_target then
+				color = ColorF(1,0,0,1)
+				
+				MathUtil.drawConeLikeTarget(cone)
+			else
+				local stand_still_time = data.stand_still_timer:stop()
+				local scope = 90 - math.min((stand_still_time / M.aim_time) * 80, 80)
+				
+				local target_pos = target_vehicle:getSpawnWorldOOBB():getCenter()
+				local target_dir = target_pos - veh_pos
+				local dist = Util.dist3d(target_pos, veh_pos)
+				local cone = MathUtil.createCone(start_pos, target_dir, dist, scope)
+				MathUtil.drawConeLikeTarget(cone)				
+			end
+		else
+			MathUtil.drawConeLikeTarget(cone)
 		end
-		
-		data.is_valid_target = Util.tableContains(targets, data.selected_id)
-		local color = ColorF(0,1,0,1)
-		if not data.is_valid_target then
-			color = ColorF(1,0,0,1)
-		end
-		
-		local target_pos = target_vehicle:getSpawnWorldOOBB():getCenter()
-		target_pos.z = target_pos.z + 2
-		debugDrawer:drawSphere(target_pos, 1, color)
 	end
 end
 
@@ -123,7 +135,7 @@ M[Hotkey.Fire] = function(data, origin_id, state)
 	if state ~= HKeyState.Down then return end
 	
 	local origin_vehicle = be:getObjectByID(origin_id)
-	if data.charging_timer:stop() < 2000 or data.ammo == 0 or MathUtil.velocity(origin_vehicle:getVelocity()) > 3 then
+	if data.charging_timer:stop() < 2000 or data.ammo == 0 or data.stand_still_timer:stop() < 1000 then
 		return
 	end
 	
@@ -141,8 +153,11 @@ M[Hotkey.Fire] = function(data, origin_id, state)
 		target_dir = target_vehicle:getPosition() - origin_pos
 	end
 	
+	local stand_still_time = data.stand_still_timer:stop()
+	local scope = 3.01 - math.min((stand_still_time / M.aim_time) * 3, 3)
+	
 	return onHKey.TargetInfo({
-			target_dir = target_dir:normalized(),
+			target_dir = MathUtil.disperseVec(target_dir:normalized(), scope),
 			start_pos = start_pos
 		}
 	)
@@ -263,6 +278,11 @@ M.whileActive = function(data, origin_id, dt)
 	if not data.is_reloading and data.ammo > 0 and data.charging_timer:stop() > 600 then
 		data.is_reloading = true
 		M.reload_sound:smart(origin_id)
+	end
+	
+	local origin_vehicle = be:getObjectByID(origin_id)
+	if MathUtil.velocity(origin_vehicle:getVelocity()) > 3 then
+		data.stand_still_timer:stopAndReset()
 	end
 	
 	whileSelecting(data, origin_id, dt)

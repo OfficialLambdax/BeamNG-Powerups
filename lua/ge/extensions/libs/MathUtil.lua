@@ -20,6 +20,77 @@ end
 M.getPosInFront = function(pos_vec, dir_vec, distance)
 	return pos_vec + (dir_vec:normalized() * distance)
 end
+
+M.createCone = function(start_vec, dir_vec, len, radius)
+	local dir_vec = dir_vec:normalized()
+	local m90 = vec3(-dir_vec.y, dir_vec.x, dir_vec.z)
+	local cone_center = M.getPosInFront(start_vec, dir_vec, len)
+	
+	local cone = {
+		start = start_vec,
+		center = cone_center,
+		
+		c_b = vec3(cone_center.x, cone_center.y, cone_center.z - radius),
+		c_t = vec3(cone_center.x, cone_center.y, cone_center.z + radius),
+		
+		c_r = (start_vec + (dir_vec * len)) - (m90 * radius),
+		c_l = (start_vec + (dir_vec * len)) + (m90 * radius),
+	}
+	--dump(cone)
+	return cone
+end
+
+M.drawCone = function(cone, no_start)
+	debugDrawer:drawSphere(cone.center, 1, ColorF(0,1,1,1))
+	debugDrawer:drawText(cone.center, "c", ColorF(0,0,0,1))
+	if not no_start then
+		debugDrawer:drawSphere(cone.start, 1, ColorF(0,1,1,1))
+		debugDrawer:drawText(cone.start, "s", ColorF(0,0,0,1))
+	end
+	for name, pos in pairs(cone) do
+		if name ~= "center" and name ~= "start" then
+			debugDrawer:drawSphere(pos, 1, ColorF(1,1,1,1))
+			debugDrawer:drawText(pos, name, ColorF(0,0,0,1))
+		end
+	end
+end
+
+M.drawConeLikeTarget = function(cone)
+	debugDrawer:drawText(cone.center, "x", ColorF(0,0,0,1))
+	debugDrawer:drawText(cone.c_b, "|", ColorF(0,0,0,1))
+	debugDrawer:drawText(cone.c_t, "|", ColorF(0,0,0,1))
+	debugDrawer:drawText(cone.c_r, "-", ColorF(0,0,0,1))
+	debugDrawer:drawText(cone.c_l, "-", ColorF(0,0,0,1))
+end
+
+M.getVehiclesInsideCone = function(cone, ...)
+	local blacklist = Util.tableVToK({...})
+	local cone_axis = cone.center - cone.start
+	local cone_axis_length = cone_axis:length()
+	
+	local vehicles = {}
+	for _, vehicle in ipairs(getAllVehicles()) do
+		if not blacklist[vehicle:getId()] then
+		
+			local vector_to_check = vehicle:getPosition() - cone.start
+			local projection_length = vector_to_check:dot(cone_axis) / cone_axis_length
+			if projection_length > 0 and projection_length < cone_axis_length then
+				local check_projection = vec3(
+					cone_axis.x * (projection_length / cone_axis_length),
+					cone_axis.y * (projection_length / cone_axis_length),
+					cone_axis.z * (projection_length / cone_axis_length)
+				)
+				
+				local cone_radius_at_projection = (projection_length / cone_axis_length) * (cone.c_l - cone.center):length()
+				if (vector_to_check - check_projection):length() <= cone_radius_at_projection then
+					table.insert(vehicles, vehicle:getId())
+				end
+			end
+		end
+	end
+	
+	return vehicles
+end
 	
 M.createBox = function(center_vec, dir_vec, len, wide, height)
 	local dir_vec = dir_vec:normalized()
