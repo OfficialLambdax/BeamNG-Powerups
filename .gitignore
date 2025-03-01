@@ -1,3 +1,4 @@
 /# ignore
+/art/sounds/ext
 /lua/ge/extensions/mp_settings/multiplayer.server.toml
 /lua/ge/extensions/mp_settings/content.html
