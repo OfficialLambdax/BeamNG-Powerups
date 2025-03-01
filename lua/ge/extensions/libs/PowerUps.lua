@@ -639,7 +639,9 @@ local function activatePowerup(game_vehicle_id, from_server, charge_overwrite) -
 		return
 	end
 	
-	simpleDisplayHotkeyRequirement(powerup_active.hotkeys)
+	if Extender.isSpectating(game_vehicle_id) then
+		simpleDisplayHotkeyRequirement(powerup_active.hotkeys)
+	end
 	
 	vehicle.powerup_active = powerup_active
 	vehicle.powerup_data = response.data -- can be nil
@@ -715,7 +717,7 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 		if type == PowerupTypes.Charge then
 			M.addCharge(game_vehicle_id, 1)
 			Log.info("PowerUp: " .. game_vehicle_id .. " picked a charge")
-			simpleDisplayActivatedPowerup(game_vehicle_id, "Charge", powerup.type)
+			simpleDisplayActivatedPowerup(game_vehicle_id, "Charge (The thing that makes your powerups stronger)", powerup.type)
 			
 		elseif type == PowerupTypes.Negative then
 			-- check current powerup
