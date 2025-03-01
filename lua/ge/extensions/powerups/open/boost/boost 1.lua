@@ -42,7 +42,7 @@ local M = {
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
 	Sets.loadSet(M.file_path .. "sets/boost 1.lua", M.set_name)
-	M.activate_sound = Sound(M.file_path .. 'sounds/nitro_activation.ogg', 6)
+	M.activate_sound = Sound('art/sounds/ext/boost/nitro_activation.ogg', 6)
 end
 
 -- Called for each vehicle

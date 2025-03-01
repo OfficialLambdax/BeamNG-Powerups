@@ -41,7 +41,7 @@ local M = {
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/shockwave_heavy.ogg', 7)
+	M.activate_sound = Sound('art/sounds/ext/shockwave/shockwave_heavy.ogg', 7)
 end
 
 -- Called for each vehicle

@@ -38,15 +38,15 @@ local M = {
 	
 	max_projectiles = 5,
 	shoot_downtime = 500,
-	follow_sound = 'sounds/cannonball_flying.ogg',
+	follow_sound = 'art/sounds/ext/cannon/cannonball_flying.ogg',
 }
 
 
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/cannon_light.ogg', 3)
-	M.hit_sound = Sound(M.file_path .. 'sounds/hit.ogg', 6)
+	M.activate_sound = Sound('art/sounds/ext/cannon/cannon_light.ogg', 3)
+	M.hit_sound = Sound('art/sounds/ext/cannon/hit.ogg', 6)
 end
 
 -- Called for each vehicle
@@ -192,7 +192,7 @@ M.onTargetSelect = function(data, target_info)
 		:selfDisable(life_time)
 		:selfDestruct(life_time + 500)
 	
-	Sfx(M.file_path .. M.follow_sound, target_info.start_pos)
+	Sfx(M.follow_sound, target_info.start_pos)
 		:is3D(true)
 		:volume(1)
 		:minDistance(30)

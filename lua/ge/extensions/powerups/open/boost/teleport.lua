@@ -42,7 +42,7 @@ local M = {
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
 	Sets.loadSet(M.file_path .. "sets/teleport.lua", M.set_name)
-	M.activate_sound = Sound(M.file_path .. 'sounds/teleport.ogg', 12)
+	M.activate_sound = Sound('art/sounds/ext/boost/teleport.ogg', 12)
 end
 
 -- Called for each vehicle
