@@ -48,17 +48,17 @@ local M = {
 
 -- Called once when the powerup is loaded
 M.onInit = function(group_defs)
-	M.reload_sound = Sound(M.file_path .. 'sounds/sniper_reload_1.ogg', 3)
-	M.ontarget_hit_sound = Sound(M.file_path .. 'sounds/hit_sound.ogg', 15)
+	M.reload_sound = Sound('art/sounds/ext/sniper/sniper_reload_1.ogg', 3)
+	M.ontarget_hit_sound = Sound('art/sounds/ext/sniper/hit_sound.ogg', 15)
 	
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_1.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_2.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_3.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_4.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_5.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_6.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_7.ogg', 3), 1)
-	M.fire_sounds:add(Sound(M.file_path .. 'sounds/sniper_shot_8.ogg', 3), 1)
+	M.fire_sounds:add(Sound('art/sounds/ext/sniper/sniper_shot_1.ogg', 3), 1)
+	M.fire_sounds:add(Sound('art/sounds/ext/sniper/sniper_shot_2.ogg', 3), 1)
+	M.fire_sounds:add(Sound('art/sounds/ext/sniper/sniper_shot_3.ogg', 3), 1)
+	M.fire_sounds:add(Sound('art/sounds/ext/sniper/sniper_shot_4.ogg', 3), 1)
+	M.fire_sounds:add(Sound('art/sounds/ext/sniper/sniper_shot_5.ogg', 3), 1)
+	M.fire_sounds:add(Sound('art/sounds/ext/sniper/sniper_shot_6.ogg', 3), 1)
+	M.fire_sounds:add(Sound('art/sounds/ext/sniper/sniper_shot_7.ogg', 3), 1)
+	M.fire_sounds:add(Sound('art/sounds/ext/sniper/sniper_shot_8.ogg', 3), 1)
 	
 	M.fire_sounds:stir(5)
 end
@@ -247,7 +247,7 @@ M.onTargetSelect = function(data, target_info)
 		:bind(marker, 500)
 		:follow(marker)
 	
-	Sfx(M.file_path .. 'sounds/bullet_flying2.ogg', data.start_pos)
+	Sfx('art/sounds/ext/sniper/bullet_flying2.ogg', data.start_pos)
 		:is3D(true)
 		:volume(1)
 		:minDistance(30)

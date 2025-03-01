@@ -47,7 +47,7 @@ M.onInit = function(group_defs)
 	}
 	
 	for _, sound in ipairs(sounds) do
-		local soundObj = Sound(M.file_path .. 'sounds/' .. sound[1], sound[2])
+		local soundObj = Sound('art/sounds/ext/repair/' .. sound[1], sound[2])
 		if soundObj then
 			M.sounds[sound[1]] = soundObj
 			M.pot:add(sound[1], sound[3])

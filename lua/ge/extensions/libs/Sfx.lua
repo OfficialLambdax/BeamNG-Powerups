@@ -23,7 +23,7 @@ local function selfDisable(self)
 end
 
 local function follow(trigger_name, timer, for_time, self, obj)
-	if (for_time > 0 and timer:stop() >= for_time) or (obj.isDeleted and obj:isDeleted()) or self.int.obj:isDeleted() then
+	if (for_time > 0 and timer:stop() >= for_time) or obj:isDeleted() or self.int.obj:isDeleted() then
 		TimedTrigger.remove(trigger_name)
 		return
 	end
@@ -176,7 +176,7 @@ return function(file_path, pos_vec)
 	-- obj must have :getPosition() method and return a vec3
 	function sfx:follow(obj, for_time)
 		local trigger_name = TimedTrigger.getUnused('Sfx_follow_' .. self.int.name)
-		TimedTrigger.new(
+		if not obj.isDeleted or not TimedTrigger.new(
 			trigger_name,
 			0,
 			0,
@@ -186,7 +186,9 @@ return function(file_path, pos_vec)
 			for_time or 0,
 			self,
 			obj
-		)
+		) then
+			Log.error('Cannot bind to particle. Object doesnt have :isDeleted() method or cannot create timer')
+		end
 		
 		return self
 	end
@@ -202,7 +204,7 @@ return function(file_path, pos_vec)
 	]]
 	function sfx:followC(obj, for_time, callback)
 		local trigger_name = TimedTrigger.getUnused('Sfx_followC_' .. self.int.name)
-		TimedTrigger.new(
+		if not TimedTrigger.new(
 			trigger_name,
 			0,
 			0,
@@ -213,7 +215,9 @@ return function(file_path, pos_vec)
 			self,
 			obj,
 			callback
-		)
+		) then
+			Log.error('Cannot bind to particle. Object doesnt have :isDeleted() method or cannot create timer')
+		end
 		
 		return self
 	end
@@ -223,7 +227,7 @@ return function(file_path, pos_vec)
 	-- All objects from the ObjectWrapper have it.
 	function sfx:bind(obj, delete_after)
 		local trigger_name = TimedTrigger.getUnused('Sfx_bind_' .. self.int.name)
-		TimedTrigger.new(
+		if not obj.isDeleted or not TimedTrigger.new(
 			trigger_name,
 			100,
 			0,
@@ -232,7 +236,9 @@ return function(file_path, pos_vec)
 			self,
 			obj,
 			delete_after or 0
-		)
+		) then
+			Log.error('Cannot bind to particle. Object doesnt have :isDeleted() method or cannot create timer')
+		end
 		
 		return self
 	end

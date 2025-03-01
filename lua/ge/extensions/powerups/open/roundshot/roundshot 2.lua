@@ -44,8 +44,8 @@ local M = {
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/roundshot_2_double.ogg', 3)
-	M.hit_sound = Sound(M.file_path .. 'sounds/energy_bullet_hit.ogg', 6)
+	M.activate_sound = Sound('art/sounds/ext/roundshot/roundshot_2_double.ogg', 3)
+	M.hit_sound = Sound('art/sounds/ext/roundshot/energy_bullet_hit.ogg', 6)
 end
 
 -- Called for each vehicle
@@ -160,7 +160,7 @@ M.onTargetSelect = function(data, target_info)
 		target_info.target_dir
 	)
 	
-	Sfx(M.file_path .. 'sounds/bullet_flying.ogg', target_info.start_pos)
+	Sfx('art/sounds/ext/roundshot/bullet_flying.ogg', target_info.start_pos)
 		:bind(marker):follow(marker)
 		:is3D(true)
 		:volume(0.3)
