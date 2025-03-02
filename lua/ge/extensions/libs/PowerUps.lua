@@ -118,6 +118,10 @@ local LOCATIONS = {}
 local VEHICLES = {}
 
 -- ------------------------------------------------------------------------------------------------
+-- Function dec, so that func order doesnt matter
+local simplePowerUpDisplay, simpleDisplayActivatedPowerup, simpleDisplayHotkeyRequirement, targetInfoExec, targetHitExec, tickRenderQue, checkRenderDistance, updateRenderDistanceCheckTime, onVehicleSpawned, onVehicleDestroyed, checkIfTraffic, loadPowerups, loadPowerupSet, selectPowerup, activatePowerup, vehicleAddPowerup, takePowerupFromLocation, restockPowerups, checkLocationRotation, updateLocationRotationCheckTime, loadLocations, removePowerupFromVehicle, removeActivePowerup
+
+-- ------------------------------------------------------------------------------------------------
 -- Basics
 local function pcall(func, ...)
 	local ok, r = R_PCALL(func, ...)
@@ -131,7 +135,7 @@ end
 
 -- ------------------------------------------------------------------------------------------------
 -- Very basic powerup display. Shows powerup info depending on which vehicle the player is spectating
-local function simplePowerUpDisplay()
+simplePowerUpDisplay = function()
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		local powerup = vehicle.powerup
 		if Extender.isSpectating(game_vehicle_id) and powerup then
@@ -156,7 +160,7 @@ local function simplePowerUpDisplay()
 	end
 end
 
-local function simpleDisplayActivatedPowerup(game_vehicle_id, clear_name, type)
+simpleDisplayActivatedPowerup = function(game_vehicle_id, clear_name, type)
 	if not Extender.isSpectating(game_vehicle_id) then return end
 	
 	local symbol = "success"
@@ -193,7 +197,7 @@ local function simpleDisplayActivatedPowerup(game_vehicle_id, clear_name, type)
 	})	
 end
 
-local function simpleDisplayHotkeyRequirement(hotkeys)
+simpleDisplayHotkeyRequirement = function(hotkeys)
 	if not Util.tableHasContent(hotkeys) then return end
 	
 	local str = 'This powerup makes use of special hotkeys: '
@@ -217,17 +221,14 @@ end
 
 -- ------------------------------------------------------------------------------------------------
 -- Powerup render que
-local function targetInfoExec(vehicle, target_info)
+targetInfoExec = function(vehicle, target_info)
 	local _, err = pcall(vehicle.powerup_active.onTargetSelect, vehicle.powerup_data, target_info)
 	if err then
-		pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data)
-		vehicle.powerup_active = nil
-		vehicle.powerup_data = nil
-		MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+		removeActivePowerup(game_vehicle_id)
 	end
 end
 
-local function targetHitExec(game_vehicle_id, vehicle, targets, deactivate)
+targetHitExec = function(game_vehicle_id, vehicle, targets, deactivate)
 	local is_spectating = Extender.isSpectating(game_vehicle_id)
 	
 	-- must use "pairs" as MPClientRuntime.onTargetHit() can nilify entries of unknown vehicles
@@ -241,15 +242,11 @@ local function targetHitExec(game_vehicle_id, vehicle, targets, deactivate)
 	end
 	
 	if deactivate then
-		pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
-		vehicle.powerup_active = nil
-		vehicle.powerup_data = nil
-		
-		MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+		removeActivePowerup(game_vehicle_id)
 	end
 end
 
-local function tickRenderQue(dt)
+tickRenderQue = function(dt)
 	for _, location in pairs(LOCATIONS) do
 		if location.is_rendered and location.powerup then
 			local _, err = pcall(location.powerup.whileActive, location.data, dt)
@@ -269,10 +266,7 @@ local function tickRenderQue(dt)
 			if vehicle.powerup then
 				local _, err = pcall(vehicle.powerup.whilePickup, vehicle.data, game_vehicle_id, dt)
 				if err then
-					pcall(vehicle.powerup.onDrop, vehicle.data, game_vehicle_id, vehicle.is_rendered)
-					pcall(vehicle.powerup.onDespawn, vehicle.data)
-					vehicle.powerup = nil
-					vehicle.data = nil
+					removePowerupFromVehicle(game_vehicle_id)
 				end
 			end
 			
@@ -280,19 +274,12 @@ local function tickRenderQue(dt)
 				local response, err = pcall(vehicle.powerup_active.whileActive, vehicle.powerup_data, game_vehicle_id, dt)
 				
 				if err then
-					pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data)
-					vehicle.powerup_active = nil
-					vehicle.powerup_data = nil
-					MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+					removeActivePowerup(game_vehicle_id)
 				end
 				
 				if is_own and response then
 					if response.IsStop then
-						pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
-						vehicle.powerup_active = nil
-						vehicle.powerup_data = nil
-						
-						MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+						removeActivePowerup(game_vehicle_id)
 						
 					else
 						if response.target_info then
@@ -317,7 +304,7 @@ local function tickRenderQue(dt)
 	end
 end
 
-local function checkRenderDistance()
+checkRenderDistance = function()
 	local camera_position = core_camera.getPosition()
 	if camera_position == nil then return end
 	local dist3d = Util.dist3d
@@ -368,7 +355,7 @@ local function checkRenderDistance()
 	end
 end
 
-local function updateRenderDistanceCheckTime(time)
+updateRenderDistanceCheckTime = function(time)
 	ROUTINE_POWERUPS_CHECK_RENDER_DISTANCE = time
 
 	if TimedTrigger.updateTriggerEvery("PowerUps_checkRenderDist", time) then
@@ -398,7 +385,7 @@ function onPowerUpVehicleInit(game_vehicle_id)
 	end
 end
 
-local function onVehicleSpawned(game_vehicle_id)
+onVehicleSpawned = function(game_vehicle_id)
 	VEHICLES[game_vehicle_id] = {
 		charge = 1,
 		powerup = nil,
@@ -420,7 +407,7 @@ local function onVehicleSpawned(game_vehicle_id)
 	return VEHICLES[game_vehicle_id]
 end
 
-local function onVehicleDestroyed(game_vehicle_id)
+onVehicleDestroyed = function(game_vehicle_id)
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle == nil then return end
 
@@ -429,20 +416,18 @@ local function onVehicleDestroyed(game_vehicle_id)
 	if not IS_BEAMMP_SERVER then
 		-- drop powerup
 		if vehicle.powerup then
-			pcall(vehicle.powerup.onDrop, vehicle.data, game_vehicle_id, vehicle.is_rendered)
-			pcall(vehicle.powerup.onDespawn, vehicle.data)
+			removePowerupFromVehicle(game_vehicle_id)
 		end
 		
 		if vehicle.powerup_active then
-			pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
-			MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+			removeActivePowerup(game_vehicle_id)
 		end
 	end
 end
 
 -- ------------------------------------------------------------------------------------------------
 -- Traffic vehicle check routine
-local function checkIfTraffic()
+checkIfTraffic = function()
 	local traffic_list = Util.tableVToK(gameplay_traffic.getTrafficList())
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		if traffic_list[game_vehicle_id] then
@@ -455,7 +440,25 @@ end
 
 -- ------------------------------------------------------------------------------------------------
 -- Powerups
-local function loadPowerups(set_path, group_path, group)
+removePowerupFromVehicle = function(game_vehicle_id)
+	local vehicle = VEHICLES[game_vehicle_id]
+	if vehicle == nil or vehicle.powerup == nil then return end
+	
+	pcall(vehicle.powerup.onDrop, vehicle.data, game_vehicle_id, vehicle.is_rendered)
+	pcall(vehicle.powerup.onDespawn, vehicle.data, vehicle.is_rendered)
+end
+
+removeActivePowerup = function(game_vehicle_id)
+	local vehicle = VEHICLES[game_vehicle_id]
+	if vehicle == nil or vehicle.powerup_active == nil then return end
+	
+	pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
+	vehicle.powerup_active = nil
+	vehicle.powerup_data = nil
+	MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+end
+
+loadPowerups = function(set_path, group_path, group)
 	if POWERUP_DEFS[group.name] then 
 		Log.error('"' .. group.name .. '" from "' .. Util.fileName(group_path) .. '" already exists. Aborting load')
 		return
@@ -575,7 +578,7 @@ local function loadPowerups(set_path, group_path, group)
 	Log.info('\tPowerups : ' .. group.max_levels)
 end
 
-local function loadPowerupSet(set_path)
+loadPowerupSet = function(set_path)
 	Log.info('Trying to load powerup set "' .. Util.fileName(set_path) .. '"')
 	for _, group_path in pairs(Util.listFiles(set_path)) do
 		local group, err = Util.compileLua(group_path)
@@ -590,7 +593,7 @@ local function loadPowerupSet(set_path)
 	if not IS_BEAMMP_SESSION or IS_BEAMMP_SERVER then M.restockPowerups(true) end
 end
 
-local function selectPowerup()
+selectPowerup = function()
 	if not Util.tableHasContent(POWERUP_DEFS) then return end
 
 	local pot = Pot()
@@ -602,7 +605,7 @@ local function selectPowerup()
 	return pot:surprise()
 end
 
-local function activatePowerup(game_vehicle_id, from_server, charge_overwrite) -- charge overwrite is given by negatives
+activatePowerup = function(game_vehicle_id, from_server, charge_overwrite) -- charge overwrite is given by negatives
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle.powerup == nil then
 		Log.error('Vehicle owns no powerup')
@@ -624,8 +627,7 @@ local function activatePowerup(game_vehicle_id, from_server, charge_overwrite) -
 	local powerup_type = vehicle.powerup.type
 	
 	-- drop powerup
-	pcall(vehicle.powerup.onDrop, vehicle.data, game_vehicle_id, vehicle.is_rendered)
-	pcall(vehicle.powerup.onDespawn, vehicle.data, vehicle.is_rendered)
+	removePowerupFromVehicle(game_vehicle_id)
 	
 	-- consume powerup and charge
 	if charge_overwrite == nil then vehicle.charge = 1 end
@@ -673,7 +675,7 @@ local function activatePowerup(game_vehicle_id, from_server, charge_overwrite) -
 	simpleDisplayActivatedPowerup(game_vehicle_id, powerup_active.clear_name, powerup_type)
 end
 
-local function vehicleAddPowerup(game_vehicle_id, powerup, location)
+vehicleAddPowerup = function(game_vehicle_id, powerup, location)
 	-- is the case when a player joins a server where vehicles already have powerups, in that case there is no powerup to inherit from a location
 	local origin_vehicle = be:getObjectByID(game_vehicle_id)
 	local is_fake_location = false
@@ -723,8 +725,7 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 			-- check current powerup
 			if vehicle.powerup then
 				Log.info("PowerUp: " .. game_vehicle_id .. " dropped " .. vehicle.powerup.name)
-				pcall(vehicle.powerup.onDrop, vehicle.data, game_vehicle_id, vehicle.is_rendered)
-				pcall(vehicle.powerup.onDespawn, vehicle.data)
+				removePowerupFromVehicle(game_vehicle_id)
 			end
 					
 			-- swap ownership
@@ -742,8 +743,7 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 		else
 			if vehicle.powerup then
 				Log.info('PowerUP: ' .. game_vehicle_id .. ' dropped ' .. vehicle.powerup.name)
-				pcall(vehicle.powerup.onDrop, vehicle.data, game_vehicle_id, vehicle.is_rendered)
-				pcall(vehicle.powerup.onDespawn, vehicle.data)
+				removePowerupFromVehicle(game_vehicle_id)
 				
 				-- if the previous taken powerup matches the new then consider this like as if a charge was picked up
 				if vehicle.powerup.name == location.powerup.name then
@@ -789,7 +789,7 @@ local function vehicleAddPowerup(game_vehicle_id, powerup, location)
 end
 
 -- game drives into location
-local function takePowerupFromLocation(location_name, trigger_data, location)
+takePowerupFromLocation = function(location_name, trigger_data, location)
 	local location = location or LOCATIONS[location_name]
 	if location == nil then return end
 	if location.powerup == nil then return end
@@ -814,7 +814,7 @@ end
 
 -- ------------------------------------------------------------------------------------------------
 -- Location restock and rotation check routine
-local function restockPowerups(instant)
+restockPowerups = function(instant)
 	for location_name, location in pairs(LOCATIONS) do
 		if location.powerup == nil and (instant or location.respawn_timer:stop() > RESPAWN_TIME) then
 			location.powerup = selectPowerup()
@@ -840,7 +840,7 @@ local function restockPowerups(instant)
 	end
 end
 
-local function checkLocationRotation()
+checkLocationRotation = function()
 	for location_name, location in pairs(LOCATIONS) do
 		if location.powerup and location.rotation_timer:stop() > ROTATION_TIME then
 			if not IS_BEAMMP_SERVER then location.powerup.onDespawn(location.data) end
@@ -870,7 +870,7 @@ end
 
 -- ------------------------------------------------------------------------------------------------
 -- Locations
-local function updateLocationRotationCheckTime()
+updateLocationRotationCheckTime = function()
 	if not IS_BEAMMP_SESSION or IS_BEAMMP_SERVER then
 		ROUTINE_LOCATIONS_ROTATION = math.floor(math.min(ROTATION_TIME / Util.tableSize(LOCATIONS), 5000))
 		
@@ -880,7 +880,7 @@ local function updateLocationRotationCheckTime()
 	end
 end
 
-local function loadLocations(triggers)
+loadLocations = function(triggers)
 	local total_loaded = 0
 	for trigger_name, trigger in pairs(triggers) do
 		if LOCATIONS[trigger_name] then
@@ -961,10 +961,7 @@ function onCustomActivePowerUpHotkey(hotkey_id, state)
 			if vehicle.powerup_active and vehicle.powerup_active[event] then
 				local response, err = pcall(vehicle.powerup_active[event], vehicle.powerup_data, game_vehicle_id, state)
 				if err then
-					pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
-					vehicle.powerup_active = nil
-					vehicle.powerup_data = nil
-					MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+					removeActivePowerup(game_vehicle_id)
 					
 				else
 					local is_own = MPUtil.isOwn(game_vehicle_id)
@@ -972,10 +969,7 @@ function onCustomActivePowerUpHotkey(hotkey_id, state)
 					
 					if is_own and response then
 						if response.IsStop then
-							pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
-							vehicle.powerup_active = nil
-							vehicle.powerup_data = nil
-							MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+							removeActivePowerup(game_vehicle_id)
 							
 						else
 							if response.target_info then
@@ -1116,12 +1110,10 @@ M.unload = function()
 		
 		for game_vehicle_id, vehicle in pairs(VEHICLES) do
 			if vehicle.powerup ~= nil then
-				pcall(vehicle.powerup.onDrop, vehicle.data, game_vehicle_id, vehicle.is_rendered)
-				pcall(vehicle.powerup.onDespawn, vehicle.data)
+				removePowerupFromVehicle(game_vehicle_id)
 			end
 			if vehicle.powerup_active ~= nil then
-				pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
-				MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+				removeActivePowerup(game_vehicle_id)
 			end
 		end
 	end
@@ -1325,24 +1317,14 @@ M.givePowerup = function(game_vehicle_id, group_name)
 end
 
 M.disableActivePowerup = function(game_vehicle_id)
-	local vehicle = VEHICLES[game_vehicle_id]
-	if vehicle == nil or vehicle.powerup_active == nil then return end
-	
-	pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
-	vehicle.powerup_active = nil
-	vehicle.powerup_data = nil
-	
-	MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+	removeActivePowerup(game_vehicle_id)
 end
 
 M.dropPowerup = function(game_vehicle_id)
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle == nil or vehicle.powerup == nil then return end
 	
-	pcall(vehicle.powerup.onDrop, vehicle.data, game_vehicle_id, vehicle.is_rendered)
-	pcall(vehicle.powerup.onDespawn, vehicle.data)
-	vehicle.powerup = nil
-	vehicle.data = nil
+	removePowerupFromVehicle(game_vehicle_id)
 end
 
 M.setRespawnTime = function(time)
