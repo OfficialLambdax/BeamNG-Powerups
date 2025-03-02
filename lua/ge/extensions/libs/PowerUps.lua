@@ -796,13 +796,14 @@ vehicleAddPowerup = function(game_vehicle_id, powerup, location)
 		else
 			if vehicle.powerup then
 				Log.info('PowerUP: ' .. game_vehicle_id .. ' dropped ' .. vehicle.powerup.name)
-				removePowerupFromVehicle(game_vehicle_id)
 				
 				-- if the previous taken powerup matches the new then consider this like as if a charge was picked up
 				if vehicle.powerup.name == location.powerup.name then
 					M.addCharge(game_vehicle_id, 1)
 					Log.info("PowerUp: " .. game_vehicle_id .. " increases charge because picked up same powerup")
 				end
+				
+				removePowerupFromVehicle(game_vehicle_id)
 			end
 			-- swap ownership
 			vehicle.powerup = location.powerup
