@@ -81,7 +81,7 @@ local function onTargetInfo(data)
 	if vehicle == nil then return end
 	if vehicle.powerup_active == nil then return end
 	
-	PowerUps.targetInfoExec(vehicle, data.target_info)
+	PowerUps.targetInfoExec(vehicle, data.target_info, game_vehicle_id)
 end
 
 local function onTargetHit(data)
@@ -111,6 +111,7 @@ local function onActivePowerupDisable(server_vehicle_id)
 	if vehicle.powerup_active == nil then return end
 	
 	pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
+	vehicle.stop_after_exec = false
 	vehicle.powerup_active = nil
 	vehicle.powerup_data = nil
 end

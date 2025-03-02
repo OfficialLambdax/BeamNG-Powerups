@@ -112,7 +112,7 @@ end
 
 -- While the powerup is active. Update its render here, detect if it hit something. that kinda stuff
 M.whileActive = function(data, origin_id, dt)
-	if not data.target_dir then return nil end
+	if not data.projectile or data.projectile:isDeleted() then return nil end
 	
 	local proj_pos = data.projectile:getPosition()
 	local new_pos = MathUtil.getPosInFront(proj_pos, data.target_dir, data.init_vel * dt)
