@@ -210,7 +210,7 @@ M.onHit = function(data, origin_id, target_id)
 	local spin = target_vehicle:getDirectionVectorUp():normalized() * 1.5
 	target_vehicle:queueLuaCommand(string.format("PowerUpExtender.addAngularVelocity(0, 0, 0, %d, %d, %d)", spin.x, spin.y, spin.z))
 	
-	Sfx(M.file_path .. 'sounds/bullet_impact.ogg', target_pos)
+	Sfx('art/sounds/ext/machinegun/bullet_impact.ogg', target_pos)
 		:is3D(true)
 		:minDistance(5)
 		:maxDistance(20)
