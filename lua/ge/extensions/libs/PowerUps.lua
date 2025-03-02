@@ -234,8 +234,7 @@ end
 -- ------------------------------------------------------------------------------------------------
 -- Powerup render que
 targetInfoExec = function(vehicle, target_info, game_vehicle_id)
-	vehicle.stop_block = false
-	TimedTrigger.remove('PowerUps_stopBlock_' .. game_vehicle_id)
+	setStopBlock(vehicle, game_vehicle_id, false)
 	
 	local _, err = pcall(vehicle.powerup_active.onTargetSelect, vehicle.powerup_data, target_info)
 	if err then
@@ -245,6 +244,7 @@ end
 
 targetHitExec = function(game_vehicle_id, vehicle, targets, deactivate)
 	local is_spectating = Extender.isSpectating(game_vehicle_id)
+	setStopBlock(vehicle, game_vehicle_id, false)
 	
 	-- must use "pairs" as MPClientRuntime.onTargetHit() can nilify entries of unknown vehicles
 	for _, target_id in pairs(targets) do
@@ -305,7 +305,7 @@ tickRenderQue = function(dt)
 							if not IS_BEAMMP_SESSION then
 								targetInfoExec(vehicle, response.target_info, game_vehicle_id)
 							else
-								setStopBlock(vehicle, game_vehicle_id)
+								setStopBlock(vehicle, game_vehicle_id, true)
 								MPClientRuntime.tryTargetInfo(game_vehicle_id, response.target_info)
 							end
 						end
@@ -314,6 +314,7 @@ tickRenderQue = function(dt)
 							if not IS_BEAMMP_SESSION then
 								targetHitExec(game_vehicle_id, vehicle, response.target_hits, response.IsStopAfterExec)
 							else
+								setStopBlock(vehicle, game_vehicle_id, true)
 								MPClientRuntime.tryTargetHit(game_vehicle_id, response.target_hits, response.IsStopAfterExec)
 							end
 						end
@@ -477,8 +478,7 @@ removeActivePowerup = function(game_vehicle_id)
 	if vehicle == nil or vehicle.powerup_active == nil then return end
 	
 	pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
-	TimedTrigger.remove('PowerUps_stopBlock_' .. game_vehicle_id)
-	vehicle.stop_block = false
+	setStopBlock(vehicle, game_vehicle_id, false)
 	vehicle.stop_after_exec = false
 	vehicle.powerup_active = nil
 	vehicle.powerup_data = nil
@@ -486,19 +486,23 @@ removeActivePowerup = function(game_vehicle_id)
 end
 
 -- mediates a racing condition with target_info in multiplayer
-setStopBlock = function(vehicle, game_vehicle_id)
-	vehicle.stop_block = true
+setStopBlock = function(vehicle, game_vehicle_id, state)
+	vehicle.stop_block = state
 	
-	-- auto remove the stop block after 2 seconds. If we dont and the server rejects our target info then we endup with a infinitly running active powerup
-	TimedTrigger.new(
-		'PowerUps_stopBlock_' .. game_vehicle_id,
-		2000,
-		1,
-		function(vehicle)
-			vehicle.stop_block = false
-		end,
-		vehicle
-	)
+	if state then
+		-- auto remove the stop block after 2 seconds. If we dont and the server rejects our target info then we endup with a infinitly running active powerup
+		TimedTrigger.new(
+			'PowerUps_stopBlock_' .. game_vehicle_id,
+			2000,
+			1,
+			function(vehicle)
+				vehicle.stop_block = false
+			end,
+			vehicle
+		)
+	else
+		TimedTrigger.remove('PowerUps_stopBlock_' .. game_vehicle_id)
+	end
 end
 
 loadPowerups = function(set_path, group_path, group)
@@ -704,7 +708,7 @@ activatePowerup = function(game_vehicle_id, from_server, charge_overwrite) -- ch
 			if not IS_BEAMMP_SESSION then
 				targetInfoExec(vehicle, response.target_info, game_vehicle_id)
 			else
-				setStopBlock(vehicle, game_vehicle_id)
+				setStopBlock(vehicle, game_vehicle_id, true)
 				MPClientRuntime.tryTargetInfo(game_vehicle_id, response.target_info)
 			end
 		end
@@ -714,6 +718,7 @@ activatePowerup = function(game_vehicle_id, from_server, charge_overwrite) -- ch
 			if not IS_BEAMMP_SESSION then
 				targetHitExec(game_vehicle_id, vehicle, response.target_hits, true)
 			else
+				setStopBlock(vehicle, game_vehicle_id, true)
 				MPClientRuntime.tryTargetHit(game_vehicle_id, response.target_hits, true)
 			end
 		end
@@ -1028,7 +1033,7 @@ function onCustomActivePowerUpHotkey(hotkey_id, state)
 								if not IS_BEAMMP_SESSION then
 									targetInfoExec(vehicle, response.target_info, game_vehicle_id)
 								else
-									setStopBlock(vehicle, game_vehicle_id)
+									setStopBlock(vehicle, game_vehicle_id, true)
 									MPClientRuntime.tryTargetInfo(game_vehicle_id, response.target_info)
 								end
 							end
@@ -1037,6 +1042,7 @@ function onCustomActivePowerUpHotkey(hotkey_id, state)
 								if not IS_BEAMMP_SESSION then
 									targetHitExec(game_vehicle_id, vehicle, response.target_hits, response.IsStopAfterExec)
 								else
+									setStopBlock(vehicle, game_vehicle_id, true)
 									MPClientRuntime.tryTargetHit(game_vehicle_id, response.target_hits, response.IsStopAfterExec)
 								end
 							end
