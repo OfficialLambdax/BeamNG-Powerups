@@ -190,7 +190,7 @@ local function dropPowerup(server_vehicle_id)
 	Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, nil, nil):send()
 end
 
-local function activatePowerup(server_vehicle_id, charge_overwrite)
+local function activatePowerup(server_vehicle_id, charge_overwrite, from_client)
 	local player_id = MPUtil.getPlayerIDFromServerID(server_vehicle_id)
 	
 	local vehicle = VEHICLES[server_vehicle_id]
@@ -235,11 +235,19 @@ local function activatePowerup(server_vehicle_id, charge_overwrite)
 	
 	if not is_negative then
 		vehicle.charge = 1
-		Build:new():all():onPowerupActivate(server_vehicle_id, charge_overwrite):send()
+		if from_client then
+			Build:new():allExcept(player_id):onPowerupActivate(server_vehicle_id, charge_overwrite):send()
+		else
+			Build:new():all():onPowerupActivate(server_vehicle_id, charge_overwrite):send()
+		end
 		
 		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" activated ' .. vehicle.powerup_active.internal_name)
 	else
-		Build:new():all():onPowerupActivate(server_vehicle_id, charge_overwrite or charge):send()
+		if from_client then
+			Build:new():allExcept(player_id):onPowerupActivate(server_vehicle_id, charge_overwrite or charge):send()
+		else
+			Build:new():all():onPowerupActivate(server_vehicle_id, charge_overwrite or charge):send()
+		end
 		
 		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" activated negative ' .. vehicle.powerup_active.internal_name)
 	end
@@ -271,7 +279,7 @@ local function disableActivePowerup(server_vehicle_id, from_client)
 	end
 end
 
-local function takePowerup(server_vehicle_id, location_name)
+local function takePowerup(server_vehicle_id, location_name, from_client)
 	local location = LOCATIONS[location_name]
 	if location == nil or location.powerup == nil then return end
 	
@@ -301,7 +309,7 @@ local function takePowerup(server_vehicle_id, location_name)
 		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up negative ' .. vehicle.powerup.name)
 		
 		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
-		activatePowerup(server_vehicle_id)
+		activatePowerup(server_vehicle_id, nil, from_client)
 		
 	else
 		if vehicle.powerup then
@@ -321,7 +329,12 @@ local function takePowerup(server_vehicle_id, location_name)
 		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
 	end
 	
-	Build:new():all():onLocationsPowerupUpdate(location_name):send()
+	-- we dont have todo this, but if the vehicle doesnt exists for a player the powerup will stay in the world
+	if from_client then
+		Build:new():allExcept(player_id):onLocationsPowerupUpdate(location_name):send()
+	else
+		Build:new():all():onLocationsPowerupUpdate(location_name):send()
+	end
 end
 
 -- ------------------------------------------------------------------------------------------------
@@ -330,9 +343,9 @@ M.syncLocationUpdate = function(location_name)
 	Build:new():all():onLocationsPowerupUpdate(location_name):send()
 end
 
-M.syncVehicleUpdate = function(server_vehicle_id, location_name, overwrite)
-	Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name, overwrite):send()
-end
+--M.syncVehicleUpdate = function(server_vehicle_id, location_name, overwrite)
+--	Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name, overwrite):send()
+--end
 
 -- ------------------------------------------------------------------------------------------------
 -- From client
@@ -401,7 +414,7 @@ function tryActivatePowerup(player_id, server_vehicle_id)
 		return
 	end
 	
-	if not activatePowerup(server_vehicle_id) then
+	if not activatePowerup(server_vehicle_id, nil, true) then
 		Build:new():to(player_id):onActivePowerupDisable(server_vehicle_id):send()
 	end
 end
@@ -443,7 +456,7 @@ function tryTakePowerup(player_id, data)
 		return
 	end
 	
-	takePowerup(server_vehicle_id, location_name)
+	takePowerup(server_vehicle_id, location_name, true)
 end
 
 -- ------------------------------------------------------------------------------------------------
