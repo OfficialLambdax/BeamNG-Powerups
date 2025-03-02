@@ -115,12 +115,14 @@ local LOCATIONS = {}
 		[is_rendered] = bool
 		[player_name] = singleplayer/traffic/player_name if multiplayer session, as a player can only have one
 		[last_pickup] = hptimer
+		[stop_after_exec] = bool (will prevent whileActive calls)
+		[stop_block] = bool (set to true after target_info was given for a short period of time)
 ]]
 local VEHICLES = {}
 
 -- ------------------------------------------------------------------------------------------------
 -- Function dec, so that func order doesnt matter
-local simplePowerUpDisplay, simpleDisplayActivatedPowerup, simpleDisplayHotkeyRequirement, targetInfoExec, targetHitExec, tickRenderQue, checkRenderDistance, updateRenderDistanceCheckTime, onVehicleSpawned, onVehicleDestroyed, checkIfTraffic, loadPowerups, loadPowerupSet, selectPowerup, activatePowerup, vehicleAddPowerup, takePowerupFromLocation, restockPowerups, checkLocationRotation, updateLocationRotationCheckTime, loadLocations, removePowerupFromVehicle, removeActivePowerup
+local simplePowerUpDisplay, simpleDisplayActivatedPowerup, simpleDisplayHotkeyRequirement, targetInfoExec, targetHitExec, tickRenderQue, checkRenderDistance, updateRenderDistanceCheckTime, onVehicleSpawned, onVehicleDestroyed, checkIfTraffic, loadPowerups, loadPowerupSet, selectPowerup, activatePowerup, vehicleAddPowerup, takePowerupFromLocation, restockPowerups, checkLocationRotation, updateLocationRotationCheckTime, loadLocations, removePowerupFromVehicle, removeActivePowerup, setStopBlock
 
 -- ------------------------------------------------------------------------------------------------
 -- Basics
@@ -129,6 +131,15 @@ local function pcall(func, ...)
 	if not ok then
 		Log.error('Call to powerup failed')
 		Log.error(r)
+		
+		guihooks.trigger('toastrMsg', {
+			type = 'error',
+			title = 'Powerups',
+			msg = 'Error during powerup execution. This may stop the powerup.',
+			config = {
+				timeOut = 5000
+			}
+		})
 		return nil, true
 	end
 	return r
@@ -222,7 +233,10 @@ end
 
 -- ------------------------------------------------------------------------------------------------
 -- Powerup render que
-targetInfoExec = function(vehicle, target_info)
+targetInfoExec = function(vehicle, target_info, game_vehicle_id)
+	vehicle.stop_block = false
+	TimedTrigger.remove('PowerUps_stopBlock_' .. game_vehicle_id)
+	
 	local _, err = pcall(vehicle.powerup_active.onTargetSelect, vehicle.powerup_data, target_info)
 	if err then
 		removeActivePowerup(game_vehicle_id)
@@ -271,7 +285,7 @@ tickRenderQue = function(dt)
 				end
 			end
 			
-			if vehicle.powerup_active then
+			if vehicle.powerup_active and not vehicle.stop_after_exec then
 				local response, err = pcall(vehicle.powerup_active.whileActive, vehicle.powerup_data, game_vehicle_id, dt)
 				
 				if err then
@@ -280,13 +294,18 @@ tickRenderQue = function(dt)
 				
 				if is_own and response then
 					if response.IsStop then
-						removeActivePowerup(game_vehicle_id)
+						if not vehicle.stop_block then
+							removeActivePowerup(game_vehicle_id)
+						end
 						
 					else
+						vehicle.stop_after_exec = response.IsStopAfterExec == true
+						
 						if response.target_info then
 							if not IS_BEAMMP_SESSION then
-								targetInfoExec(vehicle, response.target_info)
+								targetInfoExec(vehicle, response.target_info, game_vehicle_id)
 							else
+								setStopBlock(vehicle, game_vehicle_id)
 								MPClientRuntime.tryTargetInfo(game_vehicle_id, response.target_info)
 							end
 						end
@@ -392,7 +411,9 @@ onVehicleSpawned = function(game_vehicle_id)
 		powerup = nil,
 		is_rendered = true,
 		player_name = MPUtil.getPlayerName(game_vehicle_id) or SUBJECT_SINGLEPLAYER,
-		last_pickup = PauseTimer.new()
+		last_pickup = PauseTimer.new(),
+		stop_after_exec = false,
+		stop_block = false
 	}
 	
 	if not IS_BEAMMP_SERVER then
@@ -447,6 +468,8 @@ removePowerupFromVehicle = function(game_vehicle_id)
 	
 	pcall(vehicle.powerup.onDrop, vehicle.data, game_vehicle_id, vehicle.is_rendered)
 	pcall(vehicle.powerup.onDespawn, vehicle.data, vehicle.is_rendered)
+	vehicle.powerup = nil
+	vehicle.data = nil
 end
 
 removeActivePowerup = function(game_vehicle_id)
@@ -454,9 +477,28 @@ removeActivePowerup = function(game_vehicle_id)
 	if vehicle == nil or vehicle.powerup_active == nil then return end
 	
 	pcall(vehicle.powerup_active.onDeactivate, vehicle.powerup_data, game_vehicle_id)
+	TimedTrigger.remove('PowerUps_stopBlock_' .. game_vehicle_id)
+	vehicle.stop_block = false
+	vehicle.stop_after_exec = false
 	vehicle.powerup_active = nil
 	vehicle.powerup_data = nil
 	MPClientRuntime.tryDisableActivePowerup(game_vehicle_id)
+end
+
+-- mediates a racing condition with target_info in multiplayer
+setStopBlock = function(vehicle, game_vehicle_id)
+	vehicle.stop_block = true
+	
+	-- auto remove the stop block after 2 seconds. If we dont and the server rejects our target info then we endup with a infinitly running active powerup
+	TimedTrigger.new(
+		'PowerUps_stopBlock_' .. game_vehicle_id,
+		2000,
+		1,
+		function(vehicle)
+			vehicle.stop_block = false
+		end,
+		vehicle
+	)
 end
 
 loadPowerups = function(set_path, group_path, group)
@@ -660,8 +702,9 @@ activatePowerup = function(game_vehicle_id, from_server, charge_overwrite) -- ch
 	if response.IsTargetInfo then
 		if response.target_info then
 			if not IS_BEAMMP_SESSION then
-				targetInfoExec(vehicle, response.target_info)
+				targetInfoExec(vehicle, response.target_info, game_vehicle_id)
 			else
+				setStopBlock(vehicle, game_vehicle_id)
 				MPClientRuntime.tryTargetInfo(game_vehicle_id, response.target_info)
 			end
 		end
@@ -974,13 +1017,18 @@ function onCustomActivePowerUpHotkey(hotkey_id, state)
 					
 					if is_own and response then
 						if response.IsStop then
-							removeActivePowerup(game_vehicle_id)
+							if not vehicle.stop_block then
+								removeActivePowerup(game_vehicle_id)
+							end
 							
 						else
+							vehicle.stop_after_exec = response.IsStopAfterExec == true
+							
 							if response.target_info then
 								if not IS_BEAMMP_SESSION then
-									targetInfoExec(vehicle, response.target_info)
+									targetInfoExec(vehicle, response.target_info, game_vehicle_id)
 								else
+									setStopBlock(vehicle, game_vehicle_id)
 									MPClientRuntime.tryTargetInfo(game_vehicle_id, response.target_info)
 								end
 							end
@@ -1326,9 +1374,6 @@ M.disableActivePowerup = function(game_vehicle_id)
 end
 
 M.dropPowerup = function(game_vehicle_id)
-	local vehicle = VEHICLES[game_vehicle_id]
-	if vehicle == nil or vehicle.powerup == nil then return end
-	
 	removePowerupFromVehicle(game_vehicle_id)
 end
 
