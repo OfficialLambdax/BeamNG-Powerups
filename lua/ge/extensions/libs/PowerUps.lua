@@ -2,6 +2,7 @@
 	License: None
 	Author: Neverless (discord: neverless.)
 ]]
+
 local Extender = require("libs/PowerUpsExtender")
 local Traits = Extender.Traits
 local Types = Extender.Types
@@ -120,6 +121,8 @@ local VEHICLES = {}
 -- ------------------------------------------------------------------------------------------------
 -- Function dec, so that func order doesnt matter
 local simplePowerUpDisplay, simpleDisplayActivatedPowerup, simpleDisplayHotkeyRequirement, targetInfoExec, targetHitExec, tickRenderQue, checkRenderDistance, updateRenderDistanceCheckTime, onVehicleSpawned, onVehicleDestroyed, checkIfTraffic, loadPowerups, loadPowerupSet, selectPowerup, activatePowerup, vehicleAddPowerup, takePowerupFromLocation, restockPowerups, checkLocationRotation, updateLocationRotationCheckTime, loadLocations, removePowerupFromVehicle, removeActivePowerup
+
+
 
 -- ------------------------------------------------------------------------------------------------
 -- Basics

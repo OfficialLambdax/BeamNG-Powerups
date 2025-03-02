@@ -26,6 +26,27 @@ if MP and MP.TriggerClientEvent then
 	return
 end
 
+local function globalCheck()
+	local globals = {}
+	for k, _ in pairs(_G) do
+		globals[k] = true
+	end
+	return globals
+end
+
+local function globalCheckCompare(globals)
+	local found = {}
+	for k, _ in pairs(_G) do
+		if not globals[k] then
+			table.insert(found, k)
+		end
+	end
+	return found
+end
+
+local GLOBAL_CHECK = globalCheck()
+
+
 -- unload what otherwise would leak to mem
 require("libs/ForceField").unload() -- markers will otherwise leak to mem
 require("libs/PowerUps").unload()
@@ -54,6 +75,7 @@ package.loaded["libs/Pot"] = nil
 package.loaded["libs/ObjectWrapper"] = nil
 package.loaded["mp_libs/MPUtil"] = nil
 package.loaded["mp_libs/MPClientRuntime"] = nil
+
 
 local TimedTrigger = require("libs/TimedTrigger").prefillReuse(200)
 local CollisionsLib = require("libs/CollisionsLib")
@@ -482,6 +504,17 @@ end
 -- You generally only want to increase the routine if you set the overall render distance lower
 M.setRenderDistanceRoutineTime = function(time) -- in ms
 	PowerUps.setRenderDistanceRoutineTime(time)
+end
+
+
+GLOBAL_CHECK = globalCheckCompare(GLOBAL_CHECK)
+if #GLOBAL_CHECK > 0 then
+	Log.warn("===============================================================================================================")
+	Log.warn("This mod has created global variables. Some may be required, others may be a simple mistake. Please review this")
+	for _, global in ipairs(GLOBAL_CHECK) do
+		Log.info('-> ' .. global)
+	end
+	Log.warn("===============================================================================================================")
 end
 
 return M
