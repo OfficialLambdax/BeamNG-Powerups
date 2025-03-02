@@ -648,6 +648,10 @@ activatePowerup = function(game_vehicle_id, from_server, charge_overwrite) -- ch
 	
 	vehicle.powerup_active = powerup_active
 	vehicle.powerup_data = response.data -- can be nil
+	if vehicle.powerup_active.do_not_unload then
+		-- turn initial render to true for far render active powerups, so that there is no delay
+		vehicle.is_rendered = true
+	end
 	
 	if MPUtil.isOwn(game_vehicle_id) and not from_server then
 		MPClientRuntime.tryActivatePowerup(game_vehicle_id)
