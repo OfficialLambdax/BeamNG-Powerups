@@ -120,6 +120,12 @@ local LOCATIONS = {}
 ]]
 local VEHICLES = {}
 
+--[[
+	Format
+	["trigger_name"] = ref to location
+]]
+local LOCATION_RENDER = {}
+
 -- ------------------------------------------------------------------------------------------------
 -- Function dec, so that func order doesnt matter
 local simplePowerUpDisplay, simpleDisplayActivatedPowerup, simpleDisplayHotkeyRequirement, targetInfoExec, targetHitExec, tickRenderQue, checkRenderDistance, updateRenderDistanceCheckTime, onVehicleSpawned, onVehicleDestroyed, checkIfTraffic, loadPowerups, loadPowerupSet, selectPowerup, activatePowerup, vehicleAddPowerup, takePowerupFromLocation, restockPowerups, checkLocationRotation, updateLocationRotationCheckTime, loadLocations, removePowerupFromVehicle, removeActivePowerup, setStopBlock
@@ -262,6 +268,19 @@ targetHitExec = function(game_vehicle_id, vehicle, targets, deactivate)
 end
 
 tickRenderQue = function(dt)
+	for trigger_name, location in pairs(LOCATION_RENDER) do
+		if location.powerup then -- can still be false if locations loose their powerup through any means. So as long as we dont have a centralized "call this func to remove the powerup from the location" function that everything MUST use we have todo this
+			local _, err = pcall(location.powerup.whileActive, location.data, dt)
+			if err then
+				pcall(location.powerup.onDespawn, location.data)
+				location.powerup = nil
+				location.data = nil
+				LOCATION_RENDER[trigger_name] = nil
+			end
+		end
+	end
+	
+	--[[
 	for _, location in pairs(LOCATIONS) do
 		if location.is_rendered and location.powerup then
 			local _, err = pcall(location.powerup.whileActive, location.data, dt)
@@ -272,6 +291,7 @@ tickRenderQue = function(dt)
 			end
 		end
 	end
+	]]
 	
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		local is_own = MPUtil.isOwn(game_vehicle_id)
@@ -330,6 +350,34 @@ checkRenderDistance = function()
 	if camera_position == nil then return end
 	local dist3d = Util.dist3d
 	
+	for trigger_name, location in pairs(LOCATIONS) do
+		local add = false
+		if location.powerup then
+			if not location.powerup.do_not_unload and
+			dist3d(location.obj:getPosition(), camera_position) < RENDER_DISTANCE then
+				add = true
+			end
+		end
+		
+		if add then
+			LOCATION_RENDER[trigger_name] = location
+			
+			if not location.is_rendered and location.powerup then
+				location.is_rendered = true
+				pcall(location.powerup.onLoad, location.data)
+			end
+			
+		else
+			LOCATION_RENDER[trigger_name] = nil
+			
+			if location.is_rendered and location.powerup then
+				location.is_rendered = false
+				pcall(location.powerup.onUnload, location.data)
+			end
+		end
+	end
+	
+	--[[
 	for _, location in pairs(LOCATIONS) do
 		if location.powerup and not location.powerup.do_not_unload then
 			
@@ -347,6 +395,7 @@ checkRenderDistance = function()
 			end
 		end
 	end
+	]]
 	
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		if (vehicle.powerup and not vehicle.powerup.do_not_unload) or (vehicle.powerup_active and not vehicle.powerup_active.do_not_unload) then
@@ -1187,6 +1236,7 @@ M.unload = function()
 	
 	-- wiping the ref clean instead of just var = {} as that would unhook these tables from anything that references them. eg M.vehicles ~= VEHICLES
 	Util.tableReset(LOCATIONS)
+	Util.tableReset(LOCATION_RENDER)
 	Util.tableReset(VEHICLES)
 	Util.tableReset(POWERUP_DEFS)
 end
