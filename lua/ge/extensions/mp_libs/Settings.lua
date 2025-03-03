@@ -10,6 +10,9 @@ local SETTINGS_DIR = "mp_settings/"
 
 local function init()
 	SETTINGS_DIR = Util.filePath(Util.myPath():sub(1, -2)) .. SETTINGS_DIR
+	if not FS.IsDirectory(SETTINGS_DIR) then
+		FS.CreateDirectory(SETTINGS_DIR)
+	end
 end
 
 local function updateSettings(from, into)

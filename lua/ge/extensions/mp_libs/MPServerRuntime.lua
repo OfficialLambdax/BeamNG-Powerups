@@ -309,7 +309,7 @@ local function takePowerup(server_vehicle_id, location_name, from_client)
 		Log.info(server_vehicle_id .. ' from "' .. MP.GetPlayerName(player_id) .. '" picked up negative ' .. vehicle.powerup.name)
 		
 		Build:new():all():onVehiclesPowerupUpdate(server_vehicle_id, location_name):send()
-		activatePowerup(server_vehicle_id, nil, from_client)
+		activatePowerup(server_vehicle_id, nil, false)
 		
 	else
 		if vehicle.powerup then
