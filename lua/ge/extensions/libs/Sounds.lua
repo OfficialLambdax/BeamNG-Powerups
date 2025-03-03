@@ -86,11 +86,12 @@ return function(file_path, volume, pitch)
 	
 	function sound:play(volume)
 		Engine.Audio.playOnce(
-			'AudioGui',
+			--'AudioGui',
+			'AudioMaster',
 			self.int.file_path,
 			{
 				volume = volume or self.int.volume,
-				--channel = 'Music'
+				channel = 'Master'
 			}
 		)
 	end

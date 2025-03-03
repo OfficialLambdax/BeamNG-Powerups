@@ -63,9 +63,10 @@ return function(file_path, pos_vec)
 	obj.fileName = file_path
 	obj.playOnAdd = true
 	obj.isLooping = false
-	obj.isStreaming = false
+	obj.isStreaming = true
 	obj.volume = 1
 	obj.is3D = true
+	obj:setField("sourceGroup", 0, "AudioChannelMaster")
 	
 	obj:setPosition(pos_vec or vec3(0, 0, 0))
 	
