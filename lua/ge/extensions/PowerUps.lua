@@ -73,6 +73,7 @@ package.loaded["libs/Particles"] = nil
 package.loaded["libs/Sfx"] = nil
 package.loaded["libs/Pot"] = nil
 package.loaded["libs/ObjectWrapper"] = nil
+--package.loaded["libs/ObjectWrapperCleaner"] = nil
 package.loaded["libs/Placeables"] = nil
 package.loaded["mp_libs/MPUtil"] = nil
 package.loaded["mp_libs/MPClientRuntime"] = nil
@@ -87,6 +88,7 @@ local MPUtil = require("mp_libs/MPUtil")
 local PauseTimer = require("mp_libs/PauseTimer")
 local Log = require("libs/Log")
 local Util = require("libs/Util")
+local ObjectCleaner = require("libs/ObjectWrapperCleaner")
 
 local M = {}
 local INITIALIZED = false
@@ -326,6 +328,8 @@ M.onPreRender = function(dt_real) -- , dt_sim, dt_raw
 	
 	measure()
 	measureDt(dt_real)
+	
+	--print(ObjectCleaner.count())
 end
 
 -- ----------------------------------------------------------------------------
@@ -348,6 +352,7 @@ end
 M.onClientEndMission = function()
 	PowerUps.unload()
 	ForceField.unload()
+	ObjectCleaner.destroyAll()
 	
 	TimedTrigger.remove("PowerUps_measurement")
 	TimedTrigger.remove("PowerUps_dt_measurement")
