@@ -33,7 +33,7 @@ return function(pos_vec, scale_vec)
 	obj:setField("TriggerMode", 0, "Overlaps")
 	obj:setField("TriggerTestType", 0, "Bounding box")
 	obj:setField("luaFunction", 0, "onPlaceableTrigger")
-	obj:setField("debug", 0, "true")
+	--obj:setField("debug", 0, "true")
 	
 	local name = "Placeable_" .. Util.randomName()
 	obj:registerObject(name)
@@ -120,6 +120,7 @@ return function(pos_vec, scale_vec)
 		self.int.obj:delete()
 		TimedTrigger.remove('Placeable_whileInside_' .. self.int.name)
 		TimedTrigger.remove('Placeable_selfDestruct_' .. self.int.name)
+		TimedTrigger.remove('Placeable_attach_' .. self.int.name)
 		
 		if callback then
 			callback(self, self.int.data)
