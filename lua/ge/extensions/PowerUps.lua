@@ -73,6 +73,7 @@ package.loaded["libs/Particles"] = nil
 package.loaded["libs/Sfx"] = nil
 package.loaded["libs/Pot"] = nil
 package.loaded["libs/ObjectWrapper"] = nil
+package.loaded["libs/Placeables"] = nil
 package.loaded["mp_libs/MPUtil"] = nil
 package.loaded["mp_libs/MPClientRuntime"] = nil
 

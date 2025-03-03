@@ -311,5 +311,16 @@ M.disperseVec = function(dir_vec, strength)
 	return dir_vec
 end
 
+M.inRange = function(num1, num2, range)
+	return (num1 - num2) < range
+end
+
+M.isDirInRange = function(dir_vec1, dir_vec2, range)
+	if not M.inRange(dir_vec1.x, dir_vec2.x, range) then return false end
+	if not M.inRange(dir_vec1.y, dir_vec2.y, range) then return false end
+	if not M.inRange(dir_vec1.z, dir_vec2.z, range) then return false end
+	return true
+end
+
 
 return M
