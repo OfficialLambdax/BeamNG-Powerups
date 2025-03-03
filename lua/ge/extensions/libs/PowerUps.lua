@@ -31,11 +31,12 @@ local ROTATION_TIME = 180000
 local RENDER_DISTANCE = 500
 local PICKUP_DOWNTIME = 500
 local MAX_CHARGE = 0 -- updated based on the loaded set
+local CORE_CAMERA_LAST_POSITION = VEC3(0, 0, 0)
 
 local ROUTINE_LOCATIONS_RESTOCK = 5000
 local ROUTINE_LOCATIONS_ROTATION = 5000 -- dynamic (ROTATION_TIME / #LOCATIONS). Max is 5000
 
-local ROUTINE_POWERUPS_CHECK_RENDER_DISTANCE = 2500
+local ROUTINE_POWERUPS_CHECK_RENDER_DISTANCE = 2500 -- dynamic (500 - 2500). Depends on camera velocity
 local ROUTINE_POWERUPS_CHECK_TRAFFIC = 10000
 local ROUTINE_POWERUPS_BASIC_DISPLAY_REFRESH = 5000
 
@@ -128,7 +129,7 @@ local LOCATION_RENDER = {}
 
 -- ------------------------------------------------------------------------------------------------
 -- Function dec, so that func order doesnt matter
-local simplePowerUpDisplay, simpleDisplayActivatedPowerup, simpleDisplayHotkeyRequirement, targetInfoExec, targetHitExec, tickRenderQue, checkRenderDistance, updateRenderDistanceCheckTime, onVehicleSpawned, onVehicleDestroyed, checkIfTraffic, loadPowerups, loadPowerupSet, selectPowerup, activatePowerup, vehicleAddPowerup, takePowerupFromLocation, restockPowerups, checkLocationRotation, updateLocationRotationCheckTime, loadLocations, removePowerupFromVehicle, removeActivePowerup, setStopBlock
+local simplePowerUpDisplay, simpleDisplayActivatedPowerup, simpleDisplayHotkeyRequirement, targetInfoExec, targetHitExec, tickRenderQue, checkRenderDistance, updateRenderDistanceCheckTime, onVehicleSpawned, onVehicleDestroyed, checkIfTraffic, loadPowerups, loadPowerupSet, selectPowerup, activatePowerup, vehicleAddPowerup, takePowerupFromLocation, restockPowerups, checkLocationRotation, updateLocationRotationCheckTime, loadLocations, removePowerupFromVehicle, removeActivePowerup, setStopBlock, dynamicRenderDistance
 
 -- ------------------------------------------------------------------------------------------------
 -- Basics
@@ -280,19 +281,6 @@ tickRenderQue = function(dt)
 		end
 	end
 	
-	--[[
-	for _, location in pairs(LOCATIONS) do
-		if location.is_rendered and location.powerup then
-			local _, err = pcall(location.powerup.whileActive, location.data, dt)
-			if err then
-				pcall(location.powerup.onDespawn, location.data)
-				location.powerup = nil
-				location.data = nil
-			end
-		end
-	end
-	]]
-	
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		local is_own = MPUtil.isOwn(game_vehicle_id)
 		if is_own == nil then is_own = true end -- if singleplayer
@@ -345,6 +333,21 @@ tickRenderQue = function(dt)
 	end
 end
 
+-- Testing dynamic render distance checking based on user behaviour
+-- Someone flying over the map should have more frequent updates then someone just chilling
+dynamicRenderDistance = function()
+	local camera_position = core_camera:getPosition()
+	local dist = Util.dist3d(CORE_CAMERA_LAST_POSITION, camera_position) -- meters per second (if the trigger is called on time, which it isnt, but then this doesnt need to be exact)
+	CORE_CAMERA_LAST_POSITION = camera_position
+	
+	local routine = math.floor(math.max(2500 - ((dist / RENDER_DISTANCE) * 5000), 500))
+	--local routine = math.floor(math.max(4000 - ((dist / RENDER_DISTANCE) * 10000), 500))
+	--local routine = math.floor(math.max(10000 - ((dist / RENDER_DISTANCE) * 35000), 500))
+	updateRenderDistanceCheckTime(routine)
+	--dump(routine, dist)
+	--print(routine)
+end
+
 checkRenderDistance = function()
 	local camera_position = core_camera.getPosition()
 	if camera_position == nil then return end
@@ -377,26 +380,6 @@ checkRenderDistance = function()
 		end
 	end
 	
-	--[[
-	for _, location in pairs(LOCATIONS) do
-		if location.powerup and not location.powerup.do_not_unload then
-			
-			if dist3d(location.obj:getPosition(), camera_position) < RENDER_DISTANCE then
-				if not location.is_rendered then
-					location.is_rendered = true
-					pcall(location.powerup.onLoad, location.data)
-				end
-				
-			else
-				if location.is_rendered then
-					location.is_rendered = false
-					pcall(location.powerup.onUnload, location.data)
-				end
-			end
-		end
-	end
-	]]
-	
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		if (vehicle.powerup and not vehicle.powerup.do_not_unload) or (vehicle.powerup_active and not vehicle.powerup_active.do_not_unload) then
 			
@@ -427,10 +410,11 @@ end
 
 updateRenderDistanceCheckTime = function(time)
 	ROUTINE_POWERUPS_CHECK_RENDER_DISTANCE = time
-
-	if TimedTrigger.updateTriggerEvery("PowerUps_checkRenderDist", time) then
-		Log.info("Updated render distance check time to " .. time .. " ms")
-	end
+	TimedTrigger.updateTriggerEvery("PowerUps_checkRenderDist", time)
+	
+	--if TimedTrigger.updateTriggerEvery("PowerUps_checkRenderDist", time) then
+		--Log.info("Updated render distance check time to " .. time .. " ms")
+	--end
 end
 
 -- ------------------------------------------------------------------------------------------------
@@ -1198,6 +1182,16 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 		if r == nil then
 			Log.error('Cannot initialize simple display routine')
 		end
+		
+		local r = TimedTrigger.new(
+			"PowerUps_dynamicRenderDistance",
+			1000,
+			0,
+			dynamicRenderDistance
+		)
+		if r == nil then
+			Log.error('Cannot initialize dynamic render distance check')
+		end
 	end
 	
 	-- hooks event handlers and lets the server know that we are initialized
@@ -1233,6 +1227,7 @@ M.unload = function()
 	TimedTrigger.remove("PowerUps_checkRenderDist")
 	TimedTrigger.remove("PowerUps_checkTrafficlist")
 	TimedTrigger.remove("PowerUps_simpleDisplayRefresh")
+	TimedTrigger.remove("PowerUps_dynamicRenderDistance")
 	
 	-- wiping the ref clean instead of just var = {} as that would unhook these tables from anything that references them. eg M.vehicles ~= VEHICLES
 	Util.tableReset(LOCATIONS)
@@ -1468,9 +1463,9 @@ M.setRenderDistance = function(distance) -- in meters
 end
 
 -- taxing routine
-M.setRenderDistanceRoutineTime = function(time) -- in ms
-	updateRenderDistanceCheckTime(time)
-end
+--M.setRenderDistanceRoutineTime = function(time) -- in ms
+--	updateRenderDistanceCheckTime(time)
+--end
 
 M.getRenderedLocationsCount = function()
 	local total = 0

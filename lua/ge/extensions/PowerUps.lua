@@ -502,9 +502,10 @@ M.setRenderDistance = function(distance) -- in meters
 end
 
 -- You generally only want to increase the routine if you set the overall render distance lower
-M.setRenderDistanceRoutineTime = function(time) -- in ms
-	PowerUps.setRenderDistanceRoutineTime(time)
-end
+-- Disabled because the routine is dynamically changed atm
+--M.setRenderDistanceRoutineTime = function(time) -- in ms
+--	PowerUps.setRenderDistanceRoutineTime(time)
+--end
 
 
 GLOBAL_CHECK = globalCheckCompare(GLOBAL_CHECK)
