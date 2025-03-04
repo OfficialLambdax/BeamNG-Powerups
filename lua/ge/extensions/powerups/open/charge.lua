@@ -1,6 +1,6 @@
 local Extender = require("libs/PowerUpsExtender")
 local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
-local Type, onPickup, createObject = Extender.defaultGroupVars()
+local Type, onPickup, createObject, Default = Extender.defaultGroupVars(1)
 
 local M = {
 	-- Any name eg "ForwardShot". No duplicates with others of this Set.
@@ -69,7 +69,8 @@ end
 -- When the powerup is picked up by a vehicle
 M.onPickup = function(data, vehicle, is_rendered)
 	if is_rendered then
-		Particle("BNGP_waterfallspray", data.marker.obj:getPosition())
+		--Particle("BNGP_waterfallspray", data.marker.obj:getPosition())
+		Particle("BNGP_confetti", data.marker.obj:getPosition())
 			:active(true)
 			:velocity(0)
 			:selfDisable(1000)
@@ -98,7 +99,6 @@ end
 -- When the powerup is removed from the world once and for all
 M.onDespawn = function(data)
 	Extender.defaultPowerupChargeDelete(data.marker)
-	data.marker.obj = nil
 end
 
 return M
