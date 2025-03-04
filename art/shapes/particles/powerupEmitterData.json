@@ -1,0 +1,20 @@
+{
+  "PWU_Shady": {
+    "name": "PWU_Shady",
+    "class": "ParticleEmitterData",
+    "persistentId": "ba06a6e2-af33-44cf-94d9-9397f875fc74",
+    "__parent": "DataBlockGroup",
+    "ambientFactor": 0.200000018,
+    "blendStyle": "SUBTRACTIVE",
+    "ejectionOffset": 1.49011612e-08,
+    "ejectionOffsetVariance": 0.5,
+    "ejectionPeriodMS": 300,
+    "ejectionVelocity": 0.200000018,
+    "particles": "PWU_ShadyParticle",
+    "phiReferenceVel": 180,
+    "renderReflection": false,
+    "softParticles": "0",
+    "thetaMax": 180,
+    "velocityVariance": 0
+  }
+}

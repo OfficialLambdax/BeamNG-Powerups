@@ -1,0 +1,47 @@
+{
+  "PWU_ShadyParticle": {
+    "name": "PWU_ShadyParticle",
+    "class": "ParticleData",
+    "persistentId": "9afa19f8-a05d-4220-aba9-fa9dac60d613",
+    "__parent": "DataBlockGroup",
+    "animTexName": "/art/shapes/particles/part.png",
+    "colors": [
+      [
+        0.103153706,
+        0,
+        1,
+        1
+      ],
+      [
+        0.144686952,
+        0,
+        0.46480608,
+        1
+      ],
+      [
+        0.529227555,
+        0.243365586,
+        0.243365586,
+        1
+      ],
+      "Black"
+    ],
+    "constantAcceleration": 1.49011612e-08,
+    "dragCoefficient": 0.100000016,
+    "gravityCoefficient": 0.00499999989,
+    "inheritedVelFactor": 0.200000018,
+    "lifetimeMS": 4000,
+    "lifetimeVarianceMS": 500,
+    "sizes": [
+      1.49011612e-08,
+      0.299999923,
+      0.399999917,
+      0.499999911
+    ],
+    "spinRandomMax": 360,
+    "spinRandomMin": -360,
+    "spinSpeed": 0.300000012,
+    "textureName": "/art/shapes/particles/part.png",
+    "useInvAlpha": true
+  }
+}

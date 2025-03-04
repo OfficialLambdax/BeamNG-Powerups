@@ -16,6 +16,7 @@ local PowerUpsTypes = require("libs/extender/Types")
 local GroupReturns = require("libs/extender/GroupReturns")
 local PowerupReturns = require("libs/extender/PowerupReturns")
 local Hotkeys = require("libs/extender/Hotkeys")
+local Defaults = require("libs/extender/Defaults")
 
 local createObject = require("libs/ObjectWrapper")
 
@@ -29,6 +30,15 @@ M.PowerupReturns = PowerupReturns
 M.ActiveHotkeys = Hotkeys.ActivePowerupHotkeys
 M.ActiveHotkeyStates = Hotkeys.ActivePowerupHotkeyStates
 M.hotkeyResolveClearName = Hotkeys.resolveClearName
+
+-- to be deprecated
+M.defaultPowerupCreator = Defaults.powerupCreator
+M.defaultPowerupRender = Defaults.powerupRender
+M.defaultPowerupDelete = Defaults.powerupDelete
+M.defaultPowerupChargeCreator = Defaults.powerupChargeCreator
+M.defaultPowerupChargeRender = Defaults.powerupChargeRender
+M.defaultPowerupChargeLoader = Defaults.powerupChargeLoader
+M.defaultPowerupChargeDelete = Defaults.powerupChargeDelete
 
 local SUBJECT_SINGLEPLAYER = "!singleplayer"
 local SUBJECT_TRAFFIC = "!traffic"
@@ -90,168 +100,11 @@ M.defaultGroupVars = function(version)
 		return M.Types, GroupReturns.onPickup, createObject
 		
 	elseif version == 1 then
-		-- local Type, onPickup, createObject = Extender.defaultGroupVars(1)
-		return M.Types, GroupReturns.onPickup, createObject
+		-- local Type, onPickup, createObject, Default = Extender.defaultGroupVars(1)
+		return M.Types, GroupReturns.onPickup, createObject, Defaults
 	end
 end
 
-M.defaultPowerupCreator = function(trigger_obj, shape_path, color_point, is_rendered)
-	local pos = trigger_obj:getPosition()
-	
-	local marker = createObject("TSStatic")
-	marker.shapeName = shape_path
-	marker.useInstanceRenderData = 1
-	marker.instanceColor = color_point
-	local rot = QuatF(0, 0, 0, 0)
-	rot:setFromEuler(vec3(math.random(), math.random(), math.random()))
-	marker:setPosRot(pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w)
-	--marker.scale = trigger_obj:getScale()
-	marker.scale = vec3(2, 2, 2)
-	marker:registerObject("lib_default_powerup_" .. Util.randomName())
-	
-	if is_rendered == nil then is_rendered = true end
-	if is_rendered then
-		Particle("DefaultEmitter", vec3(pos.x, pos.y, pos.z - 1))
-			:active(true)
-			:velocity(5)
-			:selfDisable(1000)
-			:selfDestruct(3000)
-			
-	else
-		marker:setHidden(true)
-	end
-
-	return marker
-end
-
-M.defaultPowerupRender = function(marker_obj, dt)
-	if marker_obj == nil then return end
-	local pos = marker_obj:getPosition()
-	local rot = marker_obj:getRotation():toEuler()
-		
-	rot.x = rot.x + (0.5 * dt)
-	rot.y = rot.y + (0.5 * dt)
-	local new_rot = QuatF(0, 0, 0, 0)
-	new_rot:setFromEuler(rot)
-	marker_obj:setPosRot(pos.x, pos.y, pos.z, new_rot.x, new_rot.y, new_rot.z, new_rot.w)
-end
-
-M.defaultPowerupDelete = function(marker_obj)
-	if marker_obj then
-		marker_obj:delete()
-	end
-end
-
-M.defaultPowerupChargeCreator = function(trigger_obj, is_rendered)
-	local pos = trigger_obj:getPosition()
-	
-	local marker = createObject("TSStatic")
-	marker.shapeName = "art/shapes/collectible/s_marker_BNG.cdae"
-	marker.useInstanceRenderData = 1
-	marker.instanceColor = Point4F(1, 0, 0, 1)
-	local rot = QuatF(0, 0, 0, 0)
-	rot:setFromEuler(vec3(math.random(), math.random(), math.random()))
-	marker:setPosRot(pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w)
-	marker.scale = vec3(2, 2, 2)
-	marker:registerObject("lib_default_powerup_" .. Util.randomName())
-	
-	local particle = Particle("DefaultEmitter", vec3(pos.x, pos.y, pos.z + 0.75)):velocity(-3)
-	local particle2 = Particle("DefaultEmitter", vec3(pos.x, pos.y, pos.z - 1.1)):velocity(-0.5)
-	
-	if is_rendered == nil then is_rendered = true end
-	if is_rendered then
-		particle:active(true)
-		particle2:active(true)
-	else
-		marker:setHidden(true)
-		particle:active(false)
-		particle2:active(false)
-	end
-
-	return {
-		step = 1,
-		obj = marker,
-		particle = particle,
-		particle2 = particle2
-	}
-end
-
-M.defaultPowerupChargeLoader = function(marker, state)
-	if marker.obj == nil then return end
-	
-	marker.obj:setHidden(not state)
-	marker.particle:active(state)
-	marker.particle2:active(state)
-end
-
-M.defaultPowerupChargeRender = function(marker, dt)
-	if marker.obj == nil then return end
-	local pos = marker.obj:getPosition()
-	local rot = marker.obj:getRotation():toEuler()
-	
-	rot.x = rot.x + (0.5 * dt)
-	rot.y = rot.y + (0.5 * dt)
-	local new_rot = QuatF(0, 0, 0, 0)
-	new_rot:setFromEuler(rot)
-	marker.obj:setPosRot(pos.x, pos.y, pos.z, new_rot.x, new_rot.y, new_rot.z, new_rot.w)
-	
-	local color = marker.obj.instanceColor
-	local change = 1
-	
-	if marker.step == 1 then -- until g == 1
-		color.y = color.y + (change * dt)
-		if color.y >= 1 then
-			color.y = 1
-			marker.step = 2
-		end
-		
-	elseif marker.step == 2 then -- unitl r == 0
-		color.x = color.x - (change * dt)
-		if color.x <= 0 then
-			color.x = 0
-			marker.step = 3
-		end
-		
-	elseif marker.step == 3 then -- until b == 1
-		color.z = color.z + (change * dt)
-		if color.z >= 1 then
-			color.z = 1
-			marker.step = 4
-		end
-		
-	elseif marker.step == 4 then -- until g == 0
-		color.y = color.y - (change * dt)
-		if color.y <= 0 then
-			color.y = 0
-			marker.step = 5
-		end
-		
-	elseif marker.step == 5 then -- until r == 1
-		color.x = color.x + (change * dt)
-		if color.x >= 1 then
-			color.x = 1
-			marker.step = 6
-		end
-		
-	elseif marker.step == 6 then -- until b == 0
-		color.z = color.z - (change * dt)
-		if color.z <= 0 then
-			color.z = 0
-			marker.step = 1
-		end
-		
-	end
-	
-	marker.obj.instanceColor = color
-end
-
-M.defaultPowerupChargeDelete = function(marker)
-	if marker.obj then
-		marker.obj:delete()
-		marker.particle:delete()
-		marker.particle2:delete()
-	end
-end
 
 M.defaultPowerupMaterialPatch = function()
 	if true then return end -- DISABLED. "lod_vertcol" is used by alot
@@ -507,6 +360,13 @@ M.targetChange = function(possible_targets, current_selected)
 	
 	-- couldnt find the previous target in the list? choose first
 	return possible_targets[1]
+end
+
+-- You may have to reload your game if you have opened the world editor before calling this on a new particle
+M.loadParticles = function(particle_data, emitter_data)
+	-- game engine function
+	loadJsonMaterialsFile(particle_data)
+	loadJsonMaterialsFile(emitter_data)
 end
 
 return M
