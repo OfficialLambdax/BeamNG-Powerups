@@ -7,11 +7,11 @@ local M = {
 	name = "banana",
 	
 	-- Define general type of this group. Decides over where this powerup is spawned in the world.
-	type = Type.Undefined,
+	type = Type.Defensive,
 	
 	-- Define the level hirachy of this group
 	-- {"powerup 1", "powerup N"}
-	leveling = {"banana 1"},
+	leveling = {"banana 1", "banana 2"},
 	
 	-- Turn true to not be affected by the render distance
 	do_not_unload = false,
@@ -47,7 +47,7 @@ M.onCreate = function(trigger, is_rendered)
 		marker = Extender.defaultPowerupCreator(
 			trigger,
 			"art/shapes/collectible/s_collect_machine_part.cdae",
-			Point4F(0, 1, 0, 1),
+			Point4F(0, 0, 1, 1),
 			is_rendered
 		)
 	}

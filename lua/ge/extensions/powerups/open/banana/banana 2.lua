@@ -50,12 +50,25 @@ M.onActivate = function(vehicle)
 	local origin_pos = vehicle:getPosition()
 	local origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
 	
-	return onActivate.TargetInfo({}, {origin_pos = origin_pos})
+	return onActivate.TargetInfo({ammo = 2}, {origin_pos = origin_pos})
+end
+
+M[Hotkey.Fire] = function(data, origin_id, state)
+	if state ~= HKeyState.Down then return end
+	
+	local vehicle = be:getObjectByID(origin_id)
+	local origin_pos = vehicle:getPosition()
+	local origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
+	
+	data.ammo = data.ammo - 1
+	
+	return onHKey.TargetInfo({origin_pos = origin_pos})
 end
 
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, origin_id, dt)
-	return whileActive.Stop()
+	if data.ammo == 0 then return whileActive.Stop() end
+	return whileActive.Continue()
 end
 
 -- When the powerup selected one or multiple targets or just shared target_info
