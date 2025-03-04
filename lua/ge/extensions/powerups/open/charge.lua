@@ -49,11 +49,8 @@ end
 M.onCreate = function(trigger, is_rendered)
 	-- Whatever you return here is given to all other callbacks too. So if you need the trigger, then also add that.
 	return {
-		--marker = Extender.defaultPowerupCreator(trigger, "art/shapes/collectible/s_collect_medikit.cdae", Point4F(1, 1, 1, 1)),
-		marker = Extender.defaultPowerupCreator(
+		marker = Extender.defaultPowerupChargeCreator(
 			trigger,
-			"art/shapes/collectible/s_marker_BNG.cdae",
-			Point4F(1, 1, 1, 1),
 			is_rendered
 		)
 	}
@@ -61,22 +58,18 @@ end
 
 -- only called once
 M.onUnload = function(data)
-	if data.marker then
-		data.marker:setHidden(true)
-	end
+	Extender.defaultPowerupChargeLoader(data.marker, false)
 end
 
 -- only called once
 M.onLoad = function(data)
-	if data.marker then
-		data.marker:setHidden(false)
-	end
+	Extender.defaultPowerupChargeLoader(data.marker, true)
 end
 
 -- When the powerup is picked up by a vehicle
 M.onPickup = function(data, vehicle, is_rendered)
 	if is_rendered then
-		Particle("BNGP_waterfallspray", data.marker:getPosition())
+		Particle("BNGP_waterfallspray", data.marker.obj:getPosition())
 			:active(true)
 			:velocity(0)
 			:selfDisable(1000)
@@ -91,7 +84,7 @@ M.whilePickup = function(data, origin_id, dt)
 	--print("while pickup")
 end
 
--- When the powerup is dropped by a vehicle. Happens once the powerup is activated, swapped or if it looses the powerup through any other means
+-- When the powerup is dropped by a vehicle. Happens once the powerup is activated, swapped or if it loses the powerup through any other means
 M.onDrop = function(data, origin_id, is_rendered)
 	--print("drop")
 end
@@ -99,13 +92,13 @@ end
 -- While the powerup is spawned in the world. As in if you want it to display special effects while its waiting to be picked up. Aka slowly moving up n down.
 -- Routine is 100ms
 M.whileActive = function(data, dt)
-	Extender.defaultPowerupRender(data.marker, dt)
+	Extender.defaultPowerupChargeRender(data.marker, dt)
 end
 
 -- When the powerup is removed from the world once and for all
 M.onDespawn = function(data)
-	Extender.defaultPowerupDelete(data.marker)
-	data.marker = nil
+	Extender.defaultPowerupChargeDelete(data.marker)
+	data.marker.obj = nil
 end
 
 return M
