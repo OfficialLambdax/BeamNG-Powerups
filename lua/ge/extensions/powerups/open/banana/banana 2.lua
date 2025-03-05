@@ -39,6 +39,7 @@ local M = {
 -- Called once when the powerup is loaded
 M.onInit = function(group_defs)
 	M.activation_sound = Sound('/art/sounds/ext/banana/minion_laugh.ogg', 3)
+	Extender.loadAssets('art/shapes/banana/materials.json')
 end
 
 -- Called every time a vehicle is spawned or reloaded
@@ -76,7 +77,7 @@ M.onTargetSelect = function(data, target_info)
 	local origin_pos = target_info.origin_pos
 	
 	local marker = createObject("TSStatic")
-	marker.shapeName = "art/shapes/banana/banana_peel.dae"
+	marker.shapeName = "art/shapes/banana/banana_peel.cdae"
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 0, 0, 1)
 	marker:setPosRot(origin_pos.x, origin_pos.y, origin_pos.z + 0.2, 0, 0, 0, 1)

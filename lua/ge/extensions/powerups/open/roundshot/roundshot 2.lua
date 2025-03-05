@@ -46,6 +46,7 @@ local M = {
 M.onInit = function(group_defs)
 	M.activate_sound = Sound('art/sounds/ext/roundshot/roundshot_2_double.ogg', 3)
 	M.hit_sound = Sound('art/sounds/ext/roundshot/energy_bullet_hit.ogg', 6)
+	Extender.loadAssets('art/shapes/cannonball/materials.json')
 end
 
 -- Called for each vehicle
@@ -146,11 +147,11 @@ M.onTargetSelect = function(data, target_info)
 	
 	-- spawn projectile
 	local marker = createObject("TSStatic")
-	marker.shapeName = "art/shapes/collectible/s_trashbag_collectible.cdae"
+	marker.shapeName = "art/shapes/cannonball/cannonball.cdae"
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 0, 0, 0)
 	marker:setPosRot(target_info.start_pos.x, target_info.start_pos.y, target_info.start_pos.z, 0, 0, 0, 1)
-	marker.scale = vec3(0.25, 0.25, 0.25)
+	marker.scale = vec3(0.5, 0.5, 0.5)
 	
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)

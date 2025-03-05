@@ -8,7 +8,7 @@ local M = {
 	
 	-- If the camera is to far away from this powerups owner it will not render except this is true
 	-- Will prevent whileActive calls
-	do_not_unload = false,
+	do_not_unload = true,
 	
 	max_len = 8000,
 	target_info_descriptor = nil,
@@ -45,6 +45,7 @@ local M = {
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
 	M.activate_sound = Sound('art/sounds/ext/machinegun/assault_rifle.ogg', 2)
+	Extender.loadAssets('art/shapes/cannonball/materials.json')
 end
 
 -- Called for each vehicle
@@ -156,11 +157,11 @@ M.onTargetSelect = function(data, target_info)
 	
 	-- spawn projectile
 	local marker = createObject("TSStatic")
-	marker.shapeName = "art/shapes/collectible/s_trashbag_collectible.cdae"
+	marker.shapeName = "art/shapes/cannonball/cannonball.cdae"
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 0, 0, 0)
 	marker:setPosRot(target_info.start_pos.x, target_info.start_pos.y, target_info.start_pos.z, 0, 0, 0, 1)
-	marker.scale = vec3(0.1, 0.1, 0.1)
+	marker.scale = vec3(0.3, 0.3, 0.3)
 	
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)

@@ -1,0 +1,44 @@
+{
+  "PWU_Cannon": {
+    "name": "PWU_Cannon",
+    "mapTo": "PWU_Cannon",
+    "class": "Material",
+    "Stages": [
+      {
+        "colorMap": "cannon_01_diff.jpg"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None"
+  },
+  "PWU_Machinegun": {
+    "name": "PWU_Machinegun",
+    "mapTo": "PWU_Machinegun",
+    "class": "Material",
+    "Stages": [
+      {
+        "colorMap": "AKM BaseColor.jpg"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None"
+  },
+  "PWU_Shield": {
+    "name": "PWU_Shield",
+    "mapTo": "PWU_Shield",
+    "class": "Material",
+    "Stages": [
+      {
+        "colorMap": "bronze_BaseColor.1001.jpg"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None"
+  }
+}
