@@ -184,5 +184,17 @@ M.split = function(string, delimeter, convert_into)
 	return t
 end
 
+-- returns files only
+M.getFileListRecursive = function(file_path)
+	local files = {}
+	for _, path in ipairs(FS:directoryList(file_path)) do
+		if FS:directoryExists(path) then
+			M.tableArrayMerge(files, M.getFileListRecursive(path))
+		else
+			table.insert(files, path)
+		end
+	end
+	return files
+end
 
 return M

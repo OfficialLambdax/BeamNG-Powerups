@@ -113,6 +113,14 @@ M.init = function()
 		"art/shapes/pwu/particles/powerupEmitterData.json",
 		"art/shapes/pwu/spheres/materials.json"
 	)
+	
+	-- some things need to be loaded in the right order, eg particle data before emitter data
+	local files = Util.getFileListRecursive("art/shapes/pwu")
+	for _, file in ipairs(files) do
+		if Util.fileExtension(file):lower() == "json" then
+			M.loadAssets(file:sub(2))
+		end
+	end
 	Defaults.init()
 end
 
@@ -350,7 +358,6 @@ M.targetChange = function(possible_targets, current_selected)
 	return possible_targets[1]
 end
 
--- You may have to reload your game if you have opened the world editor before calling this on a new particle
 M.loadAssets = function(...)
 	for _, asset_json in ipairs({...}) do
 		if not LOADED_ASSETS[asset_json] then
