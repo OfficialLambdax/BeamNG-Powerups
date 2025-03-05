@@ -1,6 +1,6 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
-local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 
 local M = {
 	-- Clear name of the powerup
@@ -41,7 +41,7 @@ local M = {
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/ghost.ogg', 3)
+	M.activate_sound = Sound('art/sounds/ext/countermeasure/ghost.ogg', 3)
 end
 
 -- Called for each vehicle

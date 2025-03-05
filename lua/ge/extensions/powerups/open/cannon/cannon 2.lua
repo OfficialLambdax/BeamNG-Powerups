@@ -1,6 +1,6 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
-local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 
 local M = {
 	-- Clear name of the powerup
@@ -21,7 +21,7 @@ local M = {
 	--[[
 		eg. {Trait.Consuming, Trait.Reflective}
 	]]
-	respects_traits = {Trait.Consuming, Trait.Breaking, Trait.Ghosted},
+	respects_traits = {Trait.Consuming, Trait.Breaking, Trait.Ghosted, Trait.Ignore},
 	
 	-- This must match the power ups library _NAME or this powerup is rejected.
 	-- This name is changed when the api changes, so to not load outdated powerups.
@@ -38,15 +38,16 @@ local M = {
 	
 	max_projectiles = 5,
 	shoot_downtime = 500,
-	follow_sound = 'sounds/cannonball_flying.ogg',
+	follow_sound = 'art/sounds/ext/cannon/cannonball_flying.ogg',
 }
 
 
 
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
-	M.activate_sound = Sound(M.file_path .. 'sounds/cannon_light.ogg', 3)
-	M.hit_sound = Sound(M.file_path .. 'sounds/hit.ogg', 6)
+	M.activate_sound = Sound('art/sounds/ext/cannon/cannon_light.ogg', 3)
+	M.hit_sound = Sound('art/sounds/ext/cannon/hit.ogg', 6)
+	Extender.loadAssets('art/shapes/pwu/cannonball/materials.json')
 end
 
 -- Called for each vehicle
@@ -79,25 +80,29 @@ M.whileActive = function(data, origin_id, dt)
 		local veh_pos = origin_vehicle:getPosition()
 		veh_pos.z = veh_pos.z + 0.5
 		
+		local start_pos = MathUtil.getPosInFront(veh_pos, veh_dir, 2)
+		
 		local veh_id = origin_vehicle:getId()
-		local box_center = MathUtil.getPosInFront(veh_pos, veh_dir, 70)
-		local box = MathUtil.createBox(box_center, veh_dir, 60, 30, 40)
-		local targets = MathUtil.getVehiclesInsideBox(box, veh_id) or {}
+		local cone = MathUtil.createCone(start_pos, veh_dir, 300, 200)
+		local targets = MathUtil.getVehiclesInsideCone(cone, origin_id)
+		targets = Extender.cleanseTargetsWithTraits(targets, origin_id, Trait.Ignore)
+		targets = Extender.cleanseTargetsBehindStatics(start_pos, targets)
+		local projectile_speed = MathUtil.velocity(origin_vehicle:getVelocity()) + 100
 		
 		local target_dir = veh_dir
 		local _, target_id = Util.tablePickRandom(targets)
 		if target_id then
 			local target_vehicle = be:getObjectByID(target_id)
 			local pos1 = origin_vehicle:getPosition()
-			local pos2 = target_vehicle:getPosition()
+			local pos2 = MathUtil.getPredictedPosition(origin_vehicle, target_vehicle, projectile_speed)
 			
 			target_dir = pos2 - pos1
 		end
 		
 		local target_info = {
 			target_dir = target_dir,
-			start_pos = MathUtil.getPosInFront(veh_pos, veh_dir, 3),
-			init_vel = MathUtil.velocity(origin_vehicle:getVelocity())
+			start_pos = start_pos,
+			init_vel = projectile_speed
 		}
 		
 		data.shoot_timer:stopAndReset()
@@ -113,27 +118,24 @@ M.whileActive = function(data, origin_id, dt)
 	local target_hits = {}
 	for index, projectile in pairs(data.projectiles) do
 		local proj_pos = projectile.projectile:getPosition()
-		local new_pos = MathUtil.getPosInFront(proj_pos, projectile.target_dir, (100 + projectile.init_vel) * dt)
+		local new_pos = MathUtil.getPosInFront(proj_pos, projectile.target_dir, projectile.init_vel * dt)
 		
 		projectile.projectile:setPosRot(new_pos.x, new_pos.y, new_pos.z, 0, 0, 0, 0)
 		
-		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) then
+		local try = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
+		local try = Extender.cleanseTargetsWithTraits(try, origin_id, Trait.Ghosted)
+		local try = Extender.cleanseTargetsBehindStatics(proj_pos, try)
+			
+		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) or #try > 0 then
 			projectile.projectile:delete()
 			data.projectiles[index] = nil
 			
-		else
-			-- check collision
-			local new_hit = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
-			Extender.cleanseTargetsWithTraits(new_hit, origin_id, Trait.Ghosted)
-			if #new_hit > 0 then
-				Util.tableArrayMerge(target_hits, new_hit)
-				projectile.projectile:delete()
-				data.projectiles[index] = nil
-			
-			elseif projectile.life_time:stop() > 2500 then
-				projectile.projectile:delete()
-				data.projectiles[index] = nil
+			if #try > 0 then
+				Util.tableArrayMerge(target_hits, try)
 			end
+		elseif projectile.life_time:stop() > 2500 then
+			projectile.projectile:delete()
+			data.projectiles[index] = nil
 		end
 	end
 	
@@ -157,11 +159,11 @@ M.onTargetSelect = function(data, target_info)
 	
 	-- spawn projectile
 	local marker = createObject("TSStatic")
-	marker.shapeName = "art/shapes/collectible/s_trashbag_collectible.cdae"
+	marker.shapeName = "art/shapes/pwu/cannonball/cannonball.cdae"
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 0, 0, 1)
 	marker:setPosRot(target_info.start_pos.x, target_info.start_pos.y, target_info.start_pos.z, 0, 0, 0, 1)
-	marker.scale = vec3(1, 1, 1)
+	marker.scale = vec3(2.5, 2.5, 2.5)
 	
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)
@@ -191,7 +193,7 @@ M.onTargetSelect = function(data, target_info)
 		:selfDisable(life_time)
 		:selfDestruct(life_time + 500)
 	
-	Sfx(M.file_path .. M.follow_sound, target_info.start_pos)
+	Sfx(M.follow_sound, target_info.start_pos)
 		:is3D(true)
 		:volume(1)
 		:minDistance(30)

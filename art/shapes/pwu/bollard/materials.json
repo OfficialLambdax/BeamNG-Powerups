@@ -1,0 +1,17 @@
+{
+  "PWU_Bollard": {
+    "name": "PWU_Bollard",
+    "mapTo": "PWU_Bollard",
+    "class": "Material",
+    "Stages": [
+      {
+        "baseColorMap": ".018_baseColor.jpg"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None",
+    "version": 1.5
+  }
+}

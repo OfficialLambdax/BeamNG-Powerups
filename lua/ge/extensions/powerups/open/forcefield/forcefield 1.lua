@@ -1,6 +1,6 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
-local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 
 local M = {
 	-- Clear name of the powerup
@@ -44,8 +44,8 @@ M.onInit = function(group_defs)
 	Sets.loadSet(M.file_path .. "sets/forceField 1.lua", M.force_field_set)
 	Sets.loadSet(M.file_path .. "sets/rem_set.lua", M.force_field_rem_set)
 	
-	M.force_field_sound = Sound(M.file_path ..'sounds/force_field_low.ogg', 6)
-	M.force_field_hit_sound = Sound(M.file_path ..'sounds/shield_hit.ogg', 6)
+	M.force_field_sound = Sound('art/sounds/ext/forcefield/force_field_low.ogg', 6)
+	M.force_field_hit_sound = Sound('art/sounds/ext/forcefield/shield_hit.ogg', 6)
 end
 
 -- Called for each vehicle

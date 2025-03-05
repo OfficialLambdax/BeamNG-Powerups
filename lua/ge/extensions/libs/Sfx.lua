@@ -63,9 +63,10 @@ return function(file_path, pos_vec)
 	obj.fileName = file_path
 	obj.playOnAdd = true
 	obj.isLooping = false
-	obj.isStreaming = false
+	obj.isStreaming = true
 	obj.volume = 1
 	obj.is3D = true
+	obj:setField("sourceGroup", 0, "AudioChannelMaster")
 	
 	obj:setPosition(pos_vec or vec3(0, 0, 0))
 	
@@ -176,7 +177,7 @@ return function(file_path, pos_vec)
 	-- obj must have :getPosition() method and return a vec3
 	function sfx:follow(obj, for_time)
 		local trigger_name = TimedTrigger.getUnused('Sfx_follow_' .. self.int.name)
-		TimedTrigger.new(
+		if not TimedTrigger.new(
 			trigger_name,
 			0,
 			0,
@@ -186,7 +187,9 @@ return function(file_path, pos_vec)
 			for_time or 0,
 			self,
 			obj
-		)
+		) then
+			Log.error('Cannot bind to particle. Cannot create timer')
+		end
 		
 		return self
 	end
@@ -202,7 +205,7 @@ return function(file_path, pos_vec)
 	]]
 	function sfx:followC(obj, for_time, callback)
 		local trigger_name = TimedTrigger.getUnused('Sfx_followC_' .. self.int.name)
-		TimedTrigger.new(
+		if not TimedTrigger.new(
 			trigger_name,
 			0,
 			0,
@@ -213,7 +216,9 @@ return function(file_path, pos_vec)
 			self,
 			obj,
 			callback
-		)
+		) then
+			Log.error('Cannot bind to particle. Object doesnt have :isDeleted() method or cannot create timer')
+		end
 		
 		return self
 	end
@@ -223,7 +228,7 @@ return function(file_path, pos_vec)
 	-- All objects from the ObjectWrapper have it.
 	function sfx:bind(obj, delete_after)
 		local trigger_name = TimedTrigger.getUnused('Sfx_bind_' .. self.int.name)
-		TimedTrigger.new(
+		if not obj.isDeleted or not TimedTrigger.new(
 			trigger_name,
 			100,
 			0,
@@ -232,7 +237,9 @@ return function(file_path, pos_vec)
 			self,
 			obj,
 			delete_after or 0
-		)
+		) then
+			Log.error('Cannot bind to particle. Object doesnt have :isDeleted() method or cannot create timer')
+		end
 		
 		return self
 	end

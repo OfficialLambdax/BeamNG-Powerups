@@ -1,0 +1,16 @@
+{
+  "Cast": {
+    "name": "Cast",
+    "mapTo": "Cast",
+    "class": "Material",
+    "Stages": [
+      {
+        "colorMap": "GWC Cast Iron Minor Rust_BaseColor.jpg.001.jpg"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None"
+  }
+}

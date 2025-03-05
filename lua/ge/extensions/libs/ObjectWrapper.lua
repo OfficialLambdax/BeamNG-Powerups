@@ -17,6 +17,9 @@
 
 -- package.loaded["libs/ObjectWrapper"] = nil; require("libs/ObjectWrapper")("TSStatic")
 
+local ObjectCleaner = require("libs/ObjectWrapperCleaner")
+
+
 -- ----------------------------------------------------------------------------
 -- Ripperoni from http://github.com/kikito/inspect.lua
 -- MIT license
@@ -92,6 +95,7 @@ return function(name)
 		if self.int.is_deleted then return end
 		self.int.obj:delete()
 		self.int.is_deleted = true
+		ObjectCleaner.unregister(self)
 	end
 	
 	function wrapper:isDeleted()
@@ -112,5 +116,6 @@ return function(name)
 		}
 	)
 	
+	ObjectCleaner.register(wrapper)
 	return wrapper
 end

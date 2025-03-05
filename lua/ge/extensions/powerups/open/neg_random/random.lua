@@ -1,6 +1,6 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
-local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 
 --[[
 	Quite alot of negative effects have been inspired by JulianStaps StreamerVsChat mod!
@@ -54,7 +54,7 @@ M.onInit = function(group_defs)
 		if set_def.file ~= nil then
 			Sets.loadSet(M.file_path .. 'sets/' .. set_def.file .. '.lua', set_def.file)
 			if set_def.sound then
-				set_def.sound = Sound(M.file_path .. 'sounds/' .. set_def.sound, set_def.volume)
+				set_def.sound = Sound('art/sounds/ext/neg_random/' .. set_def.sound, set_def.volume)
 			end
 			
 			M.sets[set_def.file] = set_def

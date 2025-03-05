@@ -9,11 +9,14 @@ local MPUtil = require("mp_libs/MPUtil")
 local TimedTrigger = require("libs/TimedTrigger")
 local MathUtil = require("libs/MathUtil")
 local Log = require("libs/Log")
+local Particle = require("libs/Particles")
 
 local PowerUpsTraits = require("libs/extender/Traits")
 local PowerUpsTypes = require("libs/extender/Types")
 local GroupReturns = require("libs/extender/GroupReturns")
 local PowerupReturns = require("libs/extender/PowerupReturns")
+local Hotkeys = require("libs/extender/Hotkeys")
+local Defaults = require("libs/extender/Defaults")
 
 local createObject = require("libs/ObjectWrapper")
 
@@ -24,16 +27,30 @@ M.TraitsLookup = Util.tableVToK(M.Traits)
 M.Types = PowerUpsTypes.Types
 M.GroupReturns = GroupReturns
 M.PowerupReturns = PowerupReturns
+M.ActiveHotkeys = Hotkeys.ActivePowerupHotkeys
+M.ActiveHotkeyStates = Hotkeys.ActivePowerupHotkeyStates
+M.hotkeyResolveClearName = Hotkeys.resolveClearName
+
+-- to be deprecated
+M.defaultPowerupCreator = Defaults.powerupCreator
+M.defaultPowerupRender = Defaults.powerupRender
+M.defaultPowerupDelete = Defaults.powerupDelete
+M.defaultPowerupChargeCreator = Defaults.powerupChargeCreator
+M.defaultPowerupChargeRender = Defaults.powerupChargeRender
+M.defaultPowerupChargeLoader = Defaults.powerupChargeLoader
+M.defaultPowerupChargeDelete = Defaults.powerupChargeDelete
 
 local SUBJECT_SINGLEPLAYER = "!singleplayer"
 local SUBJECT_TRAFFIC = "!traffic"
 local SUBJECT_UNKNOWN = "!unknown"
 
+local LOADED_ASSETS = {} -- ["file_path"] = true
+
 
 M.defaultImports = function() -- do not change order
-	-- local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
+	-- local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
 
-	return require("libs/PowerUps"), require("libs/Util"), require("libs/Sets"), require("libs/Sounds"), require("libs/MathUtil"), require("libs/Pot"), require("libs/Log"), require("libs/TimedTrigger"), require("libs/CollisionsLib"), require("mp_libs/MPUtil"), require("mp_libs/PauseTimer"), require("libs/Particles"), require("libs/Sfx")
+	return require("libs/PowerUps"), require("libs/Util"), require("libs/Sets"), require("libs/Sounds"), require("libs/MathUtil"), require("libs/Pot"), require("libs/Log"), require("libs/TimedTrigger"), require("libs/CollisionsLib"), require("mp_libs/MPUtil"), require("mp_libs/PauseTimer"), require("libs/Particles"), require("libs/Sfx"), require("libs/Placeables")
 	
 	--[[
 		Lib = libs/PowerUps.lua
@@ -68,72 +85,35 @@ M.defaultImports = function() -- do not change order
 	]]
 end
 
-M.defaultPowerupVars = function() -- do not change order
-	-- local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
-	
-	return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject
-end
-
-M.defaultGroupVars = function()
-	-- local Type, onPickup, createObject = Extender.defaultGroupVars()
-	
-	return M.Types, GroupReturns.onPickup, createObject
-end
-
-M.defaultPowerupCreator = function(trigger_obj, shape_path, color_point)
-	local pos = trigger_obj:getPosition()
-	
-	local marker = createObject("TSStatic")
-	marker.shapeName = shape_path
-	marker.useInstanceRenderData = 1
-	marker.instanceColor = color_point
-	local rot = QuatF(0, 0, 0, 0)
-	rot:setFromEuler(vec3(math.random(), math.random(), math.random()))
-	marker:setPosRot(pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w)
-	--marker.scale = trigger_obj:getScale()
-	marker.scale = vec3(2, 2, 2)
-	
-	marker:registerObject("my_powerup_" .. Util.randomName())
-	
-	return marker
-end
-
-M.defaultPowerupRender = function(marker_obj, dt)
-	if marker_obj == nil then return end
-	local pos = marker_obj:getPosition()
-	local rot = marker_obj:getRotation():toEuler()
+M.defaultPowerupVars = function(version) -- do not change order
+	if version == nil then
+		-- local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
+		return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject
 		
-	rot.x = rot.x + (0.5 * dt)
-	rot.y = rot.y + (0.5 * dt)
-	local new_rot = QuatF(0, 0, 0, 0)
-	new_rot:setFromEuler(rot)
-	marker_obj:setPosRot(pos.x, pos.y, pos.z, new_rot.x, new_rot.y, new_rot.z, new_rot.w)
-end
-
-M.defaultPowerupDelete = function(marker_obj)
-	if marker_obj then marker_obj:delete() end
-end
-
-M.defaultPowerupMaterialPatch = function()
-	if true then return end -- DISABLED. "lod_vertcol" is used by alot
-	
-	local non_emissive_material = scenetree.findObject("lod_vertcol")
-	if non_emissive_material == nil then
-		Log.error('Patching failed. Cannot find "log_vertcol" material')
-		return
+	elseif version == 1 then -- v0.5
+		-- local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
+		return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject, M.ActiveHotkeys, M.ActiveHotkeyStates, PowerupReturns.onHKey
 	end
-	
-	if non_emissive_material:getField("version", 0) ~= "1" then return end
-	Log.warn('Patching default powerups "lod_vertcol" material to pbr version 1.5 and applying emissive properties.\nThis change is not permanent.\nIf you have weird glowing texture glitches, try disabling the mod and restart the game!')
-	
-	non_emissive_material:setField("glow", 0, "0") -- according to the materialEditor.lua this must be done!
-	non_emissive_material:setField("version", 0, "1.5")
-	non_emissive_material:setField("emissiveMap", 0, "/art/shapes/collectible/collectible_sphere_b.color.DDS")
-	non_emissive_material:setField("emissiveFactor", 0, "0.5 0.5 0.5")
-	non_emissive_material:setField("instanceEmissive", 0, "1")
-	non_emissive_material:reload()
-	
-	Log.info('Patch successfull')
+end
+
+M.defaultGroupVars = function(version)
+	if version == nil then -- enums
+		-- local Type, onPickup, createObject = Extender.defaultGroupVars()
+		return M.Types, GroupReturns.onPickup, createObject
+		
+	elseif version == 1 then -- v0.5
+		-- local Type, onPickup, createObject, Default = Extender.defaultGroupVars(1)
+		return M.Types, GroupReturns.onPickup, createObject, Defaults
+	end
+end
+
+M.init = function()
+	M.loadAssets(
+		"art/shapes/pwu/particles/powerupParticleData.json",
+		"art/shapes/pwu/particles/powerupEmitterData.json",
+		"art/shapes/pwu/spheres/materials.json"
+	)
+	Defaults.init()
 end
 
 M.getTraitName = function(value)
@@ -242,6 +222,17 @@ M.cleanseTargetsWithTraits = function(targets, origin_vehicle_id, ...)
 	return new_targets
 end
 
+M.cleanseTargetsBehindStatics = function(origin_pos, targets)
+	local new_targets = {}
+	for _, target_id in ipairs(targets) do
+		local target_pos = be:getObjectByID(target_id):getPosition()
+		if not MathUtil.raycastAlongSideLine(origin_pos, target_pos) then
+			table.insert(new_targets, target_id)
+		end
+	end
+	return new_targets
+end
+
 M.isPlayerVehicle = function(game_vehicle_id)
 	local vehicle = PowerUps.vehicles[game_vehicle_id]
 	if vehicle then
@@ -342,5 +333,32 @@ M.ghostVehicleAutoUnghost = function(vehicle, time)
 	)
 end
 
+M.targetChange = function(possible_targets, current_selected)
+	if not possible_targets or #possible_targets == 0 then return nil end
+	
+	-- if none selected so far choose first valid
+	if current_selected == nil then return possible_targets[1] end
+	
+	-- if one selected before, choose next in the list
+	for index, target_id in ipairs(possible_targets) do
+		if current_selected == target_id then
+			return possible_targets[index + 1] -- or possible_targets[1]
+		end
+	end
+	
+	-- couldnt find the previous target in the list? choose first
+	return possible_targets[1]
+end
+
+-- You may have to reload your game if you have opened the world editor before calling this on a new particle
+M.loadAssets = function(...)
+	for _, asset_json in ipairs({...}) do
+		if not LOADED_ASSETS[asset_json] then
+			-- game engine function
+			loadJsonMaterialsFile(asset_json)
+			LOADED_ASSETS[asset_json] = true
+		end
+	end
+end
 
 return M

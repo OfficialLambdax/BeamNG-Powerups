@@ -26,22 +26,45 @@ if MP and MP.TriggerClientEvent then
 	return
 end
 
+local function globalCheck()
+	local globals = {}
+	for k, _ in pairs(_G) do
+		globals[k] = true
+	end
+	return globals
+end
+
+local function globalCheckCompare(globals)
+	local found = {}
+	for k, _ in pairs(_G) do
+		if not globals[k] then
+			table.insert(found, k)
+		end
+	end
+	return found
+end
+
+local GLOBAL_CHECK = globalCheck()
+
+
 -- unload what otherwise would leak to mem
 require("libs/ForceField").unload() -- markers will otherwise leak to mem
 require("libs/PowerUps").unload()
 require("libs/TriggerLoad").unload()
 
 -- force reload of these
-package.loaded["libs/TimedTrigger"] = nil
+--package.loaded["libs/TimedTrigger"] = nil -- only enable the reload of this if you dev the TimedTriggers. Otherwise you may endup with memory leaks
 package.loaded["libs/CollisionsLib"] = nil
 package.loaded["libs/Sets"] = nil
 package.loaded["libs/ForceField"] = nil
 package.loaded["libs/PowerUps"] = nil
 package.loaded["libs/PowerUpsExtender"] = nil
-package.loaded["libs/extender/PowerUpsTraits"] = nil
-package.loaded["libs/extender/PowerUpsTypes"] = nil
+package.loaded["libs/extender/Traits"] = nil
+package.loaded["libs/extender/Types"] = nil
+package.loaded["libs/extender/Hotkeys"] = nil
 package.loaded["libs/extender/GroupReturns"] = nil
 package.loaded["libs/extender/PowerupReturns"] = nil
+package.loaded["libs/extender/Defaults"] = nil
 package.loaded["libs/TriggerLoad"] = nil
 package.loaded["libs/MathUtil"] = nil
 package.loaded["libs/Util"] = nil
@@ -51,23 +74,40 @@ package.loaded["libs/Particles"] = nil
 package.loaded["libs/Sfx"] = nil
 package.loaded["libs/Pot"] = nil
 package.loaded["libs/ObjectWrapper"] = nil
+--package.loaded["libs/ObjectWrapperCleaner"] = nil
+package.loaded["libs/Placeables"] = nil
 package.loaded["mp_libs/MPUtil"] = nil
 package.loaded["mp_libs/MPClientRuntime"] = nil
 
-local TimedTrigger = require("libs/TimedTrigger")
+
+local TimedTrigger = require("libs/TimedTrigger").prefillReuse(200)
 local CollisionsLib = require("libs/CollisionsLib")
 local Sets = require("libs/Sets")
 local ForceField = require("libs/ForceField")
 local PowerUps = require("libs/PowerUps")
+local PowerUpTypes = PowerUps.getTypes()
 local MPUtil = require("mp_libs/MPUtil")
 local PauseTimer = require("mp_libs/PauseTimer")
 local Log = require("libs/Log")
 local Util = require("libs/Util")
+local ObjectCleaner = require("libs/ObjectWrapperCleaner")
 
 local M = {}
 local INITIALIZED = false
 local TRIGGER_DEBUG = false
 local TRIGGER_ADJUST = false
+
+local MEASURE_TIMER = PauseTimer.new()
+local MEASURE_BUFFER, MEASURE_INDEX = {}, 1
+local MEASURE_PRINT = false
+local MEASURE_DT_BUFFER, MEASURE_DT_INDEX = {}, 1
+local AVG_DT = 0
+local AVG_RUNTIME = 0
+
+local FRAME_SKIPPING = false
+local FRAME_SKIPPING_DT = 0
+local FRAME_SKIPPING_COUNT = 0
+local FRAME_SKIPPING_LIMIT = 1
 
 --[[
 	Notes
@@ -93,6 +133,9 @@ local TRIGGER_ADJUST = false
 -- ----------------------------------------------------------------------------
 -- For debug
 M.displayClientState = function(show)
+	Log.info("PowerUps version: " .. PowerUps._VERSION .. "\tBranch: " .. PowerUps._BRANCH .. "\tApi name: " .. PowerUps._NAME)
+	Log.info("TimedTrigger version: " .. TimedTrigger._VERSION)
+	
 	local vehicles = PowerUps.getKnownVehicleCount()
 	local triggers = TimedTrigger.count()
 	local reuse = TimedTrigger.getReuseCount()
@@ -103,11 +146,25 @@ M.displayClientState = function(show)
 	local rotation = math.floor(PowerUps.getRotationTime() / 1000)
 	local rotation_routine = PowerUps.getRotationRoutineTime()
 	local restock = math.floor(PowerUps.getRestockTime() / 1000)
+	local rendered_locations = PowerUps.getRenderedLocationsCount()
+	local rendered_vehicles = PowerUps.getRenderedVehiclesCount()
+	local avg_runtime = Util.mathRound(AVG_RUNTIME, 2)
+	local avg_dt = Util.mathRound(AVG_DT, 2)
+	local fps = math.floor((1 / AVG_DT) * 1000)
+	local work_partition = Util.mathRound(((AVG_RUNTIME / FRAME_SKIPPING_LIMIT) / AVG_DT) * 100, 2) .. ' %'
+	local render_dis = PowerUps.getRenderDistance()
+	local render_dis_check = PowerUps.getRenderDistanceRoutineTime()
 	
 	local info = string.format([[
 	General   _
+		Frame skipping  : %s	Current : %s
 		Triggers        : %s		Reuse   : %s
 		Vehicles        : %s
+	Render    _
+		Distance        : %s m	Update : %s ms
+		Locations       : %s
+		Vehicles        : %s
+		Mod load        : %s @ %s FPS	Runtime avg: %s ms	Frame Delta avg: %s ms
 	Locations _
 		Total           : %s
 		Restock Time    : %s s
@@ -118,25 +175,39 @@ M.displayClientState = function(show)
 		Owned           : %s
 		Active          : %s
 	List      _]],
-		triggers, reuse, vehicles,
+		FRAME_SKIPPING, FRAME_SKIPPING_LIMIT, triggers, reuse, vehicles,
+		render_dis, render_dis_check, rendered_locations, rendered_vehicles, work_partition, fps, avg_runtime, avg_dt,
 		locations, restock, rotation, rotation_routine,
 		spawned, owned, active
 	)
-	for _, group in ipairs(PowerUps.getPowerupGroups()) do
-		local total = PowerUps.getSpawnCountByGroup(group)
-		local percentil = math.floor((total / spawned) * 100)
+	
+	local groups = PowerUps.getPowerupGroups()
+	for clear_name, int_name in pairs(PowerUpTypes) do
 		info = info .. '\n' ..
-			'\t\t' .. total .. ' (' .. percentil .. ' %)\t: ' .. group
+			'\t-> ' .. clear_name
+			
+		for _, group in ipairs(groups) do
+			if PowerUps.getGroupType(group) == int_name then
+				local total = PowerUps.getSpawnCountByGroup(group)
+				local percentil = math.floor((total / spawned) * 100)
+				info = info .. '\n' ..
+					'\t\t' .. total .. ' (' .. percentil .. ' %)\t: ' .. group
+			end
+		end
 	end
+	
+	--for _, group in ipairs(PowerUps.getPowerupGroups()) do
+	--	local total = PowerUps.getSpawnCountByGroup(group)
+	--	local percentil = math.floor((total / spawned) * 100)
+	--	info = info .. '\n' ..
+	--		'\t\t' .. total .. ' (' .. percentil .. ' %)\t: ' .. group
+	--end
 	
 	Log.info(info)
 end
 
 -- ----------------------------------------------------------------------------
 -- Runtime Measurement
-local MEASURE_TIMER = PauseTimer.new()
-local MEASURE_BUFFER, MEASURE_INDEX = {}, 1
-local MEASURE_PRINT = false
 local function measure()
 	MEASURE_BUFFER[MEASURE_INDEX] = MEASURE_TIMER:stop()
 	MEASURE_INDEX = MEASURE_INDEX + 1
@@ -150,6 +221,8 @@ local function measureAverage()
 	end
 	local avg = total / 100
 	
+	AVG_RUNTIME = avg
+	
 	--if avg > 5 then
 	--	Log.warn('PowerUps runtime is taking alot of time! Average: ' .. Util.mathRound(avg, 3) .. ' ms\nIf you are experiencing heavy lag, this might be why')
 	--end
@@ -161,13 +234,6 @@ end
 
 -- ----------------------------------------------------------------------------
 -- Delta time Measurement for auto frame skipping
-local MEASURE_DT_BUFFER, MEASURE_DT_INDEX = {}, 1
-
-local FRAME_SKIPPING = false
-local FRAME_SKIPPING_DT = 0
-local FRAME_SKIPPING_COUNT = 0
-local FRAME_SKIPPING_LIMIT = 1
-
 local function measureDt(dt)
 	MEASURE_DT_BUFFER[MEASURE_INDEX] = dt
 	MEASURE_DT_INDEX = MEASURE_DT_INDEX + 1
@@ -180,6 +246,8 @@ local function measureDtAverage()
 		total = total + (MEASURE_DT_BUFFER[i] or 0)
 	end
 	local avg = (total / 100) * 1000
+	
+	AVG_DT = avg
 	
 	-- enables frame skipping when <30 fps
 	if not FRAME_SKIPPING and avg > 30 then -- ~30fps
@@ -209,20 +277,33 @@ end
 -- Init
 -- only to be called once a map has been loaded or is already loaded
 local function onInit()
+	Log.info("Loading PowerUps lib wrapper mod")
+	
 	PowerUps.init()
 	
 	local level_name = core_levels.getLevelName(getMissionFilename())
 	local prefab_name = 'lua/ge/extensions/prefabs/' .. level_name .. '.prefab.json'
 	
-	if not MPUtil.isBeamMPSession() and FS:fileExists(prefab_name) then
-		PowerUps.loadLocationPrefab(prefab_name)
-		PowerUps.loadPowerUpDefs("lua/ge/extensions/powerups/open")
+	if MPUtil.isBeamMPSession() then
+		Log.info("Detected Multiplayer session")
+	else
+		Log.info("Detected Singleplayer session")
+		if not FS:fileExists(prefab_name) then
+			Log.warn('There is no location prefab available for this map "' .. level_name .. '"')
+			Log.warn('Looked at: ' .. prefab_name)
+		else
+			Log.info('Found location prefab for this map "' .. level_name .. '". Loading')
+			PowerUps.loadLocationPrefab(prefab_name)
+			PowerUps.loadPowerUpDefs("lua/ge/extensions/powerups/open")
+		end
 	end
 	
-	TimedTrigger.new("PowerUps_measurement", 10000, 0, measureAverage)
+	TimedTrigger.new("PowerUps_measurement", 1000, 0, measureAverage)
 	TimedTrigger.new("PowerUps_dt_measurement", 1000, 0, measureDtAverage)
 	
 	INITIALIZED = true
+	
+	M.displayClientState()
 end
 
 -- ----------------------------------------------------------------------------
@@ -265,6 +346,8 @@ M.onPreRender = function(dt_real) -- , dt_sim, dt_raw
 	
 	measure()
 	measureDt(dt_real)
+	
+	--print(ObjectCleaner.count())
 end
 
 -- ----------------------------------------------------------------------------
@@ -287,6 +370,7 @@ end
 M.onClientEndMission = function()
 	PowerUps.unload()
 	ForceField.unload()
+	ObjectCleaner.destroyAll()
 	
 	TimedTrigger.remove("PowerUps_measurement")
 	TimedTrigger.remove("PowerUps_dt_measurement")
@@ -442,8 +526,20 @@ M.setRenderDistance = function(distance) -- in meters
 end
 
 -- You generally only want to increase the routine if you set the overall render distance lower
-M.setRenderDistanceRoutineTime = function(time) -- in ms
-	PowerUps.setRenderDistanceRoutineTime(time)
+-- Disabled because the routine is dynamically changed atm
+--M.setRenderDistanceRoutineTime = function(time) -- in ms
+--	PowerUps.setRenderDistanceRoutineTime(time)
+--end
+
+
+GLOBAL_CHECK = globalCheckCompare(GLOBAL_CHECK)
+if #GLOBAL_CHECK > 0 then
+	Log.warn("===============================================================================================================")
+	Log.warn("This mod has created global variables. Some may be required, others may be a simple mistake. Please review this")
+	for _, global in ipairs(GLOBAL_CHECK) do
+		Log.info('-> ' .. global)
+	end
+	Log.warn("===============================================================================================================")
 end
 
 return M

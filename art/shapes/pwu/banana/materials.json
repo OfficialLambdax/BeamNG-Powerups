@@ -1,0 +1,16 @@
+{
+  "banana": {
+    "name": "banana",
+    "mapTo": "banana",
+    "class": "Material",
+    "Stages": [
+      {
+        "colorMap": "1_DefaultMaterial_BaseColor.jpg.035.jpg"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None"
+  }
+}

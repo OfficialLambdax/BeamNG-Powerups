@@ -1,6 +1,6 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx = Extender.defaultImports()
-local Type, onPickup, createObject = Extender.defaultGroupVars()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Type, onPickup, createObject, Default = Extender.defaultGroupVars(1)
 
 local M = {
 	-- Any name eg "ForwardShot". No duplicates with others of this Set.
@@ -46,57 +46,59 @@ M.onVehicleInit = function(game_vehicle_id)
 end
 
 -- Spawn the powerup visual. Keep in mind that there can always be multiple
-M.onCreate = function(trigger)
+M.onCreate = function(trigger, is_rendered)
 	-- Whatever you return here is given to all other callbacks too. So if you need the trigger, then also add that.
 	return {
-		trigger = trigger,
-		--marker = Extender.defaultPowerupCreator(trigger, "art/shapes/collectible/s_collect_medikit.cdae", Point4F(1, 1, 1, 1)),
-		marker = Extender.defaultPowerupCreator(trigger, "art/shapes/collectible/s_marker_BNG.cdae", Point4F(1, 1, 1, 1)),
-		vehicle = nil
+		marker = Extender.defaultPowerupChargeCreator(
+			trigger,
+			is_rendered
+		)
 	}
 end
 
 -- only called once
 M.onUnload = function(data)
-	if data.marker then
-		data.marker:setHidden(true)
-	end
+	Extender.defaultPowerupChargeLoader(data.marker, false)
 end
 
 -- only called once
 M.onLoad = function(data)
-	if data.marker then
-		data.marker:setHidden(false)
-	end
+	Extender.defaultPowerupChargeLoader(data.marker, true)
 end
 
 -- When the powerup is picked up by a vehicle
-M.onPickup = function(data, vehicle)
-	data.vehicle = vehicle
+M.onPickup = function(data, vehicle, is_rendered)
+	if is_rendered then
+		--Particle("BNGP_waterfallspray", data.marker.obj:getPosition())
+		Particle("BNGP_confetti", data.marker.obj:getPosition())
+			:active(true)
+			:velocity(0)
+			:selfDisable(1000)
+			:selfDestruct(3000)
+	end
 	M.onDespawn(data)
 	return onPickup.Success()
 end
 
 -- While the powerup is in someones inventory. Can have it hover above the vehicle or play sounds.
-M.whilePickup = function(data)
+M.whilePickup = function(data, origin_id, dt)
 	--print("while pickup")
 end
 
--- When the powerup is dropped by a vehicle. Happens once the powerup is activated, swapped or if it looses the powerup through any other means
-M.onDrop = function(data)
+-- When the powerup is dropped by a vehicle. Happens once the powerup is activated, swapped or if it loses the powerup through any other means
+M.onDrop = function(data, origin_id, is_rendered)
 	--print("drop")
 end
 
 -- While the powerup is spawned in the world. As in if you want it to display special effects while its waiting to be picked up. Aka slowly moving up n down.
 -- Routine is 100ms
 M.whileActive = function(data, dt)
-	Extender.defaultPowerupRender(data.marker, dt)
+	Extender.defaultPowerupChargeRender(data.marker, dt)
 end
 
 -- When the powerup is removed from the world once and for all
 M.onDespawn = function(data)
-	Extender.defaultPowerupDelete(data.marker)
-	data.marker = nil
+	Extender.defaultPowerupChargeDelete(data.marker)
 end
 
 return M
