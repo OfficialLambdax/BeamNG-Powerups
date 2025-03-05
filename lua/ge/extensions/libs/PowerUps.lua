@@ -1400,6 +1400,14 @@ M.getSpawnCountByGroup = function(group_name)
 	return total
 end
 
+M.getGroupType = function(group_name)
+	return POWERUP_DEFS[group_name].type
+end
+
+M.getTypes = function()
+	return Types
+end
+
 M.getPowerup = function(game_vehicle_id)
 	local vehicle = VEHICLES[game_vehicle_id]
 	if vehicle then

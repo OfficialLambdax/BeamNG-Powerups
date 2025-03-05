@@ -90,7 +90,7 @@ M.defaultPowerupVars = function(version) -- do not change order
 		-- local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 		return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject
 		
-	elseif version == 1 then
+	elseif version == 1 then -- v0.5
 		-- local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 		return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject, M.ActiveHotkeys, M.ActiveHotkeyStates, PowerupReturns.onHKey
 	end
@@ -101,41 +101,19 @@ M.defaultGroupVars = function(version)
 		-- local Type, onPickup, createObject = Extender.defaultGroupVars()
 		return M.Types, GroupReturns.onPickup, createObject
 		
-	elseif version == 1 then
+	elseif version == 1 then -- v0.5
 		-- local Type, onPickup, createObject, Default = Extender.defaultGroupVars(1)
 		return M.Types, GroupReturns.onPickup, createObject, Defaults
 	end
 end
 
 M.init = function()
-	M.defaultPowerupMaterialPatch()
 	M.loadAssets(
 		"art/shapes/particles/powerupParticleData.json",
 		"art/shapes/particles/powerupEmitterData.json",
 		"art/shapes/spheres/materials.json"
 	)
-end
-
-M.defaultPowerupMaterialPatch = function()
-	if true then return end -- DISABLED. "lod_vertcol" is used by alot
-	
-	local non_emissive_material = scenetree.findObject("lod_vertcol")
-	if non_emissive_material == nil then
-		Log.error('Patching failed. Cannot find "log_vertcol" material')
-		return
-	end
-	
-	if non_emissive_material:getField("version", 0) ~= "1" then return end
-	Log.warn('Patching default powerups "lod_vertcol" material to pbr version 1.5 and applying emissive properties.\nThis change is not permanent.\nIf you have weird glowing texture glitches, try disabling the mod and restart the game!')
-	
-	non_emissive_material:setField("glow", 0, "0") -- according to the materialEditor.lua this must be done!
-	non_emissive_material:setField("version", 0, "1.5")
-	non_emissive_material:setField("emissiveMap", 0, "/art/shapes/collectible/collectible_sphere_b.color.DDS")
-	non_emissive_material:setField("emissiveFactor", 0, "0.5 0.5 0.5")
-	non_emissive_material:setField("instanceEmissive", 0, "1")
-	non_emissive_material:reload()
-	
-	Log.info('Patch successfull')
+	Defaults.init()
 end
 
 M.getTraitName = function(value)

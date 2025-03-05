@@ -43,5 +43,97 @@
     "spinSpeed": 0.300000012,
     "textureName": "/art/shapes/particles/part.png",
     "useInvAlpha": true
+  },
+  "PWU_ShadyPickupParticle": {
+    "name": "PWU_ShadyPickupParticle",
+    "class": "ParticleData",
+    "persistentId": "9afa19f8-a05d-4220-aba9-fa9dac60d613",
+    "__parent": "DataBlockGroup",
+    "animTexName": "/art/shapes/particles/part.png",
+    "colors": [
+      [
+        0.291363597,
+        0.291363597,
+        0.291363597,
+        1
+      ],
+      [
+        0.211172491,
+        0.171170533,
+        0.558960557,
+        1
+      ],
+      [
+        0.524272084,
+        0.168341979,
+        0.168341979,
+        1
+      ],
+      "Black"
+    ],
+    "constantAcceleration": 2.00000191,
+    "dragCoefficient": 0.100000016,
+    "gravityCoefficient": 0.5,
+    "lifetimeMS": 2000,
+    "lifetimeVarianceMS": 500,
+    "sizes": [
+      1.49011612e-08,
+      0.299999923,
+      0.399999917,
+      0.499999911
+    ],
+    "spinRandomMax": 360,
+    "spinRandomMin": -360,
+    "spinSpeed": 0.399999917,
+    "textureName": "/art/shapes/particles/part.png",
+    "useInvAlpha": true
+  },
+  "PWU_StarFallParticle": {
+    "name": "PWU_StarFallParticle",
+    "class": "ParticleData",
+    "persistentId": "9afa19f8-a05d-4220-aba9-fa9dac60d613",
+    "__parent": "DataBlockGroup",
+    "animTexName": "core/art/defaultParticle.png",
+    "colors": [
+      [
+        0.985133529,
+        0.732274294,
+        0,
+        1
+      ],
+      [
+        0.980177999,
+        0.495441735,
+        0,
+        1
+      ],
+      [
+        1,
+        0.221986592,
+        0.221986592,
+        1
+      ],
+      "Black"
+    ],
+    "gravityCoefficient": 0.100000001,
+    "inheritedVelFactor": 0.499022007,
+    "lifetimeMS": 7000,
+    "lifetimeVarianceMS": 500,
+    "sizes": [
+      0.100000001,
+      0.299999923,
+      0.499999911,
+      0.699999928
+    ],
+    "spinRandomMax": 360,
+    "spinRandomMin": -360,
+    "textureName": "core/art/defaultParticle.png",
+    "times": [
+      null,
+      0.730000079,
+      0.960000098,
+      null
+    ],
+    "useInvAlpha": true
   }
 }

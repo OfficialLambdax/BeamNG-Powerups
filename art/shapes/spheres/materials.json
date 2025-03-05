@@ -40,5 +40,19 @@
       {}
     ],
     "translucentBlendOp": "None"
+  },
+  "PWU_Banana": {
+    "name": "PWU_Banana",
+    "mapTo": "PWU_Banana",
+    "class": "Material",
+    "Stages": [
+      {
+        "colorMap": "Low_Poly_Fruits.png.001.jpg"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None"
   }
 }
