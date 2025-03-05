@@ -85,6 +85,7 @@ local CollisionsLib = require("libs/CollisionsLib")
 local Sets = require("libs/Sets")
 local ForceField = require("libs/ForceField")
 local PowerUps = require("libs/PowerUps")
+local PowerUpTypes = PowerUps.getTypes()
 local MPUtil = require("mp_libs/MPUtil")
 local PauseTimer = require("mp_libs/PauseTimer")
 local Log = require("libs/Log")
@@ -179,12 +180,28 @@ M.displayClientState = function(show)
 		locations, restock, rotation, rotation_routine,
 		spawned, owned, active
 	)
-	for _, group in ipairs(PowerUps.getPowerupGroups()) do
-		local total = PowerUps.getSpawnCountByGroup(group)
-		local percentil = math.floor((total / spawned) * 100)
+	
+	local groups = PowerUps.getPowerupGroups()
+	for clear_name, int_name in pairs(PowerUpTypes) do
 		info = info .. '\n' ..
-			'\t\t' .. total .. ' (' .. percentil .. ' %)\t: ' .. group
+			'\t-> ' .. clear_name
+			
+		for _, group in ipairs(groups) do
+			if PowerUps.getGroupType(group) == int_name then
+				local total = PowerUps.getSpawnCountByGroup(group)
+				local percentil = math.floor((total / spawned) * 100)
+				info = info .. '\n' ..
+					'\t\t' .. total .. ' (' .. percentil .. ' %)\t: ' .. group
+			end
+		end
 	end
+	
+	--for _, group in ipairs(PowerUps.getPowerupGroups()) do
+	--	local total = PowerUps.getSpawnCountByGroup(group)
+	--	local percentil = math.floor((total / spawned) * 100)
+	--	info = info .. '\n' ..
+	--		'\t\t' .. total .. ' (' .. percentil .. ' %)\t: ' .. group
+	--end
 	
 	Log.info(info)
 end

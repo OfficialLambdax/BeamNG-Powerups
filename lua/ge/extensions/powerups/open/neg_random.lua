@@ -48,15 +48,6 @@ end
 -- Spawn the powerup visual. Keep in mind that there can always be multiple
 M.onCreate = function(trigger, is_rendered)
 	-- Whatever you return here is given to all other callbacks too. So if you need the trigger, then also add that.
-	--return {
-	--	marker = Extender.defaultPowerupCreator(
-	--		trigger,
-	--		"art/shapes/collectible/s_marker_BNG.cdae",
-	--		Point4F(0, 0, 0, 1),
-	--		is_rendered
-	--	)
-	--}
-	
 	return {
 		marker = Default.powerupNegativeCreator(trigger, is_rendered)
 	}
@@ -75,9 +66,11 @@ end
 -- When the powerup is picked up by a vehicle
 M.onPickup = function(data, vehicle, is_rendered)
 	if is_rendered then
-		Particle("BNGP_waterfallspray", data.marker.obj:getPosition())
+		local pos = data.marker.obj:getPosition()
+		pos.z = pos.z - 0.5
+		Particle("PWU_ShadyPickup", pos)
 			:active(true)
-			:velocity(0)
+			:velocity(3)
 			:selfDisable(1000)
 			:selfDestruct(3000)
 	end

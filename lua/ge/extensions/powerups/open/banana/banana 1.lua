@@ -4,7 +4,7 @@ local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey
 
 local M = {
 	-- Shown to the user
-	clear_name = "Banana",
+	clear_name = "Banana I",
 	
 	-- Turn true to not be affected by the render distance
 	do_not_unload = false,
@@ -109,6 +109,8 @@ M.onTargetSelect = function(data, target_info)
 				data.act_timer = Timer.new()
 				
 				-- attach a routine to the trigger
+				self:delete()
+				--[[
 				self:attach(
 					function(self, data)
 						if data.act_timer:stop() < 200 then return end -- after this
@@ -131,6 +133,7 @@ M.onTargetSelect = function(data, target_info)
 						end
 					end
 				)
+				]]
 			end
 		)
 end

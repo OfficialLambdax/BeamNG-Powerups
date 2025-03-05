@@ -18,7 +18,7 @@ local M = {
 	
 	-- Define spawn chance between 0 and 10. Where 0 is none and 10 max.
 	-- Default is 5
-	probability = 0,
+	probability = 5,
 	
 	-- Must match the libs version name. If it doesnt, this powerup group is considered out of date
 	-- dump(Lib.getLibVersion())
@@ -46,8 +46,8 @@ M.onCreate = function(trigger, is_rendered)
 	return {
 		marker = Extender.defaultPowerupCreator(
 			trigger,
-			"art/shapes/collectible/s_collect_machine_part.cdae",
-			Point4F(0, 0, 1, 1),
+			"art/shapes/spheres/banana.cdae",
+			Point4F(1, 1, 1, 1),
 			is_rendered
 		)
 	}

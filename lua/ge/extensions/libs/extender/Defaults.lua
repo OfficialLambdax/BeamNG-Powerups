@@ -1,6 +1,7 @@
 local Util = require("libs/Util")
 local Particle = require("libs/Particles")
 local Timer = require("mp_libs/PauseTimer")
+local Pot = require("libs/Pot")
 
 local M = {}
 --[[
@@ -8,7 +9,43 @@ local M = {}
 		["color point as string"] = Point4F
 ]]
 local NEGATIVE_LIST = {}
+local NEGATIVE_RANDOM_POT = Pot()
 
+-- ------------------------------------------------------------------------------------------------
+-- Init
+M.init = function()
+	M.defaultPowerupMaterialPatch()
+	
+	NEGATIVE_RANDOM_POT = Pot()
+		:add(function() return math.random(1000, 2000) end, 2)
+		:add(function() return math.random(4000, 6000) end, 4)
+		:add(function() return math.random(10000, 20000) end, 6)
+		:add(function() return math.random(30000, 40000) end, 4)
+		:add(function() return math.random(50000, 60000) end, 2)
+		:stir(5)
+end
+
+M.defaultPowerupMaterialPatch = function()
+	if true then return end -- DISABLED. "lod_vertcol" is used by alot
+	
+	local non_emissive_material = scenetree.findObject("lod_vertcol")
+	if non_emissive_material == nil then
+		Log.error('Patching failed. Cannot find "log_vertcol" material')
+		return
+	end
+	
+	if non_emissive_material:getField("version", 0) ~= "1" then return end
+	Log.warn('Patching default powerups "lod_vertcol" material to pbr version 1.5 and applying emissive properties.\nThis change is not permanent.\nIf you have weird glowing texture glitches, try disabling the mod and restart the game!')
+	
+	non_emissive_material:setField("glow", 0, "0") -- according to the materialEditor.lua this must be done!
+	non_emissive_material:setField("version", 0, "1.5")
+	non_emissive_material:setField("emissiveMap", 0, "/art/shapes/collectible/collectible_sphere_b.color.DDS")
+	non_emissive_material:setField("emissiveFactor", 0, "0.5 0.5 0.5")
+	non_emissive_material:setField("instanceEmissive", 0, "1")
+	non_emissive_material:reload()
+	
+	Log.info('Patch successfull')
+end
 
 -- ------------------------------------------------------------------------------------------------
 -- Default powerup creator
@@ -87,6 +124,12 @@ M.powerupChargeCreator = function(trigger_obj, is_rendered)
 	
 	if is_rendered == nil then is_rendered = true end
 	if is_rendered then
+		Particle("DefaultEmitter", vec3(pos.x, pos.y, pos.z - 1))
+			:active(true)
+			:velocity(5)
+			:selfDisable(1000)
+			:selfDestruct(3000)
+		
 		particle:active(true)
 		particle2:active(true)
 	else
@@ -208,13 +251,13 @@ M.powerupNegativeCreator = function(trigger_obj, is_rendered)
 		marker:setHidden(true)
 		particle:active(false)
 	end
-
+	
 	return {
 		obj = marker,
 		particle = particle,
 		step = 1,
 		timer = Timer.new(),
-		next_in = math.random(50000, 60000)
+		next_in = NEGATIVE_RANDOM_POT:surprise()()
 		--next_in = math.random(1000, 2000)
 	}
 end
@@ -235,26 +278,23 @@ M.powerupNegativeRender = function(obj, dt)
 		if obj.timer:stop() > obj.next_in then
 			obj.step = 2
 			obj.timer:stopAndReset()
-			obj.next_in = math.random(1000, 2000)
+			obj.next_in = 2000
 		end
 		
 	elseif obj.step == 2 then
 		local pos = obj.obj:getPosition()
-		--local rot = obj.obj:getRotation():toEuler()
-		--rot.x = rot.x - (dt * math.random())
-		--rot.y = rot.y - (dt * math.random())
-		--local new_rot = QuatF(0, 0, 0, 0)
-		--new_rot:setFromEuler(rot)
-		--obj.obj:setPosRot(pos.x, pos.y, pos.z, new_rot.x, new_rot.y, new_rot.z, new_rot.w)
 		local rot = QuatF(0, 0, 0, 0)
 		rot:setFromEuler(vec3(math.random(), math.random(), math.random()))
 		obj.obj:setPosRot(pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w)
 		obj.obj.instanceColor = Point4F(0, 0, 0, 1)
 		
-		if obj.timer:stop() > obj.next_in then
+		local time = obj.timer:stop()
+		
+		if time > obj.next_in then
 			obj.timer:stopAndReset()
 			obj.step = 3
-			obj.next_in = math.random(50000, 60000)
+			obj.next_chosen = false
+			obj.next_in = NEGATIVE_RANDOM_POT:surprise()()
 			--obj.next_in = math.random(1000, 2000)
 		end
 		
@@ -267,8 +307,6 @@ M.powerupNegativeRender = function(obj, dt)
 		
 		obj.step = 1
 	end
-		
-	
 end
 
 M.powerupNegativeLoader = function(obj, state)

@@ -7,7 +7,7 @@ local M = {
 	-- Create folder of the same name in this directory containing all the powerups
 	name = "roundshot",
 	
-	type = Type.Offensive,
+	type = Type.Defensive,
 	
 	-- eg {"ForwardShot1", "ForwardShot2", "ForwardShot3"}
 	-- Resolves to the file names in the group folder. Where
@@ -52,7 +52,7 @@ M.onCreate = function(trigger, is_rendered)
 		marker = Extender.defaultPowerupCreator(
 			trigger,
 			"art/shapes/collectible/s_trashbag_collectible.cdae",
-			Point4F(1, 0, 0, 1),
+			Point4F(0, 0, 1, 1),
 			is_rendered
 		)
 	}

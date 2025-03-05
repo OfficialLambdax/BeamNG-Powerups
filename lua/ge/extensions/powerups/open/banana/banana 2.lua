@@ -4,7 +4,7 @@ local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey
 
 local M = {
 	-- Shown to the user
-	clear_name = "Banana",
+	clear_name = "Banana II",
 	
 	-- Turn true to not be affected by the render distance
 	do_not_unload = false,
@@ -51,7 +51,7 @@ M.onActivate = function(vehicle)
 	local origin_pos = vehicle:getPosition()
 	local origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
 	
-	return onActivate.TargetInfo({ammo = 2}, {origin_pos = origin_pos})
+	return onActivate.TargetInfo({ammo = 3}, {origin_pos = origin_pos})
 end
 
 M[Hotkey.Fire] = function(data, origin_id, state)
@@ -122,6 +122,8 @@ M.onTargetSelect = function(data, target_info)
 				data.act_timer = Timer.new()
 				
 				-- attach a routine to the trigger
+				self:delete()
+				--[[
 				self:attach(
 					function(self, data)
 						if data.act_timer:stop() < 200 then return end -- after this
@@ -144,6 +146,7 @@ M.onTargetSelect = function(data, target_info)
 						end
 					end
 				)
+				]]
 			end
 		)
 end
