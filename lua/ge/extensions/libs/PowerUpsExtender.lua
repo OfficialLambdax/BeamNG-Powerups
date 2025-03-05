@@ -44,6 +44,8 @@ local SUBJECT_SINGLEPLAYER = "!singleplayer"
 local SUBJECT_TRAFFIC = "!traffic"
 local SUBJECT_UNKNOWN = "!unknown"
 
+local LOADED_ASSETS = {} -- ["file_path"] = true
+
 
 M.defaultImports = function() -- do not change order
 	-- local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
@@ -105,6 +107,14 @@ M.defaultGroupVars = function(version)
 	end
 end
 
+M.init = function()
+	M.defaultPowerupMaterialPatch()
+	M.loadAssets(
+		"art/shapes/particles/powerupParticleData.json",
+		"art/shapes/particles/powerupEmitterData.json",
+		"art/shapes/spheres/materials.json"
+	)
+end
 
 M.defaultPowerupMaterialPatch = function()
 	if true then return end -- DISABLED. "lod_vertcol" is used by alot
@@ -363,10 +373,14 @@ M.targetChange = function(possible_targets, current_selected)
 end
 
 -- You may have to reload your game if you have opened the world editor before calling this on a new particle
-M.loadParticles = function(particle_data, emitter_data)
-	-- game engine function
-	loadJsonMaterialsFile(particle_data)
-	loadJsonMaterialsFile(emitter_data)
+M.loadAssets = function(...)
+	for _, asset_json in ipairs({...}) do
+		if not LOADED_ASSETS[asset_json] then
+			-- game engine function
+			loadJsonMaterialsFile(asset_json)
+			LOADED_ASSETS[asset_json] = true
+		end
+	end
 end
 
 return M

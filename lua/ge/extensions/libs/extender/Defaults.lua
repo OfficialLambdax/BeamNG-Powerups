@@ -1,5 +1,6 @@
 local Util = require("libs/Util")
 local Particle = require("libs/Particles")
+local Timer = require("mp_libs/PauseTimer")
 
 local M = {}
 --[[
@@ -185,12 +186,11 @@ end
 M.powerupNegativeCreator = function(trigger_obj, is_rendered)
 	local pos = trigger_obj:getPosition()
 	
-	local shape_path, colors = Util.tablePickRandom(NEGATIVE_LIST) or "art/shapes/collectible/s_marker_BNG.cdae", {Point4F(1, 0, 0, 1)}
-	
-	local _, color_point = Util.tablePickRandom(colors)
+	local shape_path, colors = Util.tablePickRandom(NEGATIVE_LIST)
+	local _, color_point = Util.tablePickRandom(colors or {Point4F(1, 0, 0, 1)})
 	
 	local marker = createObject("TSStatic")
-	marker.shapeName = shape_path
+	marker.shapeName = shape_path or "art/shapes/collectible/s_marker_BNG.cdae"
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = color_point
 	local rot = QuatF(0, 0, 0, 0)
@@ -212,19 +212,63 @@ M.powerupNegativeCreator = function(trigger_obj, is_rendered)
 	return {
 		obj = marker,
 		particle = particle,
+		step = 1,
+		timer = Timer.new(),
+		next_in = math.random(50000, 60000)
+		--next_in = math.random(1000, 2000)
 	}
 end
 
 M.powerupNegativeRender = function(obj, dt)
 	if obj.obj == nil then return end
-	local pos = obj.obj:getPosition()
-	local rot = obj.obj:getRotation():toEuler()
 	
-	rot.x = rot.x + (0.5 * dt)
-	rot.y = rot.y + (0.5 * dt)
-	local new_rot = QuatF(0, 0, 0, 0)
-	new_rot:setFromEuler(rot)
-	obj.obj:setPosRot(pos.x, pos.y, pos.z, new_rot.x, new_rot.y, new_rot.z, new_rot.w)
+	if obj.step == 1 then
+		local pos = obj.obj:getPosition()
+		local rot = obj.obj:getRotation():toEuler()
+		
+		rot.x = rot.x + (0.5 * dt)
+		rot.y = rot.y + (0.5 * dt)
+		local new_rot = QuatF(0, 0, 0, 0)
+		new_rot:setFromEuler(rot)
+		obj.obj:setPosRot(pos.x, pos.y, pos.z, new_rot.x, new_rot.y, new_rot.z, new_rot.w)
+		
+		if obj.timer:stop() > obj.next_in then
+			obj.step = 2
+			obj.timer:stopAndReset()
+			obj.next_in = math.random(1000, 2000)
+		end
+		
+	elseif obj.step == 2 then
+		local pos = obj.obj:getPosition()
+		--local rot = obj.obj:getRotation():toEuler()
+		--rot.x = rot.x - (dt * math.random())
+		--rot.y = rot.y - (dt * math.random())
+		--local new_rot = QuatF(0, 0, 0, 0)
+		--new_rot:setFromEuler(rot)
+		--obj.obj:setPosRot(pos.x, pos.y, pos.z, new_rot.x, new_rot.y, new_rot.z, new_rot.w)
+		local rot = QuatF(0, 0, 0, 0)
+		rot:setFromEuler(vec3(math.random(), math.random(), math.random()))
+		obj.obj:setPosRot(pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w)
+		obj.obj.instanceColor = Point4F(0, 0, 0, 1)
+		
+		if obj.timer:stop() > obj.next_in then
+			obj.timer:stopAndReset()
+			obj.step = 3
+			obj.next_in = math.random(50000, 60000)
+			--obj.next_in = math.random(1000, 2000)
+		end
+		
+	elseif obj.step == 3 then
+		local shape_path, colors = Util.tablePickRandom(NEGATIVE_LIST)
+		local _, color_point = Util.tablePickRandom(colors or {Point4F(1, 0, 0, 1)})
+		obj.obj:setField("shapeName", 0, shape_path)
+		obj.obj:postApply()
+		obj.obj.instanceColor = color_point
+		
+		obj.step = 1
+	end
+		
+	
 end
 
 M.powerupNegativeLoader = function(obj, state)

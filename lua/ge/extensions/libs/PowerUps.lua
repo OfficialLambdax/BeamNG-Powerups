@@ -1151,8 +1151,7 @@ M.init = function() -- must be called during or after onWorldReadyState == 2
 	
 	-- run only ingame, but not matter if mp session or singleplayer
 	if not IS_BEAMMP_SERVER then
-		Extender.defaultPowerupMaterialPatch()
-		Extender.loadParticles("art/shapes/particles/powerupParticleData.json", "art/shapes/particles/powerupEmitterData.json")
+		Extender.init()
 		
 		local r = TimedTrigger.new(
 			"PowerUps_checkRenderDist",
