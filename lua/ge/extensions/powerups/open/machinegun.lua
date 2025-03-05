@@ -51,7 +51,7 @@ M.onCreate = function(trigger, is_rendered)
 	return {
 		marker = Extender.defaultPowerupCreator(
 			trigger,
-			"art/shapes/spheres/machinegun.cdae",
+			"art/shapes/pwu/spheres/machinegun.cdae",
 			Point4F(1, 0, 0, 1),
 			is_rendered
 		),

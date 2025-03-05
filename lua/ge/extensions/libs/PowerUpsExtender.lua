@@ -109,9 +109,9 @@ end
 
 M.init = function()
 	M.loadAssets(
-		"art/shapes/particles/powerupParticleData.json",
-		"art/shapes/particles/powerupEmitterData.json",
-		"art/shapes/spheres/materials.json"
+		"art/shapes/pwu/particles/powerupParticleData.json",
+		"art/shapes/pwu/particles/powerupEmitterData.json",
+		"art/shapes/pwu/spheres/materials.json"
 	)
 	Defaults.init()
 end
