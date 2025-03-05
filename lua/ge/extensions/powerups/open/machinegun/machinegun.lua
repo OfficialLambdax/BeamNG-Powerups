@@ -45,7 +45,7 @@ local M = {
 -- Anything you may want todo before anything is spawned. eg loading sounds in all vehicle vms
 M.onInit = function(group_defs)
 	M.activate_sound = Sound('art/sounds/ext/machinegun/machinegun.ogg', 2)
-	Extender.loadAssets('art/shapes/cannonball/materials.json')
+	Extender.loadAssets('art/shapes/pwu/cannonball/materials.json')
 end
 
 -- Called for each vehicle
@@ -157,7 +157,7 @@ M.onTargetSelect = function(data, target_info)
 	
 	-- spawn projectile
 	local marker = createObject("TSStatic")
-	marker.shapeName = "art/shapes/cannonball/cannonball.cdae"
+	marker.shapeName = "art/shapes/pwu/cannonball/cannonball.cdae"
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 0, 0, 0)
 	marker:setPosRot(target_info.start_pos.x, target_info.start_pos.y, target_info.start_pos.z, 0, 0, 0, 1)

@@ -44,7 +44,7 @@ local M = {
 M.onInit = function(group_defs)
 	M.activate_sound = Sound('art/sounds/ext/cannon/cannon_light.ogg', 3)
 	M.hit_sound = Sound('art/sounds/ext/cannon/hit.ogg', 6)
-	Extender.loadAssets('art/shapes/cannonball/materials.json')
+	Extender.loadAssets('art/shapes/pwu/cannonball/materials.json')
 end
 
 -- Called for each vehicle
@@ -151,7 +151,7 @@ M.onTargetSelect = function(data, target_info)
 	
 	-- spawn projectile
 	local marker = createObject("TSStatic")
-	marker.shapeName = "art/shapes/cannonball/cannonball.cdae"
+	marker.shapeName = "art/shapes/pwu/cannonball/cannonball.cdae"
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 0, 0, 1)
 	marker:setPosRot(data.start_pos.x, data.start_pos.y, data.start_pos.z, 0, 0, 0, 1)
