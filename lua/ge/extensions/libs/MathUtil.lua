@@ -303,6 +303,12 @@ M.getPredictedPosition = function(origin_vehicle, target_vehicle, proj_speed)
 	return new_pos
 end
 
+M.isMovingTowards = function(our_pos, tar_pos, tar_vel_vec)
+	local cur_dist = Util.dist3d(our_pos, tar_pos)
+	local pre_dist = Util.dist3d(our_pos, tar_pos + (tar_vel_vec * 0.01))
+	return pre_dist < cur_dist
+end
+
 M.disperseVec = function(dir_vec, strength)
 	dir_vec = dir_vec:normalized()
 	dir_vec.x = dir_vec.x + (math.random(0 - strength, 0 + strength) / 100)
@@ -322,5 +328,12 @@ M.isDirInRange = function(dir_vec1, dir_vec2, range)
 	return true
 end
 
+M.alignToSurfaceZ = function(pos_vec, max)
+	local pos_z = be:getSurfaceHeightBelow(vec3(pos_vec.x, pos_vec.y, pos_vec.z + 2))
+	if pos_z < -1e10 then return end -- "the function returns -1e20 when the raycast fails"
+	if max and math.abs(pos_vec.z - pos_z) > max then return end
+	
+	return vec3(pos_vec.x, pos_vec.y, pos_z)
+end
 
 return M

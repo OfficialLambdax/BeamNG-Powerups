@@ -89,6 +89,11 @@ return function(pos_vec, scale_vec)
 		return self
 	end
 	
+	function placeable:unAttach()
+		TimedTrigger.remove('Placeable_attach_' .. self.int.name)
+		return self
+	end
+	
 	function placeable:selfDestruct(life_time, callback)
 		TimedTrigger.new(
 			'Placeable_selfDestruct_' .. self.int.name,
