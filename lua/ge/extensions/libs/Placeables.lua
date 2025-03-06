@@ -45,7 +45,8 @@ return function(pos_vec, scale_vec)
 			vehicles = {},
 			on_enter = nil,
 			on_exit = nil,
-			while_inside = nil
+			while_inside = nil,
+			del_c = nil
 		}
 	}
 	
@@ -95,15 +96,19 @@ return function(pos_vec, scale_vec)
 	end
 	
 	function placeable:selfDestruct(life_time, callback)
+		self:delC(callback)
 		TimedTrigger.new(
 			'Placeable_selfDestruct_' .. self.int.name,
 			life_time,
 			1,
 			self.delete,
-			self,
-			callback
+			self
 		)
 		return self
+	end
+	
+	function placeable:delC(callback)
+		self.int.del_c = callback
 	end
 	
 	-- ------------------------------------------------------------------
@@ -121,22 +126,22 @@ return function(pos_vec, scale_vec)
 		return self.int.vehicles
 	end
 	
-	function placeable:delete(callback)
+	function placeable:delete()
 		self.int.obj:delete()
 		TimedTrigger.remove('Placeable_whileInside_' .. self.int.name)
 		TimedTrigger.remove('Placeable_selfDestruct_' .. self.int.name)
 		TimedTrigger.remove('Placeable_attach_' .. self.int.name)
 		
-		if callback then
-			callback(self, self.int.data)
+		if self.int.del_c then
+			self.int.del_c(self, self.int.data)
 		end
 		PLACEABLES[self.int.name] = nil
 	end
 	
-	function placeable:deleteObj()
-		self.int.obj:delete()
-		return self
-	end
+	--function placeable:deleteObj()
+	--	self.int.obj:delete()
+	--	return self
+	--end
 	
 	-- ------------------------------------------------------------------
 	-- Internal

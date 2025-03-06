@@ -304,9 +304,10 @@ M.getPredictedPosition = function(origin_vehicle, target_vehicle, proj_speed)
 end
 
 M.isMovingTowards = function(our_pos, tar_pos, tar_vel_vec)
+	-- calculating a previous position and looking if that was further away then the current is better then calculating forward. Because if our_pos is very close to tar_pos the ahead calc may calculate a position behind our_pos
 	local cur_dist = Util.dist3d(our_pos, tar_pos)
-	local pre_dist = Util.dist3d(our_pos, tar_pos + (tar_vel_vec * 0.01))
-	return pre_dist < cur_dist
+	local pre_dist = Util.dist3d(our_pos, tar_pos + (tar_vel_vec * -0.1))
+	return pre_dist > cur_dist
 end
 
 M.disperseVec = function(dir_vec, strength)
