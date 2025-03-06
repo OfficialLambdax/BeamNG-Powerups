@@ -10,6 +10,7 @@ local TimedTrigger = require("libs/TimedTrigger")
 local MathUtil = require("libs/MathUtil")
 local Log = require("libs/Log")
 local Particle = require("libs/Particles")
+local Placeable = require("libs/Placeables")
 
 local PowerUpsTraits = require("libs/extender/Traits")
 local PowerUpsTypes = require("libs/extender/Types")
@@ -108,6 +109,8 @@ M.defaultGroupVars = function(version)
 end
 
 M.init = function()
+	Util.tableReset(LOADED_ASSETS) -- necessary todo in case of map swap or hotreload
+	
 	M.loadAssets(
 		"art/shapes/pwu/particles/powerupParticleData.json",
 		"art/shapes/pwu/particles/powerupEmitterData.json",

@@ -87,7 +87,7 @@ local Log = require("libs/Log")
 local Util = require("libs/Util")
 
 local M = {
-	_VERSION = 0.26 -- 27.02.2025 (DD.MM.YYYY)
+	_VERSION = 0.27 -- 06.03.2025 (DD.MM.YYYY)
 }
 local ID_LOOKUP = {}
 local TRIGGERS = {}
@@ -102,6 +102,7 @@ local LARGE_LIST_OPT_FORCED = false
 local LIMIT_TO_CASCADE = 150000
 local TICK_TIMER = PrecisionTimer()
 local UNPACK = unpack or table.unpack
+local LAST_DT = 0
 
 
 -- ------------------------------------------------------------------------------------------------
@@ -706,6 +707,7 @@ end
 -- must be hooked to eg updateGFX. If trigger draw to the screen then onPreRender is better suited
 local function tick()
 	local dt = TICK_TIMER:stopAndReset()
+	LAST_DT = dt / 1000
 	
 	--print('Total: ' .. NEXT_POS .. '\tOpt: ' .. tostring(LARGE_LIST_OPT) .. '\tF: ' .. tostring(LARGE_LIST_OPT_FORCED) .. '\tDT: ' .. math.floor(dt) .. '\tChunk: ' .. CHUNK_CHECK)
 	
@@ -777,6 +779,7 @@ M.find = find
 M.findIndex = findIndex
 M.setChunkCheckSize = setChunkCheckSize
 M.getTriggerList = getTriggerList
+M.lastDt = function() return LAST_DT end
 
 init()
 devTests()
