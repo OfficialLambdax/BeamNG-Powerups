@@ -335,10 +335,10 @@ M.onPreRender = function(dt_real) -- , dt_sim, dt_raw
 	PowerUps.tick(dt)
 	
 	if TRIGGER_DEBUG then
-		M.setTriggerDebug(true)
+		M.setTriggerDebugInternal(true)
 	end
 	if TRIGGER_ADJUST then
-		M.autoAdjustTriggerScale()
+		M.autoAdjustTriggerScaleInternal()
 	end
 	
 	FRAME_SKIPPING_DT = 0
@@ -407,9 +407,7 @@ M.onVehicleDestroyed = function(...)
 	PowerUps.onVehicleDestroyed(...)
 end
 
--- ----------------------------------------------------------------------------
--- Convenience stuff
-M.setTriggerDebug = function(state)
+M.setTriggerDebugInternal = function(state)
 	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
 		if name:find("BeamNGTrigger_") then
 			scenetree.findObject(name):setField("debug", 0, tostring(state))
@@ -417,7 +415,7 @@ M.setTriggerDebug = function(state)
 	end
 end
 
-M.autoAdjustTriggerScale = function()
+M.autoAdjustTriggerScaleInternal = function()
 	local default_scale = PowerUps.getDefaultTriggerScale()
 	for _, name in pairs(scenetree.findClassObjects("BeamNGTrigger")) do
 		if name:find("BeamNGTrigger_") then
@@ -426,11 +424,15 @@ M.autoAdjustTriggerScale = function()
 	end
 end
 
+-- ----------------------------------------------------------------------------
+-- Convenience stuff
+
+
 -- Will highlight all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name
 M.setTriggerDebug = function(state)
 	TRIGGER_DEBUG = state
 	if not TRIGGER_DEBUG then
-		M.setTriggerDebug(false)
+		M.setTriggerDebugInternal(false)
 	end
 end
 

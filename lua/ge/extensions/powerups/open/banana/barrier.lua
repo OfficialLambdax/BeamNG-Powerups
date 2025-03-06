@@ -165,6 +165,9 @@ M.onTargetSelect = function(data, target_info)
 		)
 		:onEnter( -- once a vehicle enters create the timer
 			function(self, vehicle, data)
+				--local veh_pos = vehicle:getPosition()
+				--TimedTrigger.newF('temp', 0, 1000, function(pos) debugDrawer:drawSphere(pos, 1, ColorF(1,1,1,1)) end, veh_pos)
+				--simTimeAuthority.pause(true)
 				local veh_id = vehicle:getId()
 				if not data.building and data.effect_timers[veh_id] == nil then
 					data.effect_timers[veh_id] = Timer.new()
