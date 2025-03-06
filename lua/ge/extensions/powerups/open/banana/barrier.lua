@@ -65,7 +65,8 @@ M.onActivate = function(vehicle)
 		placing = placing,
 		build_index = 0,
 		building = false,
-		build_timer = Timer.new()
+		build_timer = Timer.new(),
+		shared = {}
 	})
 end
 
@@ -111,6 +112,22 @@ M.onTargetSelect = function(data, target_info)
 	marker.scale = vec3(3, 3, 3)
 	marker:registerObject("bollard_" .. Util.randomName())
 	
+	local collision = function(self, vehicle, data)
+		local bol_pos = data.bollard:getPosition()
+		local veh_pos = vehicle:getPosition()
+		local veh_vel = vehicle:getVelocity()
+		if not MathUtil.isMovingTowards(bol_pos, veh_pos, veh_vel) then return end
+		
+		--if MathUtil.velocity(veh_vel) > 69 then
+		--	return true
+		--end
+		
+		local dir = (bol_pos - veh_pos):normalized()
+		local dir_vel = -veh_vel - dir
+		vehicle:applyClusterVelocityScaleAdd(vehicle:getRefNodeId(), 1, dir_vel.x, dir_vel.y, dir_vel.z)
+		data.effect_timers[vehicle:getId()]:stopAndReset()
+	end
+	
 	-- spawn building particle
 	Particle("BNGP_16", vec3(pos.x, pos.y, pos.z + 0.2))
 		:active(true)
@@ -119,13 +136,12 @@ M.onTargetSelect = function(data, target_info)
 		:selfDestruct(3000)
 	
 	-- create placeable
-	local shared = {}
-	Placeable(pos, vec3(3, 3, 3))
+	Placeable(vec3(pos.x, pos.y, pos.z + 1), vec3(3, 3, 3))
 		:setData({
 				bollard = marker,
 				target_z = pos.z,
 				building = true,
-				effect_timers = shared
+				effect_timers = data.shared
 		}) -- remove after
 		:selfDestruct(120000,
 			function(self, data)
@@ -150,13 +166,9 @@ M.onTargetSelect = function(data, target_info)
 		:onEnter( -- once a vehicle enters create the timer
 			function(self, vehicle, data)
 				local veh_id = vehicle:getId()
-				if data.effect_timers[veh_id] == nil then
+				if not data.building and data.effect_timers[veh_id] == nil then
 					data.effect_timers[veh_id] = Timer.new()
-					if not MathUtil.isMovingTowards(data.bollard:getPosition(), vehicle:getPosition(), vehicle:getVelocity()) then return end
-					
-					local dir = (data.bollard:getPosition() - vehicle:getPosition()):normalized()
-					local vel = -vehicle:getVelocity() - dir
-					vehicle:applyClusterVelocityScaleAdd(vehicle:getRefNodeId(), 1, vel.x, vel.y, vel.z)
+					if collision(self, vehicle, data) then self:delete() end
 				end
 			end
 		)
@@ -166,12 +178,7 @@ M.onTargetSelect = function(data, target_info)
 				local dist = Util.dist3d(vehicle:getPosition(), data.bollard:getPosition())
 				local veh_id = vehicle:getId()
 				if dist > 2 or data.effect_timers[veh_id]:stop() < 30 then return end
-				if not MathUtil.isMovingTowards(data.bollard:getPosition(), vehicle:getPosition(), vehicle:getVelocity()) then return end
-				
-				local dir = (data.bollard:getPosition() - vehicle:getPosition()):normalized()
-				local vel = -vehicle:getVelocity() - dir
-				vehicle:applyClusterVelocityScaleAdd(vehicle:getRefNodeId(), 1, vel.x, vel.y, vel.z)
-				data.effect_timers[veh_id]:stopAndReset()
+				if collision(self, vehicle, data) then self:delete() end
 			end
 		)
 end
