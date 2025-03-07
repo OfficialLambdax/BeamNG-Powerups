@@ -4,21 +4,21 @@ local Type, onPickup, createObject, Default = Extender.defaultGroupVars(1)
 
 local M = {
 	-- Name of this group. Must be unique in this Set.
-	name = "banana",
+	name = "defenses",
 	
 	-- Define general type of this group. Decides over where this powerup is spawned in the world.
-	type = Type.Defensive,
+	type = Type.Utility,
 	
 	-- Define the level hirachy of this group
 	-- {"powerup 1", "powerup N"}
-	leveling = {"banana 1", "banana 2"},
+	leveling = {"barbedwire", "barrier"},
 	
 	-- Turn true to not be affected by the render distance
 	do_not_unload = false,
 	
 	-- Define spawn chance between 0 and 10. Where 0 is none and 10 max.
 	-- Default is 5
-	probability = 5,
+	probability = 0,
 	
 	-- Must match the libs version name. If it doesnt, this powerup group is considered out of date
 	-- dump(Lib.getLibVersion())
@@ -46,8 +46,8 @@ M.onCreate = function(trigger, is_rendered)
 	return {
 		marker = Extender.defaultPowerupCreator(
 			trigger,
-			"art/shapes/pwu/spheres/banana.cdae",
-			Point4F(1, 1, 1, 1),
+			"art/shapes/collectible/s_collect_machine_part.cdae",
+			Point4F(0, 1, 0, 1),
 			is_rendered
 		)
 	}

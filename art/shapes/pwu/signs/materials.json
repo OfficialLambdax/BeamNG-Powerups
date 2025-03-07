@@ -1,0 +1,16 @@
+{
+  "PWU_SignNoOvertaking": {
+    "name": "PWU_SignNoOvertaking",
+    "mapTo": "PWU_SignNoOvertaking",
+    "class": "Material",
+    "Stages": [
+      {
+        "colorMap": "Material_BaseColor.jpg.004.jpg"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None"
+  }
+}
