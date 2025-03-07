@@ -427,8 +427,6 @@ end
 
 -- ----------------------------------------------------------------------------
 -- Convenience stuff
-
-
 -- Will highlight all already placed and newly placed triggers that contain the string "BeamNGTrigger" in their name
 M.setTriggerDebug = function(state)
 	TRIGGER_DEBUG = state

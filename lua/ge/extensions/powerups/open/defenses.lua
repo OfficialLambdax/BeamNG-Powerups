@@ -7,7 +7,7 @@ local M = {
 	name = "defenses",
 	
 	-- Define general type of this group. Decides over where this powerup is spawned in the world.
-	type = Type.Utility,
+	type = Type.Handicapping,
 	
 	-- Define the level hirachy of this group
 	-- {"powerup 1", "powerup N"}
@@ -47,7 +47,7 @@ M.onCreate = function(trigger, is_rendered)
 		marker = Extender.defaultPowerupCreator(
 			trigger,
 			"art/shapes/pwu/spheres/trafficcone.cdae",
-			Point4F(0, 1, 0, 1),
+			Point4F(1, 0, 1, 1),
 			is_rendered
 		)
 	}
