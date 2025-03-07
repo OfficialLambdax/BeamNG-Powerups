@@ -81,7 +81,7 @@ M.powerupCreator = function(trigger_obj, shape_path, color_point, is_rendered)
 	return marker
 end
 
-M.powerupRender = function(marker_obj, dt)
+M.powerupRender = function(marker_obj, dt, is_wip)
 	if marker_obj == nil then return end
 	local pos = marker_obj:getPosition()
 	local rot = marker_obj:getRotation():toEuler()
@@ -91,6 +91,14 @@ M.powerupRender = function(marker_obj, dt)
 	local new_rot = QuatF(0, 0, 0, 0)
 	new_rot:setFromEuler(rot)
 	marker_obj:setPosRot(pos.x, pos.y, pos.z, new_rot.x, new_rot.y, new_rot.z, new_rot.w)
+	
+	if is_wip then
+		local cam_pos = core_camera:getPosition()
+		local dist = Util.dist3d(pos, cam_pos)
+		if dist < 30 then
+			debugDrawer:drawText(vec3(pos.x, pos.y, pos.z + 1.5), "WIP", marker_obj.instanceColor)
+		end
+	end
 end
 
 M.powerupDelete = function(marker_obj)

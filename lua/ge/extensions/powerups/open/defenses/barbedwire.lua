@@ -1,10 +1,10 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable, Ui = Extender.defaultImports(1)
 local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 
 local M = {
 	-- Shown to the user
-	clear_name = "Tire spikes",
+	clear_name = "Spike Strip",
 	
 	-- Turn true to not be affected by the render distance
 	do_not_unload = false,
@@ -20,7 +20,7 @@ local M = {
 	-- Server related below
 	
 	-- Define the maximum length this powerup is active. The server will end it after this time.
-	max_len = 1000,
+	max_len = 15000,
 	
 	-- TODO
 	target_info_descriptor = nil,
@@ -60,7 +60,10 @@ M.whileActive = function(data, origin_id, dt)
 	local vehicle = be:getObjectByID(origin_id)
 	
 	if not data.selected then
-		if MathUtil.velocity(vehicle:getVelocity()) > 1 then return whileActive.Continue() end
+		if MathUtil.velocity(vehicle:getVelocity()) > 1 then
+			Ui.target(origin_id).Toast.info('Must stand still', nil, 1000)
+			return whileActive.Continue()
+		end
 		local veh_dir = vehicle:getDirectionVector()
 		local pos_behind = MathUtil.getPosInFront(vehicle:getSpawnWorldOOBB():getCenter(), veh_dir, -4)
 		local pos_behind = MathUtil.alignToSurfaceZ(pos_behind, 3)
@@ -74,6 +77,7 @@ M.whileActive = function(data, origin_id, dt)
 		
 	elseif data.building then
 		if data.placeable:getData().building then return whileActive.Continue() end
+		Ui.target(origin_id).Toast.success('Wire placed', nil, 1000)
 		return whileActive.Stop()
 	end
 	

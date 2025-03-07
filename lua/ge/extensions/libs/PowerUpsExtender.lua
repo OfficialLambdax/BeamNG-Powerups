@@ -18,6 +18,7 @@ local GroupReturns = require("libs/extender/GroupReturns")
 local PowerupReturns = require("libs/extender/PowerupReturns")
 local Hotkeys = require("libs/extender/Hotkeys")
 local Defaults = require("libs/extender/Defaults")
+local Ui = require("libs/extender/Ui")
 
 local createObject = require("libs/ObjectWrapper")
 
@@ -48,46 +49,19 @@ local SUBJECT_UNKNOWN = "!unknown"
 local LOADED_ASSETS = {} -- ["file_path"] = true
 
 
-M.defaultImports = function() -- do not change order
-	-- local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
-
-	return require("libs/PowerUps"), require("libs/Util"), require("libs/Sets"), require("libs/Sounds"), require("libs/MathUtil"), require("libs/Pot"), require("libs/Log"), require("libs/TimedTrigger"), require("libs/CollisionsLib"), require("mp_libs/MPUtil"), require("mp_libs/PauseTimer"), require("libs/Particles"), require("libs/Sfx"), require("libs/Placeables")
-	
-	--[[
-		Lib = libs/PowerUps.lua
-			The main framework
-		Util = libs/Util.lua
-			Adds convenience functions like tableMerge, better math random etc.
-		Sets = libs/Sets.lua
-			Wrapper for the TimedTrigger lib that allows to configure trigger sets
-		Sound = libs/Sounds.lua
-			Wrapper for the games sound engine to play sounds in GE or on vehicle targets
-		MathUtil = libs/MathUtil.lua
-			Adds things like "get me all vehicles inside this radius but not mine", "create a box in front of me and tell me the vehicles inside it", "rotate this vector for me" etc
-		Pot = libs/Pot.lua
-			Adds probability based randomization
-		Log = libs/Log.lua
-			Log.info("some info", "name", true/false for stack trace print)
-			Log.info("some info")
-				will print -> GELua.libs_Log.FileName@FunctionName			Some Info
-				eg		   -> GeLua.libs_Log.PowerUps@vehicleAddPowerup		PowerUp: 73534 picked up cannon
-		TimedTrigger = libs/TimedTrigger.lua
-			Library to que things like routines, things to be run after X time or just for the next frame.
-		Collision = libs/Collision.lua
-			Can tell you if the given vehicle has a collision with another vehicle. Mostly untested and completly unused so far.
-		MPUtil
+M.defaultImports = function(version) -- do not change order
+	if version == nil then -- v0.4
+		-- local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+		return require("libs/PowerUps"), require("libs/Util"), require("libs/Sets"), require("libs/Sounds"), require("libs/MathUtil"), require("libs/Pot"), require("libs/Log"), require("libs/TimedTrigger"), require("libs/CollisionsLib"), require("mp_libs/MPUtil"), require("mp_libs/PauseTimer"), require("libs/Particles"), require("libs/Sfx"), require("libs/Placeables")
 		
-		Timer
-		
-		Particle
-		
-		Sfx
-			
-	]]
+	elseif version == 1 then -- v0.5
+		-- local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable, Ui = Extender.defaultImports(1)
+		return require("libs/PowerUps"), require("libs/Util"), require("libs/Sets"), require("libs/Sounds"), require("libs/MathUtil"), require("libs/Pot"), require("libs/Log"), require("libs/TimedTrigger"), require("libs/CollisionsLib"), require("mp_libs/MPUtil"), require("mp_libs/PauseTimer"), require("libs/Particles"), require("libs/Sfx"), require("libs/Placeables"), Ui
+	end
 end
 
 M.defaultPowerupVars = function(version) -- do not change order
-	if version == nil then
+	if version == nil then -- v0.4
 		-- local Trait, Type, onActivate, whileActive, getAllVehicles, createObject = Extender.defaultPowerupVars()
 		return M.Traits, M.Types, PowerupReturns.onActivate, PowerupReturns.whileActive, M.getAllVehicles, createObject
 		

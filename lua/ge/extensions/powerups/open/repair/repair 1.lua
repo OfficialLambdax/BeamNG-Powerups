@@ -41,9 +41,9 @@ local M = {
 M.onInit = function(group_defs)
 	local sounds = {
 		-- file, volume, probability
-		{"awhwhwhwww.ogg", 5, 1},
-		{"hexhex.ogg", 4, 3},
-		{"repairing.ogg", 4, 5},
+		{"awhwhwhwww.ogg", 5, 3},
+		{"hexhex.ogg", 4, 15},
+		{"repairing.ogg", 4, 20},
 	}
 	
 	for _, sound in ipairs(sounds) do
