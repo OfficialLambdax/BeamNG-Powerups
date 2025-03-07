@@ -345,4 +345,23 @@ M.loadAssets = function(...)
 	end
 end
 
+M.fakeProjectile = function(pos_vec, size)
+	local projectile = {int = {is_deleted = false, pos = pos_vec, size = size or 0.05}}
+	function projectile:delete()
+		self.int.is_deleted = true
+	end
+	function projectile:isDeleted()
+		return self.int.is_deleted
+	end
+	function projectile:setPosition(pos_vec)
+		self.int.pos = pos_vec
+		debugDrawer:drawSphere(pos_vec, self.int.size, ColorF(0,0,0,1))
+	end
+	function projectile:getPosition()
+		return self.int.pos
+	end
+	
+	return projectile
+end
+
 return M

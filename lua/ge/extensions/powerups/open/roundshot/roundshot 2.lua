@@ -103,26 +103,24 @@ M.whileActive = function(data, origin_id, dt)
 	for index, projectile in pairs(data.projectiles) do
 		local proj_pos = projectile.projectile:getPosition()
 		local new_pos = MathUtil.getPosInFront(proj_pos, projectile.target_dir, (100 + projectile.init_vel) * dt)
+		projectile.projectile:setPosition(new_pos)
 		
-		projectile.projectile:setPosRot(new_pos.x, new_pos.y, new_pos.z, 0, 0, 0, 0)
+		local try = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
+		if #try > 0 then
+			try = Extender.cleanseTargetsWithTraits(try, origin_id, Trait.Ghosted)
+			try = Extender.cleanseTargetsBehindStatics(proj_pos, try)
+		end
 		
-		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) then
+		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) or #try > 0 then
 			projectile.projectile:delete()
 			data.projectiles[index] = nil
 			
-		else		
-			-- check collision
-			local new_hit = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
-			Extender.cleanseTargetsWithTraits(new_hit, origin_id, Trait.Ghosted)
-			if #new_hit > 0 then
-				Util.tableArrayMerge(target_hits, new_hit)
-				projectile.projectile:delete()
-				data.projectiles[index] = nil
-			
-			elseif projectile.life_time:stop() > 2500 then
-				projectile.projectile:delete()
-				data.projectiles[index] = nil
+			if #try > 0 then
+				Util.tableArrayMerge(target_hits, try)
 			end
+		elseif projectile.life_time:stop() > 2500 then
+			projectile.projectile:delete()
+			data.projectiles[index] = nil
 		end
 	end
 	
@@ -146,16 +144,8 @@ M.onTargetSelect = function(data, target_info)
 	target_info.target_dir = vec3(target_info.target_dir)
 	
 	-- spawn projectile
-	local marker = createObject("TSStatic")
-	marker.shapeName = "art/shapes/pwu/cannonball/cannonball.cdae"
-	marker.useInstanceRenderData = 1
-	marker.instanceColor = Point4F(0, 0, 0, 0)
-	marker:setPosRot(target_info.start_pos.x, target_info.start_pos.y, target_info.start_pos.z, 0, 0, 0, 1)
-	marker.scale = vec3(0.5, 0.5, 0.5)
-	
-	local test = "my_powerup_" .. Util.randomName()
-	marker:registerObject(test)
-	
+	local pos = target_info.start_pos
+	local marker = Extender.fakeProjectile(vec3(pos.x, pos.y, pos.z), 0.15)
 	local blast_dir = quatFromDir(
 		data.vehicle:getDirectionVectorUp(),
 		target_info.target_dir

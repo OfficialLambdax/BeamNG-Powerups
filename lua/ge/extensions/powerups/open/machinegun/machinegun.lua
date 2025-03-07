@@ -116,13 +116,14 @@ M.whileActive = function(data, origin_id, dt)
 	for index, projectile in pairs(data.projectiles) do
 		local proj_pos = projectile.projectile:getPosition()
 		local new_pos = MathUtil.getPosInFront(proj_pos, projectile.target_dir, projectile.init_vel * dt)
-		
-		projectile.projectile:setPosRot(new_pos.x, new_pos.y, new_pos.z, 0, 0, 0, 0)
+		projectile.projectile:setPosition(new_pos)
 		
 		local try = MathUtil.getCollisionsAlongSideLine(proj_pos, new_pos, 3, origin_id)
-		local try = Extender.cleanseTargetsWithTraits(try, origin_id, Trait.Ghosted)
-		local try = Extender.cleanseTargetsBehindStatics(proj_pos, try)
-			
+		if #try > 0 then
+			try = Extender.cleanseTargetsWithTraits(try, origin_id, Trait.Ghosted)
+			try = Extender.cleanseTargetsBehindStatics(proj_pos, try)
+		end
+		
 		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) or #try > 0 then
 			projectile.projectile:delete()
 			data.projectiles[index] = nil
@@ -156,16 +157,8 @@ M.onTargetSelect = function(data, target_info)
 	target_info.target_dir = vec3(target_info.target_dir)
 	
 	-- spawn projectile
-	local marker = createObject("TSStatic")
-	marker.shapeName = "art/shapes/pwu/cannonball/cannonball.cdae"
-	marker.useInstanceRenderData = 1
-	marker.instanceColor = Point4F(0, 0, 0, 0)
-	marker:setPosRot(target_info.start_pos.x, target_info.start_pos.y, target_info.start_pos.z, 0, 0, 0, 1)
-	marker.scale = vec3(0.3, 0.3, 0.3)
-	
-	local test = "my_powerup_" .. Util.randomName()
-	marker:registerObject(test)
-	
+	local pos = target_info.start_pos
+	local marker = Extender.fakeProjectile(vec3(pos.x, pos.y, pos.z), 0.1)
 	Sfx('art/sounds/ext/machinegun/bullet_flying2.ogg', target_info.start_pos)
 		:bind(marker):follow(marker)
 		:is3D(true)
@@ -176,7 +169,7 @@ M.onTargetSelect = function(data, target_info)
 		:spawnIn(100)
 	
 	local life_time = math.random(300, 400)
-	Particle("BNGP_66", data.start_pos)
+	Particle("BNGP_66", target_info.start_pos)
 		:active(true)
 		:velocity(0)
 		:bind(marker)
