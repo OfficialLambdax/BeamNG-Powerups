@@ -88,6 +88,10 @@ return function(emitter_name, pos_vec, rot_quat)
 		self.int.obj:delete()
 	end
 	
+	function particle:isDeleted()
+		return self.int.obj:isDeleted()
+	end
+	
 	function particle:velocity(velocity)
 		self.int.obj:setField("Velocity", 0, velocity)
 		return self
@@ -100,6 +104,10 @@ return function(emitter_name, pos_vec, rot_quat)
 	function particle:active(state)
 		self.int.obj:setActive(state)
 		return self
+	end
+	
+	function particle:getPosition()
+		return self.int.obj:getPosition()
 	end
 	
 	function particle:setPosition(pos_vec)

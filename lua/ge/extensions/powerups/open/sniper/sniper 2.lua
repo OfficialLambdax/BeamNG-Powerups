@@ -184,15 +184,7 @@ M.onTargetSelect = function(data, target_info)
 	}
 	
 	local start_pos = target_info.start_pos
-	
-	local marker = createObject("TSStatic")
-	marker.shapeName = "art/shapes/collectible/s_trashbag_collectible.cdae"
-	marker.useInstanceRenderData = 1
-	marker.instanceColor = Point4F(0, 0, 0, 1)
-	marker:setPosRot(start_pos.x, start_pos.y, start_pos.z, 0, 0, 0, 1)
-	marker.scale = vec3(0.1, 0.1, 0.1)
-	
-	marker:registerObject("my_powerup_" .. Util.randomName())
+	local marker = Extender.fakeProjectile(vec3(start_pos.x, start_pos.y, start_pos.z), 0.1)
 	projectile.obj = marker
 	
 	table.insert(data.projectiles, projectile)

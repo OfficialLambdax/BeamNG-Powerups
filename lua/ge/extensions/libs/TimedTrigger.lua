@@ -725,6 +725,20 @@ local function tick()
 			
 		end
 		if CHUNK_CHECK >= NEXT_POS then CHUNK_CHECK = 0 end
+		--[[
+		if NEXT_POS == 0 then return end
+		while CHUNK_CHECK > -1 do
+			local trigger = TRIGGERS[CHUNK_CHECK]
+			if trigger:check() then
+				--removeByIndex(CHUNK_CHECK, TRIGGERS[CHUNK_CHECK]:name())
+				remove(trigger:name())
+			else
+				CHUNK_CHECK = CHUNK_CHECK - 1
+				if CHUNK_CHECK % CHUNK_CHECK_SIZE == 0 then break end
+			end
+		end
+		if CHUNK_CHECK == 0  then CHUNK_CHECK = NEXT_POS - 1 end
+		]]
 	
 	else
 		-- pairs is slow, ipairs starts at 0, NEXT_POS is dynamic.. soo our own while loop it is
@@ -738,6 +752,18 @@ local function tick()
 				index = index + 1
 			end
 		end
+		--[[
+		local index = NEXT_POS - 1
+		while index > -1 do
+			local trigger = TRIGGERS[index]
+			if trigger:check_manual(dt) then
+				--removeByIndex(index, trigger:name())
+				remove(trigger:name())
+			else
+				index = index - 1
+			end
+		end
+		]]
 	end
 end
 
