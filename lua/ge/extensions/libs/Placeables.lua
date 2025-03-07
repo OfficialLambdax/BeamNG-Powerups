@@ -113,6 +113,12 @@ return function(pos_vec, scale_vec)
 	
 	-- ------------------------------------------------------------------
 	-- Access
+	function placeable:setRotation(rot_quat)
+		local pos = self.int.obj:getPosition()
+		self.int.obj:setPosRot(pos.x, pos.y, pos.z, rot_quat.x, rot_quat.y, rot_quat.z, rot_quat.w)
+		return self
+	end
+	
 	function placeable:setData(data)
 		self.int.data = data
 		return self

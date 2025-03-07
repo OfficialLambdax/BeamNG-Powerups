@@ -1,0 +1,16 @@
+{
+  "PWU_BarbedWireLong_2": {
+    "name": "PWU_BarbedWireLong_2",
+    "mapTo": "PWU_BarbedWireLong_2",
+    "class": "Material",
+    "Stages": [
+      {
+        "colorMap": "Wire.jpg"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None"
+  }
+}
