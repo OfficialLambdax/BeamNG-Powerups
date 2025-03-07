@@ -65,6 +65,7 @@ package.loaded["libs/extender/Hotkeys"] = nil
 package.loaded["libs/extender/GroupReturns"] = nil
 package.loaded["libs/extender/PowerupReturns"] = nil
 package.loaded["libs/extender/Defaults"] = nil
+package.loaded["libs/extender/Ui"] = nil
 package.loaded["libs/TriggerLoad"] = nil
 package.loaded["libs/MathUtil"] = nil
 package.loaded["libs/Util"] = nil

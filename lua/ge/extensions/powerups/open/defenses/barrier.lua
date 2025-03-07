@@ -1,5 +1,5 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable, Ui = Extender.defaultImports(1)
 local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 
 local M = {
@@ -20,7 +20,7 @@ local M = {
 	-- Server related below
 	
 	-- Define the maximum length this powerup is active. The server will end it after this time.
-	max_len = 15000,
+	max_len = 30000,
 	
 	-- TODO
 	target_info_descriptor = nil,
@@ -33,7 +33,25 @@ local M = {
 	file_path = "",
 	
 	-- Add extra variables here if needed. Constants only!
-	activation_sound = nil,
+	hit_sounds = Pot()
+		:add(Sound('art/sounds/ext/defenses/car_hitting_1.ogg', 3), 1)
+		:add(Sound('art/sounds/ext/defenses/car_hitting_2.ogg', 3), 1)
+		:add(Sound('art/sounds/ext/defenses/hit_1.ogg', 3), 1)
+		:add(Sound('art/sounds/ext/defenses/hit_2.ogg', 3), 1)
+		:add(Sound('art/sounds/ext/defenses/hit_3.ogg', 3), 1)
+		:add(Sound('art/sounds/ext/defenses/hit_4.ogg', 3), 1)
+		:add(Sound('art/sounds/ext/defenses/hit_5.ogg', 3), 1)
+		:add(Sound('art/sounds/ext/defenses/hit_6.ogg', 3), 1)
+		:add(Sound('art/sounds/ext/defenses/hit_7.ogg', 3), 1)
+		:add(Sound('art/sounds/ext/defenses/hit_8.ogg', 3), 1)
+		:stir(5),
+	
+	build_sounds = Pot()
+		:add('art/sounds/ext/defenses/dirt_digging_1.ogg', 1)
+		:add('art/sounds/ext/defenses/dirt_digging_2.ogg', 1)
+		:add('art/sounds/ext/defenses/dirt_digging_3.ogg', 1)
+		:add('art/sounds/ext/defenses/dirt_digging_4.ogg', 1)
+		:stir(5),
 }
 
 -- Called once when the powerup is loaded
@@ -47,22 +65,8 @@ M.onVehicleInit = function(game_vehicle_id) end
 -- Called once the powerup is activated by a vehicle
 -- Vehicle = game vehicle
 M.onActivate = function(vehicle)
-	local veh_dir = vehicle:getDirectionVector()
-	local pos_behind = MathUtil.getPosInFront(vehicle:getSpawnWorldOOBB():getCenter(), veh_dir, -4)
-	
-	local side_dir = veh_dir:cross(vehicle:getDirectionVectorUp())
-	
-	local placing = {}
-	for index = 8, 2, -2 do
-		local pos_1 = MathUtil.alignToSurfaceZ(MathUtil.getPosInFront(pos_behind, side_dir, index), 3)
-		local pos_2 = MathUtil.alignToSurfaceZ(MathUtil.getPosInFront(pos_behind, side_dir, -index), 3)
-		if pos_1 then table.insert(placing, pos_1) end
-		if pos_2 then table.insert(placing, pos_2) end
-	end
-	table.insert(placing, MathUtil.alignToSurfaceZ(pos_behind, 3))
-	
 	return onActivate.Success({
-		placing = placing,
+		placing = nil,
 		build_index = 0,
 		building = false,
 		build_timer = Timer.new(),
@@ -72,31 +76,50 @@ end
 
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, origin_id, dt)
-	-- if fully build then stop
-	if data.build_index == #data.placing and data.building == false then return whileActive.Stop() end
-	
-	-- while the vehicle is moving dont do anything
-	local origin_vehicle = be:getObjectByID(origin_id)
-	if MathUtil.velocity(origin_vehicle:getVelocity()) > 1 then
-		if data.build_index > 0 then -- except the vehicle was already in the building process then quit
-			return whileActive.Stop()
+	local vehicle = be:getObjectByID(origin_id)
+	if data.placing == nil then 
+		if MathUtil.velocity(vehicle:getVelocity()) > 1 then
+			Ui.target(origin_id).Toast.info('Must stand still', nil, 1000)
+			return whileActive.Continue()
 		end
-		return whileActive.Continue()
-	end
+		
+		local veh_dir = vehicle:getDirectionVector()
+		local pos_behind = MathUtil.getPosInFront(vehicle:getSpawnWorldOOBB():getCenter(), veh_dir, -4)
+		
+		local side_dir = veh_dir:cross(vehicle:getDirectionVectorUp())
+		
+		local placing = {}
+		for index = 8, 2, -2 do
+			local pos_1 = MathUtil.alignToSurfaceZ(MathUtil.getPosInFront(pos_behind, side_dir, index), 3)
+			local pos_2 = MathUtil.alignToSurfaceZ(MathUtil.getPosInFront(pos_behind, side_dir, -index), 3)
+			if pos_1 then table.insert(placing, pos_1) end
+			if pos_2 then table.insert(placing, pos_2) end
+		end
+		table.insert(placing, MathUtil.alignToSurfaceZ(pos_behind, 3))
+		
+		data.placing = placing
 	
-	if not data.building then -- build
+	elseif not data.building then
 		data.building = true
 		data.build_timer:stopAndReset()
 		data.build_index = data.build_index + 1
+		Ui.target(origin_id).Toast.info('Building ' .. data.build_index .. '/' .. #data.placing, nil, 2000)
 		return whileActive.TargetInfo({pos = data.placing[data.build_index]})
 		
-	elseif data.building and data.build_timer:stop() > 2000 then -- if build is done
+	elseif data.building and data.build_timer:stop() > 2000 then
 		data.building = false
-		return whileActive.Continue()
 		
-	else
-		return whileActive.Continue()
+		if data.build_index == #data.placing then
+			Ui.target(origin_id).Toast.success('Successfully build')
+			return whileActive.Stop()
+		end
 	end
+	
+	if MathUtil.velocity(vehicle:getVelocity()) > 1 then
+		Ui.target(origin_id).Toast.warn('Building aborted', nil, 1000)
+		return whileActive.Stop()
+	end
+	return whileActive.Continue()
 end
 
 -- When the powerup selected one or multiple targets or just shared target_info
@@ -112,15 +135,30 @@ M.onTargetSelect = function(data, target_info)
 	marker.scale = vec3(3, 3, 3)
 	marker:registerObject("bollard_" .. Util.randomName())
 	
+	Sfx(M.build_sounds:surprise(), pos)
+		:is3D(true)
+		:minDistance(20)
+		:maxDistance(50)
+		:volume(math.random(8, 10) / 10)
+		:selfDestruct(5000)
+		:spawn()
+	
 	local collision = function(self, vehicle, data)
 		local bol_pos = data.bollard:getPosition()
 		local veh_pos = vehicle:getPosition()
 		local veh_vel = vehicle:getVelocity()
 		if not MathUtil.isMovingTowards(bol_pos, veh_pos, veh_vel) then return end
 		
-		--if MathUtil.velocity(veh_vel) > 69 then
-		--	return true
-		--end
+		if MathUtil.velocity(veh_vel) > 41 then
+			-- play break sound
+			M.hit_sounds:surprise():smartSFX2(vehicle:getId(), nil, 2000, 30, 80)
+			
+			-- unsettle car
+			vehicle:queueLuaCommand('PowerUpExtender.jump(2)')
+			-- todo
+			
+			return true
+		end
 		
 		local dir = (bol_pos - veh_pos):normalized()
 		local dir_vel = -veh_vel - dir

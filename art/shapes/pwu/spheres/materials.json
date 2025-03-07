@@ -54,5 +54,19 @@
       {}
     ],
     "translucentBlendOp": "None"
+  },
+  "PWU_TrafficCone": {
+    "name": "PWU_TrafficCone",
+    "mapTo": "PWU_TrafficCone",
+    "class": "Material",
+    "Stages": [
+      {
+        "colorMap": "DefaultMaterial_BaseColor Map.jpg.001.jpg"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None"
   }
 }
