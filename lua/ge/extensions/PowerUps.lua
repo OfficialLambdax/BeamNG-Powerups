@@ -378,6 +378,8 @@ M.onClientEndMission = function()
 	INITIALIZED = false
 end
 
+--M.onInit = function() setExtensionUnloadMode(M, "manual") end
+
 --[[
 M.onLoadingScreenFadeout = function()
 	if MPUtil.isBeamMPSession() and FS:fileExists("gameplay/tutorials/pages/powerups/content.html") then
