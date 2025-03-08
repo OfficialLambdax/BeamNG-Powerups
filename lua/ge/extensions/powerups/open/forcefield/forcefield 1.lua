@@ -106,7 +106,8 @@ end
 -- When the powerup is destroyed. eg when the vehicle is deleted or the powerup ended
 M.onDeactivate = function(data, origin_id)
 	if data.broke then
-		be:getObjectByID(origin_id):queueLuaCommand('PowerUpSounds.stopSound("' .. M.force_field_sound .. '")')
+		--be:getObjectByID(origin_id):queueLuaCommand('PowerUpSounds.stopSound("' .. M.force_field_sound .. '")')
+		M.force_field_sound:stopVE(origin_id)
 		Sets.getSet(M.force_field_set):VETarget(origin_id):revert(origin_id)
 		Sets.getSet(M.force_field_rem_set):VETarget(origin_id):exec(origin_id)
 	end
