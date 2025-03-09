@@ -135,5 +135,59 @@
       null
     ],
     "useInvAlpha": true
+  },
+  "PWU_ExplosionParticle": {
+    "name": "PWU_ExplosionParticle",
+    "class": "ParticleData",
+    "persistentId": "b318de60-12dc-4198-aca0-b7d6aca39dbc",
+    "animTexName": "art/shapes/particles/particle_smoke_black_01.dds",
+    "colors": [
+      [
+        0.321096599,
+        0.321096599,
+        0.321096599,
+        0
+      ],
+      [
+        0.33596307,
+        0.330968499,
+        0.330968499,
+        0.300000012
+      ],
+      [
+        0.643204033,
+        0.633641839,
+        0.633641839,
+        1
+      ],
+      [
+        0.454895079,
+        0.454895079,
+        0.454895079,
+        0
+      ]
+    ],
+    "dragCoefficient": 3.00000095,
+    "gravityCoefficient": -2.00000024,
+    "inheritedVelFactor": 0.800000012,
+    "lifetimeMS": 20000,
+    "lifetimeVarianceMS": 5000,
+    "sizes": [
+      8,
+      9,
+      10,
+      15
+    ],
+    "spinRandomMax": 360,
+    "spinRandomMin": -360,
+    "spinSpeed": 0.100000001,
+    "textureName": "art/shapes/particles/particle_smoke_black_01.dds",
+    "times": [
+      null,
+      1.49011612e-08,
+      0.5,
+      null
+    ],
+    "useInvAlpha": true
   }
 }

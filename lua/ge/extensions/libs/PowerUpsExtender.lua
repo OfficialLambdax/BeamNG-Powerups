@@ -379,4 +379,14 @@ M.getVehicleOwner = function(game_vehicle_id)
 	end
 end
 
+M.safeIdTransfer = function(game_vehicle_id, server_vehicle_id)
+	if game_vehicle_id then
+		if not MPUtil.isBeamMPSession() then return game_vehicle_id end
+		return MPUtil.gameVehicleIDToServerVehicleID(game_vehicle_id)
+	elseif server_vehicle_id then
+		if not MPUtil.isBeamMPSession() then return server_vehicle_id end
+		return MPUtil.serverVehicleIDToGameVehicleID(server_vehicle_id)
+	end
+end
+
 return M
