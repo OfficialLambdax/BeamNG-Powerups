@@ -81,7 +81,7 @@ M.onActivate = function(vehicle)
 			impact_pos = nil
 		},
 		{
-			spawn = {start_pos = vehicle:getPosition()}
+			spawn = {start_pos = vehicle:getPosition(), start_vel = vehicle:getVelocity()}
 		}
 	)
 end
@@ -117,7 +117,7 @@ M.whileActive = function(data, origin_id, dt)
 		rocket.search_timer:stopAndReset()
 		--rocket.dir = vec3(0, 0, 1)
 		rocket.dir.z = 0.3
-		
+		local launch_or_search = "Searching target\n"
 		if rocket.prefered_target == nil then
 			if rocket.launch_timer:stop() > 4000 then
 				local targets = MathUtil.getVehiclesInsideRadius2d(rocket.pos, 5000, origin_id)
@@ -128,22 +128,25 @@ M.whileActive = function(data, origin_id, dt)
 					local _, target_id = Util.tablePickRandom(targets)
 					rocket.prefered_target = target_id
 				end
+			else
+				launch_or_search = "Launching sequence\n"
 			end
-		end
-		-- scan for target
-		local targets = MathUtil.getVehiclesInsideRadius2d(rocket.pos, 5000, origin_id)
-		if #targets > 0 then
-			targets = Extender.cleanseTargetsBehindStatics(rocket.pos, targets)
-			targets = Extender.cleanseTargetsWithTraits(targets, origin_id, Trait.Ignore)
-			targets = Util.tableVToK(targets)
-			if targets[rocket.prefered_target] then
-				return whileActive.TargetInfo({target = {target_id = Extender.safeIdTransfer(rocket.prefered_target)}})
+		else
+			-- scan for target
+			local targets = MathUtil.getVehiclesInsideRadius2d(rocket.pos, 5000, origin_id)
+			if #targets > 0 then
+				targets = Extender.cleanseTargetsBehindStatics(rocket.pos, targets)
+				targets = Extender.cleanseTargetsWithTraits(targets, origin_id, Trait.Ignore)
+				targets = Util.tableVToK(targets)
+				if targets[rocket.prefered_target] then
+					return whileActive.TargetInfo({target = {target_id = Extender.safeIdTransfer(rocket.prefered_target)}})
+				end
 			end
 		end
 		Ui.target(origin_id)
 			.Msg
 			.send(
-				"Searching target\n" ..
+				launch_or_search ..
 				'Speed: ' .. math.floor(MathUtil.velocity(rocket.vel) * 3.6) .. 'kph\n' ..
 				'Altitude: ' .. altitude .. 'm ' .. altitudeClearName(altitude_change) .. '\n' ..
 				'Fuel left ' .. math.floor((rocket.fuel / 1) * 100) .. ' %\n' ..
@@ -242,8 +245,7 @@ M.whileActive = function(data, origin_id, dt)
 	if rocket.fuel > 0 then
 		acceleration = thrust / rocket.mass
 		
-		--rocket.fuel = rocket.fuel - (0.00002 * thrust * dt)
-		rocket.fuel = rocket.fuel - (0.00001 * thrust * dt)
+		rocket.fuel = rocket.fuel - (0.000015 * thrust * dt)
 		if rocket.fuel <= 0 then
 			rocket.fuel = 0
 			rocket.engine_sound:stop()
@@ -364,7 +366,7 @@ M.onTargetSelect = function(data, target_info, origin_id)
 			launch_timer = Timer.new(),
 			update_timer = Timer.new(),
 			pos = vec3(pos.x, pos.y, pos.z + 5),
-			vel = vec3(0, 0, 50),
+			vel = vec3(0, 0, 50) + vec3(target_info.spawn.start_vel),
 			dir = vec3(0, 0, 1),
 			facing_dir = vec3(0, 0, 1),
 			fuel = 1,
