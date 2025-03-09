@@ -53,5 +53,26 @@
     "thetaMax": 60,
     "thetaMin": 5,
     "velocityVariance": 0
+  },
+  "PWU_Explosion": {
+    "name": "PWU_Explosion",
+    "class": "ParticleEmitterData",
+    "persistentId": "a1b566db-e0e8-4235-a9ac-88d207e645d4",
+    "alignDirection": [
+      0,
+      0,
+      0
+    ],
+    "blendStyle": "NORMAL",
+    "ejectionOffset": 5,
+    "ejectionOffsetVariance": 60,
+    "ejectionPeriodMS": 1,
+    "ejectionVelocity": 20,
+    "originalName": "BNGP_20",
+    "particles": "PWU_ExplosionParticle",
+    "reverseOrder": true,
+    "softParticles": "0",
+    "thetaMax": 180,
+    "velocityVariance": 7
   }
 }

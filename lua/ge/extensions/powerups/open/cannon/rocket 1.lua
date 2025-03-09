@@ -66,6 +66,12 @@ end
 -- Called every time a vehicle is spawned or reloaded
 M.onVehicleInit = function(game_vehicle_id) end
 
+M[Hotkey.TargetChange] = function(data, origin_id, state)
+	if state ~= HKeyState.Down then return end
+	data.rocket.prefered_target = nil
+	return onHKey.TargetInfo({target = {}})
+end
+
 -- Called once the powerup is activated by a vehicle
 -- Vehicle = game vehicle
 M.onActivate = function(vehicle)
@@ -80,6 +86,24 @@ M.onActivate = function(vehicle)
 	)
 end
 
+local function thrustClearName(rocket, thrust)
+	if thrust == rocket.thrust_low then
+		return "Low"
+	elseif thrust == rocket.thrust_high then
+		return "High"
+	elseif thrust == rocket.thrust_max then
+		return "Max"
+	end
+end
+
+local function altitudeClearName(altitude)
+	altitude = math.floor(altitude)
+	if altitude >= 0 then
+		return '+' .. altitude .. 'm/s'
+	end
+	return altitude .. 'm/s'
+end
+
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, origin_id, dt)
 	local rocket = data.rocket
@@ -87,19 +111,33 @@ M.whileActive = function(data, origin_id, dt)
 	
 	local thrust = rocket.thrust_low
 	local altitude = math.floor(rocket.pos.z - (MathUtil.surfaceHeight(rocket.pos) or 0))
-	if not rocket.target_id and rocket.search_timer:stop() > 200 and rocket.launch_timer:stop() > 4000 then
+	local altitude_change = (rocket.pos + (rocket.vel * 1)).z - rocket.pos.z
+	
+	if not rocket.target_id and rocket.search_timer:stop() > 200 then
 		rocket.search_timer:stopAndReset()
-		rocket.dir = vec3(0, 0, 1)
+		--rocket.dir = vec3(0, 0, 1)
+		rocket.dir.z = 0.3
 		
+		if rocket.prefered_target == nil then
+			if rocket.launch_timer:stop() > 4000 then
+				local targets = MathUtil.getVehiclesInsideRadius2d(rocket.pos, 5000, origin_id)
+				if #targets > 0 then
+					targets = Extender.cleanseTargetsBehindStatics(rocket.pos, targets)
+					targets = Extender.cleanseTargetsWithTraits(targets, origin_id, Trait.Ignore)
+					
+					local _, target_id = Util.tablePickRandom(targets)
+					rocket.prefered_target = target_id
+				end
+			end
+		end
 		-- scan for target
 		local targets = MathUtil.getVehiclesInsideRadius2d(rocket.pos, 5000, origin_id)
 		if #targets > 0 then
 			targets = Extender.cleanseTargetsBehindStatics(rocket.pos, targets)
 			targets = Extender.cleanseTargetsWithTraits(targets, origin_id, Trait.Ignore)
-			
-			local _, target_id = Util.tablePickRandom(targets)
-			if target_id then
-				return whileActive.TargetInfo({target = {target_id = target_id}})
+			targets = Util.tableVToK(targets)
+			if targets[rocket.prefered_target] then
+				return whileActive.TargetInfo({target = {target_id = Extender.safeIdTransfer(rocket.prefered_target)}})
 			end
 		end
 		Ui.target(origin_id)
@@ -107,9 +145,10 @@ M.whileActive = function(data, origin_id, dt)
 			.send(
 				"Searching target\n" ..
 				'Speed: ' .. math.floor(MathUtil.velocity(rocket.vel) * 3.6) .. 'kph\n' ..
-				'Altitude: ' .. math.floor(rocket.pos.z - (MathUtil.surfaceHeight(rocket.pos) or 0)) .. 'm\n' ..
-				'Fuel left ' .. math.floor((rocket.fuel / 1) * 100) .. ' %',
-				"rocket.target_info",
+				'Altitude: ' .. altitude .. 'm ' .. altitudeClearName(altitude_change) .. '\n' ..
+				'Fuel left ' .. math.floor((rocket.fuel / 1) * 100) .. ' %\n' ..
+				'Thrust: ' .. thrustClearName(rocket, thrust),
+				"rocket.target_info." .. origin_id,
 				1
 			)
 		
@@ -139,31 +178,32 @@ M.whileActive = function(data, origin_id, dt)
 				dir = ((tar_pos + pre_pos) - rocket.pos):normalized()
 				rocket.facing_dir = dir
 				rocket.dir = dir - rocket.vel:normalized() * 0.85
-				
-				--if rocket.pos.z < 5 then rocket.dir.z = 0.2 end
-				local z_dist = rocket.pos.z - tar_pos.z
-				--if dist > 1000 and z_dist < 100 then
-				--	rocket.dir.z = 0.2
-				if dist > 50 and z_dist < 5 then
-					rocket.dir.z = 0.4
-				end
-				
-				
 				--debugDrawer:drawSphere(tar_pos + pre_pos, 1, ColorF(1,1,1,1))
 				--debugDrawer:drawSphere(tar_pos + pre_pos, 1, ColorF(1,1,1,1))
 				--debugDrawer:drawSphere(rocket.pos + rocket.dir, 1, ColorF(1,1,1,1))
 				--debugDrawer:drawSphere(rocket.dir, 1, ColorF(1,1,1,1))
 				
-				thrust = rocket.thrust_high
+				local z_dist = rocket.pos.z - tar_pos.z
+				--if dist > 1000 and z_dist < 100 then
+				--	rocket.dir.z = 0.2
+				if dist > 50 and z_dist < 5 then
+					rocket.dir.z = 0.6
+				end
+				if dist > 300 then
+					thrust = rocket.thrust_high
+				else
+					thrust = rocket.thrust_max
+				end
 				Ui.target(origin_id)
 					.Msg
 					.send(
 						'Target: "' .. Extender.getVehicleOwner(rocket.target_id) .. '"\n' ..
 						'Distance: ' .. math.floor(dist) .. 'm\n' ..
 						'Speed: ' .. math.floor(MathUtil.velocity(rocket.vel) * 3.6) .. 'kph\n' ..
-						'Altitude: ' .. altitude .. 'm\n' ..
-						'Fuel left ' .. math.floor((rocket.fuel / 1) * 100) .. ' %',
-						"rocket.target_info",
+						'Altitude: ' .. altitude .. 'm ' .. altitudeClearName(altitude_change) .. '\n' ..
+						'Fuel left: ' .. math.floor((rocket.fuel / 1) * 100) .. ' %\n' ..
+						'Thrust: ' .. thrustClearName(rocket, thrust),
+						"rocket.target_info." .. origin_id,
 						1
 					)
 				
@@ -173,7 +213,7 @@ M.whileActive = function(data, origin_id, dt)
 						'INCOMING MISSILE\n' ..
 						'Distance: ' .. math.floor(dist) .. 'm\n' ..
 						'Fuel left ' .. math.floor((rocket.fuel / 1) * 100) .. ' %',
-						"rocket.target_info",
+						"rocket.target_info." .. origin_id,
 						1
 					)
 				
@@ -181,8 +221,20 @@ M.whileActive = function(data, origin_id, dt)
 		end
 	end
 	
-	if altitude > 3000 and not rocket.target_id then
-		return whileActive.Stop()
+	if not rocket.target_id then
+		if altitude > 3000 then
+			return whileActive.Stop()
+		end
+		if altitude < 30 then
+			rocket.dir = vec3(0, 0, 1)
+			thrust = rocket.thrust_max
+		else
+			if altitude_change < -30 then
+				thrust = rocket.thrust_max
+			elseif altitude_change < -5 then
+				thrust = rocket.thrust_high
+			end
+		end
 	end
 	
 	-- change vel towards target dir
@@ -190,7 +242,8 @@ M.whileActive = function(data, origin_id, dt)
 	if rocket.fuel > 0 then
 		acceleration = thrust / rocket.mass
 		
-		rocket.fuel = rocket.fuel - (0.00002 * thrust * dt)
+		--rocket.fuel = rocket.fuel - (0.00002 * thrust * dt)
+		rocket.fuel = rocket.fuel - (0.00001 * thrust * dt)
 		if rocket.fuel <= 0 then
 			rocket.fuel = 0
 			rocket.engine_sound:stop()
@@ -219,7 +272,7 @@ M.whileActive = function(data, origin_id, dt)
 	rocket.obj:setPosRot(pre_pos.x, pre_pos.y, pre_pos.z, rot.x, rot.y, rot.z, rot.w)
 	--rocket.obj:setPosRot(0, 0, 10, rot.x, rot.y, rot.z, rot.w)
 	rocket.trail:setRotation(rot):active(rocket.fuel > 0)
-	rocket.trail2:setRotation(rot):active(rocket.fuel > 0)
+	rocket.trail2:setRotation(rot)--:active(rocket.fuel > 0)
 	rocket.pos = pre_pos
 	
 	local targets = MathUtil.getCollisionsAlongSideLine(pos, pre_pos, 3, origin_id)
@@ -247,6 +300,7 @@ M.whileActive = function(data, origin_id, dt)
 	end
 	
 	if rocket.update_timer:stop() > 1000 then
+		rocket.update_timer:stopAndReset()
 		return whileActive.TargetInfo({update = {
 			pos = rocket.pos,
 			vel = rocket.vel
@@ -268,35 +322,36 @@ M.onTargetSelect = function(data, target_info, origin_id)
 		marker.scale = vec3(0.5, 0.5, 0.5)
 		marker:registerObject("rocket_" .. Util.randomName())
 		
-		--local trail = Particle("BNGP_26", pos, blast_dir)
 		local trail = Particle("BNGP_29", pos)
-						:active(true)
-						:velocity(-5)
-						:follow(marker)
-						:bind(marker)
+			:active(true)
+			:velocity(-5)
+			:follow(marker)
+			:bind(marker)
+		
 		local trail2 = Particle("BNGP_49", pos)
-						:active(true)
-						:velocity(-5)
-						:follow(marker)
-						:bind(marker)
+			:active(true)
+			:velocity(-5)
+			:follow(marker)
+			:bind(marker)
 		
 		Sfx(M.launch_sounds:surprise(), pos)
 			:is3D(true)
 			:volume(1)
 			:follow(marker)
+			:bind(marker)
 			:minDistance(50)
 			:maxDistance(2500)
 			:spawn()
 		
 		local engine_sound = Sfx(M.fly_sounds:surprise(), pos)
-								:is3D(true)
-								:volume(0.05)
-								:follow(marker)
-								:bind(marker)
-								:minDistance(10)
-								:maxDistance(600)
-								:isLooping(true)
-								:spawnIn(1000)
+			:is3D(true)
+			:volume(0.05)
+			:follow(marker)
+			:bind(marker)
+			:minDistance(10)
+			:maxDistance(600)
+			:isLooping(true)
+			:spawnIn(1000)
 		
 		local rocket = {
 			obj = marker,
@@ -304,6 +359,7 @@ M.onTargetSelect = function(data, target_info, origin_id)
 			trail2 = trail2,
 			engine_sound = engine_sound,
 			target_id = nil,
+			prefered_target = nil,
 			search_timer = Timer.new(),
 			launch_timer = Timer.new(),
 			update_timer = Timer.new(),
@@ -314,20 +370,25 @@ M.onTargetSelect = function(data, target_info, origin_id)
 			fuel = 1,
 			mass = 50,
 			thrust_low = 500,
-			thrust_high = 1000
+			thrust_high = 1000,
+			thrust_max = 3000
 		}
 		
 		data.rocket = rocket
 		return
 		
 	elseif target_info.target then
-		if data.rocket.target_id and not target_info.target.target_id then
-			Ui.target(origin_id).Msg.send('Target lost', "rocket.target_info", 1)
-			Ui.target(data.rocket.target_id).Msg.send('Target lost', "rocket.target_info", 1)
+		local target_id = target_info.target.target_id
+		if target_id then
+			target_id = Extender.safeIdTransfer(nil, target_id)
+		end
+		
+		if data.rocket.target_id and not target_id then
+			Ui.target(data.rocket.target_id).Msg.send('Target lost', "rocket.target_info." .. origin_id, 1)
 			M.lockon_sound:stopVE(data.rocket.target_id)
 		end
-		data.rocket.target_id = target_info.target.target_id
-		--M.lockon_sound:smartSFX2(data.rocket.target_id, nil, 2000, 20, 50)
+		
+		data.rocket.target_id = target_id
 		if data.rocket.target_id then
 			M.lockon_sound:playVE(data.rocket.target_id)
 		end
@@ -341,10 +402,33 @@ M.onTargetSelect = function(data, target_info, origin_id)
 	elseif target_info.impact then
 		data.impact_pos = vec3(target_info.impact)
 		
+		Particle("BNGP_31", data.impact_pos)
+			:active(true)
+			:velocity(-5)
+			:selfDisable(math.random(1000, 3000))
+			:selfDestruct(30000)
+		Particle("PWU_Explosion", data.impact_pos)
+			:active(true)
+			:velocity(1)
+			:selfDisable(500)
+			:selfDestruct(30000)
 		Particle("BNGP_32", data.impact_pos)
 			:active(true)
-			:selfDisable(2000)
-			:selfDestruct(15000)
+			:velocity(1)
+			:selfDisable(math.random(1000, 3000))
+			:selfDestruct(30000)
+		--[[
+		Particle("PWU_Explosion", data.impact_pos)
+			:active(true)
+			:velocity(2)
+			:selfDisable(math.random(1000, 3000))
+			:selfDestruct(30000)
+		Particle("PWU_Explosion", data.impact_pos)
+			:active(true)
+			:velocity(3)
+			:selfDisable(math.random(1000, 3000))
+			:selfDestruct(30000)
+		]]
 			
 		Sfx(M.explosion_sounds:surprise(), data.impact_pos)
 			:is3D(true)
@@ -353,7 +437,7 @@ M.onTargetSelect = function(data, target_info, origin_id)
 			:volume(1)
 			:pitch(math.random(8, 10) / 10)
 			:selfDestruct(10000)
-			:spawn()
+			:spawnIn(100)
 	end
 end
 

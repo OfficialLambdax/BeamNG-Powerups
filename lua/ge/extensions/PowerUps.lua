@@ -278,6 +278,9 @@ end
 -- Init
 -- only to be called once a map has been loaded or is already loaded
 local function onInit()
+	if INITIALIZED then
+		M.onClientEndMission()
+	end
 	Log.info("Loading PowerUps lib wrapper mod")
 	
 	PowerUps.init()

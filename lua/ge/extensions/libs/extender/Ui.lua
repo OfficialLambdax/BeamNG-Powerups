@@ -22,7 +22,7 @@ end
 
 local function checkTarget()
 	if M.int.target_id == nil then
-		Log.error('No target given to send ui info to', nil, true)
+		Log.error('No target given to send ui info to')
 		return
 	end
 	local check = isSpectating(M.int.target_id)
@@ -37,7 +37,7 @@ local function extractId(vehicle)
 			return vehicle:getId()
 		end
 	end
-	Log.error('Given target is not a number or a vehicle', nil, true)
+	Log.error('Given target is not a number or a vehicle')
 	return nil
 end
 
