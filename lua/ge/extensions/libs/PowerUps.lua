@@ -393,10 +393,16 @@ checkRenderDistance = function()
 					end
 					
 				else
-					if vehicle.is_rendered and ((vehicle.powerup and not vehicle.powerup.do_not_unload) or (vehicle.powerup_active and not vehicle.powerup_active.do_not_unload)) then
+					if vehicle.is_rendered and (vehicle.powerup == nil or not vehicle.powerup.do_not_unload) and (vehicle.powerup_active == nil or not vehicle.powerup_active.do_not_unload) then
+					--if vehicle.is_rendered and ((vehicle.powerup and not vehicle.powerup.do_not_unload) or (vehicle.powerup_active and not vehicle.powerup_active.do_not_unload)) then
+						
 						vehicle.is_rendered = false
-						if vehicle.powerup then pcall(vehicle.powerup.onUnload, vehicle.data) end
-						if vehicle.powerup_active then pcall(vehicle.powerup_active.onUnload, vehicle.powerup_active) end
+						if vehicle.powerup then
+							pcall(vehicle.powerup.onUnload, vehicle.data)
+						end
+						if vehicle.powerup_active then
+							pcall(vehicle.powerup_active.onUnload, vehicle.powerup_active)
+						end
 					end
 				end
 				
