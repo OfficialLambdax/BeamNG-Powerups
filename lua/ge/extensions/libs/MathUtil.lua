@@ -236,6 +236,20 @@ M.getVehiclesInsideRadius = function(pos_vec, radius, ...)
 	return vehicles
 end
 
+M.getVehiclesInsideRadius2d = function(pos_vec, radius, ...)
+	local blacklist = Util.tableVToK({...})
+	local vehicles = {}
+	for _, vehicle in ipairs(getAllVehicles()) do
+		local veh_id = vehicle:getId()
+		if not blacklist[veh_id] then
+			if Util.dist2d(pos_vec, vehicle:getPosition()) < radius then
+				table.insert(vehicles, veh_id)
+			end
+		end
+	end
+	return vehicles
+end
+
 M.velocity = function(vel_vec)
 	return math.sqrt(vel_vec.x^2 + vel_vec.y^2 + vel_vec.z^2)
 end
@@ -303,6 +317,16 @@ M.getPredictedPosition = function(origin_vehicle, target_vehicle, proj_speed)
 	return new_pos
 end
 
+M.getPredictedPositionRaw = function(org_pos, tar_pos, tar_vel, proj_speed)
+	local dist = Util.dist3d(org_pos, tar_pos)
+	local time = dist / proj_speed
+	
+	local new_pos = tar_pos + (tar_vel * time)
+	--debugDrawer:drawSphere(new_pos, 1, ColorF(1,1,1,1))
+	
+	return new_pos
+end
+
 M.isMovingTowards = function(our_pos, tar_pos, tar_vel_vec)
 	-- calculating a previous position and looking if that was further away then the current is better then calculating forward. Because if our_pos is very close to tar_pos the ahead calc may calculate a position behind our_pos
 	local cur_dist = Util.dist3d(our_pos, tar_pos)
@@ -335,6 +359,47 @@ M.alignToSurfaceZ = function(pos_vec, max)
 	if max and math.abs(pos_vec.z - pos_z) > max then return end
 	
 	return vec3(pos_vec.x, pos_vec.y, pos_z)
+end
+
+M.surfaceHeight = function(pos_vec)
+	local pos_z = be:getSurfaceHeightBelow(vec3(pos_vec.x, pos_vec.y, pos_vec.z + 2))
+	if pos_z < -1e10 then return end -- "the function returns -1e20 when the raycast fails"
+	return pos_z
+end
+
+-- https://www.gamedev.net/forums/topic/56471-extracting-direction-vectors-from-quaternion/
+M.quatFromQuatAndDir = function(rot_quat, dir_vec)
+	--print(rot_quat)
+	local up_vec = vec3(
+		2 * (rot_quat.x * rot_quat.y - -rot_quat.w * rot_quat.z),
+		1 - 2 * (rot_quat.x * rot_quat.x + rot_quat.z * rot_quat.z),
+		2 * (rot_quat.y * rot_quat.z + -rot_quat.w * rot_quat.x)
+	)
+	--dump(2 * (rot_quat.x * rot_quat.y - -rot_quat.w * rot_quat.z))
+	--dump(up_vec)
+	return quatFromDir(up_vec, dir_vec)
+	
+	--local up_vec = vec3(2 - dir_vec.x, 2 - dir_vec.y, 2 - dir_vec.z):normalized()
+	--print(dir_vec:normalized())
+	--return quatFromDir(up_vec, dir_vec)
+	
+	--[[
+	local for_vec = vec3(
+		2 * (rot_quat.x * rot_quat.z + rot_quat.w * rot_quat.y),
+		2 * (rot_quat.y * rot_quat.z - rot_quat.w * rot_quat.x),
+		1 - 2 * (rot_quat.x * rot_quat.x + rot_quat.y * rot_quat.y)
+	)
+	return quatFromDir(for_vec, dir_vec)
+	]]
+	
+	--[[
+	local left_vec = vec3(
+		1 - 2 * (rot_quat.y * rot_quat.y + rot_quat.z * rot_quat.z),
+		2 * (rot_quat.x * rot_quat.y + rot_quat.w * rot_quat.z),
+		2 * (rot_quat.w * rot_quat.z - rot_quat.w * rot_quat.y)
+	)
+	return quatFromDir(left_vec, dir_vec)
+	]]
 end
 
 return M

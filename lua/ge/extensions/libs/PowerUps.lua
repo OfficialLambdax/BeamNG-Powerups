@@ -243,7 +243,7 @@ end
 targetInfoExec = function(vehicle, target_info, game_vehicle_id)
 	setStopBlock(vehicle, game_vehicle_id, false)
 	
-	local _, err = pcall(vehicle.powerup_active.onTargetSelect, vehicle.powerup_data, target_info)
+	local _, err = pcall(vehicle.powerup_active.onTargetSelect, vehicle.powerup_data, target_info, game_vehicle_id)
 	if err then
 		removeActivePowerup(game_vehicle_id)
 	end

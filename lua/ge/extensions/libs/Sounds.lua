@@ -91,7 +91,7 @@ return function(file_path, volume, pitch)
 			self.int.file_path,
 			{
 				volume = volume or self.int.volume,
-				channel = 'Master'
+				channel = 'Other'
 			}
 		)
 	end

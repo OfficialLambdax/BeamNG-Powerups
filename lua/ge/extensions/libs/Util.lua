@@ -113,6 +113,10 @@ M.tableContains = function(table, this)
 	return false
 end
 
+M.dist2d = function(p1, p2)
+	return math.sqrt((p2.x - p1.x)^2 + (p2.y - p1.y)^2)
+end
+
 M.dist3d = function(p1, p2)
 	return math.sqrt((p2.x - p1.x)^2 + (p2.y - p1.y)^2 + (p2.z - p1.z)^2)
 end
