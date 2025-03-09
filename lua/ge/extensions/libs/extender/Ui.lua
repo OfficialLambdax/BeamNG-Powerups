@@ -10,7 +10,8 @@ local M = {int = {
 		target_id = nil
 	},
 	
-	Toast = {}
+	Toast = {},
+	Msg = {}
 }
 
 local function isSpectating(target_id)
@@ -64,5 +65,11 @@ M.Toast.error = function(message, title, time)
 	if not checkTarget() then return end
 	guihooks.trigger('toastrMsg', {type = 'error', title = title or '', msg = message or '', config = {timeOut = time or 5000}})
 end
+
+M.Msg.send = function(message, ident, time)
+	if not checkTarget() then return end
+	guihooks.message({txt = message}, time or 1, ident or "notset")
+end
+
 
 return M

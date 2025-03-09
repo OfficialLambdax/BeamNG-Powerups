@@ -1,0 +1,16 @@
+{
+  "PWU_Missile": {
+    "name": "PWU_Missile",
+    "mapTo": "PWU_Missile",
+    "class": "Material",
+    "Stages": [
+      {
+        "colorMap": "astra_decimated_base_BaseColor.jpg"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None"
+  }
+}

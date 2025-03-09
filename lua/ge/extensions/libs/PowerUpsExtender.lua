@@ -364,4 +364,19 @@ M.fakeProjectile = function(pos_vec, size)
 	return projectile
 end
 
+M.getVehicleOwner = function(game_vehicle_id)
+	local vehicle = PowerUps.vehicles[game_vehicle_id]
+	if not vehicle then return end
+	local player_name = vehicle.player_name
+	if player_name == SUBJECT_SINGLEPLAYER then
+		return "You"
+	elseif player_name == SUBJECT_TRAFFIC then
+		return be:getObjectByID(game_vehicle_id):getJBeamFilename() -- there must be a way to get the clear name
+	elseif player_name == SUBJECT_UNKNOWN then
+		return "Unknown"
+	else
+		return player_name
+	end
+end
+
 return M
