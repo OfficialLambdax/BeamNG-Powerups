@@ -55,7 +55,7 @@ end
 
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, dt)
-	Extender.defaultPowerupRender(data.marker, dt)
+	Extender.defaultPowerupRender(data.marker, dt, true)
 end
 
 -- Vehicle that wants to pick this powerup up
