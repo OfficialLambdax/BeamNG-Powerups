@@ -1,5 +1,5 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable, Ui = Extender.defaultImports(1)
 local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 
 local M = {
@@ -282,6 +282,7 @@ M.whileActive = function(data, origin_id, dt)
 	
 	local origin_vehicle = be:getObjectByID(origin_id)
 	if MathUtil.velocity(origin_vehicle:getVelocity()) > 3 then
+		Ui.target(origin_id).Toast.info('Must stand still', nil, 1000)
 		data.stand_still_timer:stopAndReset()
 	end
 	
