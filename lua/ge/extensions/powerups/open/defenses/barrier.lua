@@ -103,10 +103,10 @@ M.whileActive = function(data, origin_id, dt)
 		data.building = true
 		data.build_timer:stopAndReset()
 		data.build_index = data.build_index + 1
-		Ui.target(origin_id).Toast.info('Building ' .. data.build_index .. '/' .. #data.placing, nil, 2000)
+		Ui.target(origin_id).Toast.info('Building ' .. data.build_index .. '/' .. #data.placing, nil, 1000)
 		return whileActive.TargetInfo({pos = data.placing[data.build_index]})
 		
-	elseif data.building and data.build_timer:stop() > 2000 then
+	elseif data.building and data.build_timer:stop() > 1000 then
 		data.building = false
 		
 		if data.build_index == #data.placing then
@@ -181,7 +181,7 @@ M.onTargetSelect = function(data, target_info)
 				building = true,
 				effect_timers = data.shared
 		}) -- remove after
-		:selfDestruct(120000,
+		:selfDestruct(180000,
 			function(self, data)
 				data.bollard:delete()
 			end
