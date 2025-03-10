@@ -12,5 +12,19 @@
       {}
     ],
     "translucentBlendOp": "None"
+  },
+  "PWU_BarbedWireLong_3": {
+    "name": "PWU_BarbedWireLong_3",
+    "mapTo": "PWU_BarbedWireLong_3",
+    "class": "Material",
+    "Stages": [
+      {
+        "colorMap": "metal-texture-pictures-48xgj9hn2w2epewh.jpg"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None"
   }
 }
