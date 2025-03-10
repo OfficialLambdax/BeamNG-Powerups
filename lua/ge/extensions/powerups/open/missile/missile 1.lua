@@ -122,6 +122,7 @@ M.whileActive = function(data, origin_id, dt)
 	local thrust = rocket.thrust_low
 	local altitude = math.floor(rocket.pos.z - (MathUtil.surfaceHeight(rocket.pos) or 0))
 	local altitude_change = (rocket.pos + (rocket.vel * 1)).z - rocket.pos.z
+	local is_spectating = Extender.isSpectating(origin_id)
 	
 	if not rocket.target_id and rocket.search_timer:stop() > 200 then
 		rocket.search_timer:stopAndReset()
@@ -199,8 +200,8 @@ M.whileActive = function(data, origin_id, dt)
 				local dist = Util.dist3d(tar_pos, rocket.pos)
 				local dir = (tar_pos - rocket.pos):normalized()
 				
-				local relative_speed = math.abs(MathUtil.velocity(rocket.vel) - dir:dot(tar_vel))
-				local pre_pos = tar_vel * dist / relative_speed
+				local relative_speed = MathUtil.velocity(rocket.vel) - dir:dot(tar_vel)
+				local pre_pos = tar_vel * dist / math.abs(relative_speed)
 				
 				dir = ((tar_pos + pre_pos) - rocket.pos):normalized()
 				rocket.facing_dir = dir
@@ -247,6 +248,11 @@ M.whileActive = function(data, origin_id, dt)
 						"rocket.target_info." .. origin_id,
 						1
 					)
+				
+				if is_spectating then
+					debugDrawer:drawText(tar_pos, "x", ColorF(0,0,0,1))
+					debugDrawer:drawText(MathUtil.getPosInFront(rocket.pos, rocket.dir, dist), "x", ColorF(1,1,1,1))
+				end
 				
 				Ui.target(rocket.target_id)
 					.Msg
@@ -339,7 +345,7 @@ M.whileActive = function(data, origin_id, dt)
 		return whileActive.StopAfterExec({impact = impact_pos}, targets)
 	end
 	
-	if core_camera.getActiveCamName() == "missile" and Extender.isSpectating(origin_id) then
+	if core_camera.getActiveCamName() == "missile" and is_spectating then
 		local pos = MathUtil.getPosInFront(rocket.pos, rocket.facing_dir, 1)
 		pos.z = pos.z + 1
 		core_camera:setPosition(pos)
