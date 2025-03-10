@@ -314,7 +314,7 @@ local function takePowerup(server_vehicle_id, location_name, from_client)
 	else
 		if vehicle.powerup then
 			if vehicle.powerup.name == location.powerup.name then
-				vehicle.charge = vehicle.charge + 1
+				vehicle.charge = math.min(vehicle.charge + 1, PowerUps.getMaxCharge())
 				Log.info(server_vehicle_id .. ' from ' .. MP.GetPlayerName(player_id) .. ' got extra charge. Because picked up same powerup')
 			end
 		end

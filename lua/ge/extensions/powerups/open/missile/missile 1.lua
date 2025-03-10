@@ -36,25 +36,25 @@ local M = {
 	effect_radius_inner = 30,
 	
 	-- Add extra variables here if needed. Constants only!
-	lockon_sound = Sound('art/sounds/ext/cannon/missile_lockon.ogg', 1.5),
+	lockon_sound = Sound('art/sounds/ext/missile/missile_lockon.ogg', 1.5),
 	
 	-- cannot use Sounds lib for any below because these sounds are location bound not vehicle bound
 	explosion_sounds = Pot()
-		:add('art/sounds/ext/cannon/missile_explosion_1.ogg', 1)
-		:add('art/sounds/ext/cannon/missile_explosion_2.ogg', 1)
-		:add('art/sounds/ext/cannon/shockwave_heavy.ogg', 1)
+		:add('art/sounds/ext/missile/missile_explosion_1.ogg', 1)
+		:add('art/sounds/ext/missile/missile_explosion_2.ogg', 1)
+		:add('art/sounds/ext/missile/shockwave_heavy.ogg', 1)
 		:stir(5),
 	
 	launch_sounds = Pot()
-		:add('art/sounds/ext/cannon/missile_launch_1.ogg', 1)
-		:add('art/sounds/ext/cannon/missile_launch_2.ogg', 1)
-		:add('art/sounds/ext/cannon/missile_launch_3.ogg', 1)
-		:add('art/sounds/ext/cannon/missile_launch_4.ogg', 1)
+		:add('art/sounds/ext/missile/missile_launch_1.ogg', 1)
+		:add('art/sounds/ext/missile/missile_launch_2.ogg', 1)
+		:add('art/sounds/ext/missile/missile_launch_3.ogg', 1)
+		:add('art/sounds/ext/missile/missile_launch_4.ogg', 1)
 		:stir(5),
 	
 	fly_sounds = Pot()
-		:add('art/sounds/ext/cannon/missile_engine_1.ogg', 1)
-		:add('art/sounds/ext/cannon/missile_engine_2.ogg', 1)
+		:add('art/sounds/ext/missile/missile_engine_1.ogg', 1)
+		:add('art/sounds/ext/missile/missile_engine_2.ogg', 1)
 		:stir(5),
 }
 

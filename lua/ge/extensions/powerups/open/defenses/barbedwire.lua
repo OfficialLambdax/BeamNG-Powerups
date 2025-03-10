@@ -116,7 +116,7 @@ M.onTargetSelect = function(data, target_info)
 			building = true,
 			target_size = 2.5
 		})
-		:selfDestruct(120000,
+		:selfDestruct(180000,
 			function(self, data)
 				data.wire:delete()
 				data.sign:delete()
