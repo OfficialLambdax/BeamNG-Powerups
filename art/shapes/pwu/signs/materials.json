@@ -12,5 +12,19 @@
       {}
     ],
     "translucentBlendOp": "None"
+  },
+  "PWU_SignRoadSpikesAhead": {
+    "name": "PWU_SignRoadSpikesAhead",
+    "mapTo": "PWU_SignRoadSpikesAhead",
+    "class": "Material",
+    "Stages": [
+      {
+        "colorMap": "IMG_0241.PNG.001.png"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None"
   }
 }

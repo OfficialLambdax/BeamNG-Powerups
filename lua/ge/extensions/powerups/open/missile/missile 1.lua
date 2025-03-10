@@ -328,17 +328,18 @@ M.onTargetSelect = function(data, target_info, origin_id)
 			:active(true)
 			:velocity(-5)
 			:follow(marker)
-			:bind(marker)
+			:bind(marker, 1000)
 		
 		local trail2 = Particle("BNGP_49", pos)
 			:active(true)
 			:velocity(-5)
 			:follow(marker)
-			:bind(marker)
+			:bind(marker, 1000)
 		
 		Sfx(M.launch_sounds:surprise(), pos)
 			:is3D(true)
 			:volume(1)
+			:pitch(math.random(8, 12) / 10)
 			:follow(marker)
 			:bind(marker)
 			:minDistance(50)
@@ -419,25 +420,13 @@ M.onTargetSelect = function(data, target_info, origin_id)
 			:velocity(1)
 			:selfDisable(math.random(1000, 3000))
 			:selfDestruct(30000)
-		--[[
-		Particle("PWU_Explosion", data.impact_pos)
-			:active(true)
-			:velocity(2)
-			:selfDisable(math.random(1000, 3000))
-			:selfDestruct(30000)
-		Particle("PWU_Explosion", data.impact_pos)
-			:active(true)
-			:velocity(3)
-			:selfDisable(math.random(1000, 3000))
-			:selfDestruct(30000)
-		]]
-			
+		
 		Sfx(M.explosion_sounds:surprise(), data.impact_pos)
 			:is3D(true)
 			:minDistance(100)
 			:maxDistance(2500)
 			:volume(1)
-			:pitch(math.random(8, 10) / 10)
+			:pitch(math.random(8, 12) / 10)
 			:selfDestruct(10000)
 			:spawnIn(100)
 	end
@@ -472,8 +461,6 @@ end
 M.onDeactivate = function(data, origin_id)
 	if data.rocket then
 		data.rocket.obj:delete()
-		data.rocket.trail:delete()
-		data.rocket.trail2:delete()
 	end
 end
 

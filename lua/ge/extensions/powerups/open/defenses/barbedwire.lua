@@ -92,7 +92,7 @@ M.onTargetSelect = function(data, target_info)
 	data.building = true
 	
 	local marker = createObject("TSStatic")
-	marker.shapeName = "art/shapes/pwu/barbedwire/barbedwire.cdae"
+	marker.shapeName = "art/shapes/pwu/barbedwire/barbedwire_2.cdae"
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 0, 0, 1)
 	marker:setPosRot(pos.x, pos.y, pos.z + 0.35, dir.x, dir.y, dir.z, dir.w)
@@ -100,11 +100,11 @@ M.onTargetSelect = function(data, target_info)
 	marker:registerObject("barbedwire_" .. Util.randomName())
 	
 	local sign = createObject("TSStatic")
-	sign.shapeName = "art/shapes/pwu/signs/no_overtaking.cdae"
+	sign.shapeName = "art/shapes/pwu/signs/road_spikes2.cdae"
 	sign.useInstanceRenderData = 1
 	sign.instanceColor = Point4F(0, 0, 0, 1)
 	sign:setPosRot(pos.x, pos.y, pos.z + 5, sign_dir.x, sign_dir.y, sign_dir.z, sign_dir.w)
-	sign.scale = vec3(4, 4, 4)
+	sign.scale = vec3(3, 3, 3)
 	sign:registerObject("signs_" .. Util.randomName())
 	sign:setHidden(true)
 	
