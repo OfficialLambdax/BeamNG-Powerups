@@ -76,6 +76,9 @@ end
 -- Vehicle = game vehicle
 M.onActivate = function(vehicle)
 	Ui.target(vehicle:getId()).Toast.info("This powerup is Work in progress")
+	if Extender.isSpectating(vehicle:getId()) then
+		core_camera.setByName("missile")
+	end
 	return onActivate.TargetInfo({
 			rocket = nil,
 			impact_pos = nil
@@ -104,6 +107,13 @@ local function altitudeClearName(altitude)
 	return altitude .. 'm/s'
 end
 
+-- https://gamedev.stackexchange.com/questions/69649/using-atan2-to-calculate-angle-between-two-vectors
+local function angleBetween(going_dir, want_dir)
+	--return math.acos(going_dir:dot(want_dir))
+	return math.abs(math.atan2(going_dir.y, going_dir.x) - math.atan2(want_dir.y, want_dir.x))
+	--return math.acos(going_dir:dot(want_dir) / (going_dir:length() * want_dir:length()))
+end
+
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, origin_id, dt)
 	local rocket = data.rocket
@@ -117,6 +127,7 @@ M.whileActive = function(data, origin_id, dt)
 		rocket.search_timer:stopAndReset()
 		--rocket.dir = vec3(0, 0, 1)
 		rocket.dir.z = 0.3
+		
 		local launch_or_search = "Searching target\n"
 		if rocket.prefered_target == nil then
 			if rocket.launch_timer:stop() > 4000 then
@@ -143,6 +154,7 @@ M.whileActive = function(data, origin_id, dt)
 				end
 			end
 		end
+		--[[
 		Ui.target(origin_id)
 			.Msg
 			.send(
@@ -151,6 +163,18 @@ M.whileActive = function(data, origin_id, dt)
 				'Altitude: ' .. altitude .. 'm ' .. altitudeClearName(altitude_change) .. '\n' ..
 				'Fuel left ' .. math.floor((rocket.fuel / 1) * 100) .. ' %\n' ..
 				'Thrust: ' .. thrustClearName(rocket, thrust),
+				"rocket.target_info." .. origin_id,
+				1
+			)
+		]]
+		Ui.target(origin_id)
+			.Msg
+			.send(
+				launch_or_search ..
+				'Target: ---\n' ..
+				'Dist: ---m Altitude: ' .. altitude .. 'm ' .. altitudeClearName(altitude_change) .. '\n' ..
+				'Speeds - R: --- Tar: --- Mis: ' .. math.floor(MathUtil.velocity(rocket.vel) * 3.6) .. ' kph\n' ..
+				'Fuel left: ' .. math.floor((rocket.fuel / 1) * 100) .. ' % Thrust: ' .. thrustClearName(rocket, thrust) .. '\n',
 				"rocket.target_info." .. origin_id,
 				1
 			)
@@ -197,6 +221,7 @@ M.whileActive = function(data, origin_id, dt)
 				else
 					thrust = rocket.thrust_max
 				end
+				--[[
 				Ui.target(origin_id)
 					.Msg
 					.send(
@@ -209,6 +234,19 @@ M.whileActive = function(data, origin_id, dt)
 						"rocket.target_info." .. origin_id,
 						1
 					)
+				]]
+				Ui.target(origin_id)
+				--Ui.target(rocket.target_id)
+					.Msg
+					.send(
+						'Target: ' .. Extender.getVehicleOwner(rocket.target_id) .. '\n' ..
+						'Dist: ' .. math.floor(dist) .. 'm Altitude: ' .. altitude .. 'm ' .. altitudeClearName(altitude_change) .. '\n' ..
+						'Speeds - R: ' .. math.floor(relative_speed * 3.6) .. ' Tar: ' .. math.floor(MathUtil.velocity(tar_vel) * 3.6) .. ' Mis: ' .. math.floor(MathUtil.velocity(rocket.vel) * 3.6) .. ' kph\n' ..
+						--'Angle: ' ..angleBetween(rocket.vel:normalized(), dir) ..
+						'Fuel left: ' .. math.floor((rocket.fuel / 1) * 100) .. ' % Thrust: ' .. thrustClearName(rocket, thrust) .. '\n',
+						"rocket.target_info." .. origin_id,
+						1
+					)
 				
 				Ui.target(rocket.target_id)
 					.Msg
@@ -216,7 +254,7 @@ M.whileActive = function(data, origin_id, dt)
 						'INCOMING MISSILE\n' ..
 						'Distance: ' .. math.floor(dist) .. 'm\n' ..
 						'Fuel left ' .. math.floor((rocket.fuel / 1) * 100) .. ' %',
-						"rocket.target_info." .. origin_id,
+						"rocket.target_info123." .. origin_id,
 						1
 					)
 				
@@ -299,6 +337,12 @@ M.whileActive = function(data, origin_id, dt)
 		
 		Ui.target(origin_id).Toast.info(#targets .. ' targets hit')
 		return whileActive.StopAfterExec({impact = impact_pos}, targets)
+	end
+	
+	if core_camera.getActiveCamName() == "missile" and Extender.isSpectating(origin_id) then
+		local pos = MathUtil.getPosInFront(rocket.pos, rocket.facing_dir, 1)
+		pos.z = pos.z + 1
+		core_camera:setPosition(pos)
 	end
 	
 	if rocket.update_timer:stop() > 1000 then
@@ -455,12 +499,16 @@ M.onHit = function(data, origin_id, target_id)
 		]]
 		target_vehicle:queueLuaCommand(exec)
 	end
+	
+	-- this could also spawn a screen shaker and screen blur
+	-- todo
 end
 
 -- When the powerup has ended or is destroyed by any means
 M.onDeactivate = function(data, origin_id)
 	if data.rocket then
 		data.rocket.obj:delete()
+		data.rocket.engine_sound:delete()
 	end
 end
 
