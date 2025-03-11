@@ -872,7 +872,6 @@ vehicleAddPowerup = function(game_vehicle_id, powerup, location)
 		else
 			if type ~= PowerupTypes.Negative then
 				activatePowerup(game_vehicle_id)
-				MPClientRuntime.tryActivatePowerup(game_vehicle_id)
 			end
 		end
 	end

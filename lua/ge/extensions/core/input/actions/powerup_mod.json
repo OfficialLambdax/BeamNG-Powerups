@@ -44,12 +44,23 @@
         "title": "Cancel",
         "desc": "Some powerups may require you to use this"
     },
+	"camera_powerup": {
+		"internal_name": "onHKeyCamera",
+        "cat": "powerup_mod",
+        "order": 4,
+        "ctx": "tlua",
+        "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Camera', 2) end",
+        "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Camera', 3) end",
+        "isBasic": true,
+        "title": "Camera",
+        "desc": "Some powerups may require you to use this"
+    },
 	
 	
 	"action_1_powerup": {
 		"internal_name": "onHKeyAction1",
         "cat": "powerup_mod",
-        "order": 4,
+        "order": 5,
         "ctx": "tlua",
         "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action1', 2) end",
         "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action1', 3) end",
@@ -60,7 +71,7 @@
 	"action_2_powerup": {
 		"internal_name": "onHKeyAction2",
         "cat": "powerup_mod",
-        "order": 5,
+        "order": 6,
         "ctx": "tlua",
         "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action2', 2) end",
         "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action2', 3) end",
@@ -71,7 +82,7 @@
 	"action_3_powerup": {
 		"internal_name": "onHKeyAction3",
         "cat": "powerup_mod",
-        "order": 6,
+        "order": 7,
         "ctx": "tlua",
         "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action3', 2) end",
         "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action3', 3) end",
@@ -82,7 +93,7 @@
 	"action_4_powerup": {
 		"internal_name": "onHKeyAction4",
         "cat": "powerup_mod",
-        "order": 7,
+        "order": 8,
         "ctx": "tlua",
         "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action4', 2) end",
         "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action4', 3) end",
@@ -93,7 +104,7 @@
 	"action_5_powerup": {
 		"internal_name": "onHKeyAction5",
         "cat": "powerup_mod",
-        "order": 8,
+        "order": 9,
         "ctx": "tlua",
         "onDown": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action5', 2) end",
         "onUp": "if onCustomActivePowerUpHotkey then onCustomActivePowerUpHotkey('Action5', 3) end",
