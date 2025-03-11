@@ -1,5 +1,6 @@
 -- Game docs https://documentation.beamng.com/modding/input/actions/
 local Log = require("libs/Log")
+local MPUtil = require("mp_libs/MPUtil")
 
 local M = {}
 M.BIND_FILE_PATH = 'lua/ge/extensions/core/input/actions/powerup_mod.json'
@@ -40,6 +41,7 @@ end
 
 
 local function init()
+	if MPUtil.isBeamMPServer() then return end
 	local handle = io.open(M.BIND_FILE_PATH, 'r')
 	if handle == nil then
 		Log.error('Cannot open bindings file in read mode @ "' .. M.BIND_FILE_PATH .. '"')
