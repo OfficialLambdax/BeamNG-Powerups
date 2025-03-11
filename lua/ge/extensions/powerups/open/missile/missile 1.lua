@@ -72,13 +72,18 @@ M[Hotkey.TargetChange] = function(data, origin_id, state)
 	return onHKey.TargetInfo({target = {}})
 end
 
+M[Hotkey.Camera] = function(data, origin_id, state)
+	if state ~= HKeyState.Down then return end
+	core_camera.setByName("missile")
+end
+
 -- Called once the powerup is activated by a vehicle
 -- Vehicle = game vehicle
 M.onActivate = function(vehicle)
 	Ui.target(vehicle:getId()).Toast.info("This powerup is Work in progress")
-	if Extender.isSpectating(vehicle:getId()) then
-		core_camera.setByName("missile")
-	end
+	--if Extender.isSpectating(vehicle:getId()) then
+	--	core_camera.setByName("missile")
+	--end
 	return onActivate.TargetInfo({
 			rocket = nil,
 			impact_pos = nil
@@ -346,8 +351,7 @@ M.whileActive = function(data, origin_id, dt)
 	end
 	
 	if core_camera.getActiveCamName() == "missile" and is_spectating then
-		local pos = MathUtil.getPosInFront(rocket.pos, rocket.facing_dir, 1)
-		pos.z = pos.z + 1
+		local pos = MathUtil.getPosInFront(rocket.pos, rocket.facing_dir, 3)
 		core_camera:setPosition(pos)
 	end
 	

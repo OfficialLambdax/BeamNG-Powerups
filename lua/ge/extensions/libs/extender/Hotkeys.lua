@@ -10,6 +10,7 @@ local ActivePowerupHotkeys = {
 	Fire = "onHKeyFire",
 	TargetChange = "onHKeyTargetChange",
 	Cancel = "onHKeyCancel",
+	Camera = "onHKeyCamera",
 	--TargetAim = "onHKeyTargetAim", -- TODO
 	
 	Action1 = "onHKeyAction1",
