@@ -32,8 +32,8 @@ local M = {
 	-- Contains the dir path to this powerup
 	file_path = "",
 	
-	effect_radius = 60,
-	effect_radius_inner = 30,
+	effect_radius = 80,
+	effect_radius_inner = 40,
 	
 	-- Add extra variables here if needed. Constants only!
 	lockon_sound = Sound('art/sounds/ext/missile/missile_lockon.ogg', 1.5),
@@ -177,7 +177,7 @@ M.whileActive = function(data, origin_id, dt)
 			.Msg
 			.send(
 				launch_or_search ..
-				'Target: ---\n' ..
+				'Target: ' .. (Extender.getVehicleOwner(rocket.prefered_target) or '---') .. '\n' ..
 				'Dist: ---m Altitude: ' .. altitude .. 'm ' .. altitudeClearName(altitude_change) .. '\n' ..
 				'Speeds - R: --- Tar: --- Mis: ' .. math.floor(MathUtil.velocity(rocket.vel) * 3.6) .. ' kph\n' ..
 				'Fuel left: ' .. math.floor((rocket.fuel / 1) * 100) .. ' % Thrust: ' .. thrustClearName(rocket, thrust) .. '\n',
@@ -327,6 +327,10 @@ M.whileActive = function(data, origin_id, dt)
 	rocket.pos = pre_pos
 	
 	local targets = MathUtil.getCollisionsAlongSideLine(pos, pre_pos, 3, origin_id)
+	if #targets == 0 and rocket.launch_timer:stop() > 4000 then
+		-- if not targets from direct collision then try proximity trigger
+		targets = MathUtil.getVehiclesInsideRadius(pre_pos, M.effect_radius_inner * 0.8, origin_id)
+	end
 	local impact_dist = MathUtil.raycastAlongSideLine(pos, pre_pos)
 	if impact_dist or #targets > 0 then
 		local impact_pos
@@ -428,7 +432,7 @@ M.onTargetSelect = function(data, target_info, origin_id)
 			mass = 50,
 			thrust_low = 500,
 			thrust_high = 1000,
-			thrust_max = 3000
+			thrust_max = 2000
 		}
 		
 		data.rocket = rocket
