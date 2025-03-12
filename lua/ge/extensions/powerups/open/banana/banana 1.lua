@@ -1,5 +1,5 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable, Ui = Extender.defaultImports(1)
 local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 
 local M = {
@@ -51,7 +51,7 @@ M.onActivate = function(vehicle)
 	local origin_pos = vehicle:getPosition()
 	local origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
 	
-	return onActivate.TargetInfo({}, {origin_pos = origin_pos})
+	return onActivate.TargetInfo({}, {origin_pos = MathUtil.alignToSurfaceZ(origin_pos, 3) or origin_pos})
 end
 
 -- Hooked to the onPreRender tick

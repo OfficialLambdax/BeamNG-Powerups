@@ -773,6 +773,34 @@ M.init = function()
 	end
 	API = nil
 	
+	-- On request quick n dirty
+	function onChatMessage(player_id, player_name, message)
+		if message == "/pwu disable" then
+			Build:new():all():onCompleteReset():send()
+			PowerUps.unload()
+			
+			MP.SendChatMessage(player_id, "The Powerups mod has been unloaded")
+			return 1
+			
+		elseif message == "/pwu enable" then
+			PowerUps.init()
+			PowerUps.loadLocationPrefab(Util.myPath() .. '../prefabs/' .. LOCATION_PREFAB_NAME)
+			PowerUps.loadPowerUpDefs(Util.myPath() .. '../powerups/' .. POWERUP_SET_NAME)
+			
+			for player_id, _ in pairs(TriggerClientEvent.players) do
+				if TriggerClientEvent:is_synced(player_id) then
+					TriggerClientEvent:remove(player_id)
+					onPlayerReady(player_id)
+				end
+			end
+			
+			MP.SendChatMessage(player_id, "The Powerups mod has been loaded")
+			return 1
+			
+		end
+	end
+	--MP.RegisterEvent("onChatMessage", "onChatMessage")
+	
 	Log.info("Loaded")
 end
 
