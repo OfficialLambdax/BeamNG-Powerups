@@ -51,7 +51,7 @@ M.onActivate = function(vehicle)
 	local origin_pos = vehicle:getPosition()
 	local origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
 	
-	return onActivate.TargetInfo({ammo = 2}, {origin_pos = origin_pos})
+	return onActivate.TargetInfo({ammo = 2}, {origin_pos = MathUtil.alignToSurfaceZ(origin_pos, 3) or origin_pos})
 end
 
 M[Hotkey.Fire] = function(data, origin_id, state)
@@ -63,7 +63,7 @@ M[Hotkey.Fire] = function(data, origin_id, state)
 	
 	data.ammo = data.ammo - 1
 	
-	return onHKey.TargetInfo({origin_pos = origin_pos})
+	return onHKey.TargetInfo({origin_pos = MathUtil.alignToSurfaceZ(origin_pos, 3) or origin_pos})
 end
 
 -- Hooked to the onPreRender tick
