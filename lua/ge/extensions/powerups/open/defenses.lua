@@ -11,7 +11,7 @@ local M = {
 	
 	-- Define the level hirachy of this group
 	-- {"powerup 1", "powerup N"}
-	leveling = {"barbedwire", "barrier"},
+	leveling = {"barbedwire", "barrier", "landmine"},
 	
 	-- Turn true to not be affected by the render distance
 	do_not_unload = false,
