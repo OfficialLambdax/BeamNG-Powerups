@@ -346,13 +346,6 @@ M.inRange = function(num1, num2, range)
 	return (num1 - num2) < range
 end
 
-M.isDirInRange = function(dir_vec1, dir_vec2, range)
-	if not M.inRange(dir_vec1.x, dir_vec2.x, range) then return false end
-	if not M.inRange(dir_vec1.y, dir_vec2.y, range) then return false end
-	if not M.inRange(dir_vec1.z, dir_vec2.z, range) then return false end
-	return true
-end
-
 M.alignToSurfaceZ = function(pos_vec, max)
 	local pos_z = be:getSurfaceHeightBelow(vec3(pos_vec.x, pos_vec.y, pos_vec.z + 2))
 	if pos_z < -1e10 then return end -- "the function returns -1e20 when the raycast fails"
@@ -367,6 +360,7 @@ M.surfaceHeight = function(pos_vec)
 	return pos_z
 end
 
+-- This isnt fully functional
 -- https://www.gamedev.net/forums/topic/56471-extracting-direction-vectors-from-quaternion/
 M.quatFromQuatAndDir = function(rot_quat, dir_vec)
 	--print(rot_quat)
@@ -400,6 +394,14 @@ M.quatFromQuatAndDir = function(rot_quat, dir_vec)
 	)
 	return quatFromDir(left_vec, dir_vec)
 	]]
+end
+
+-- This isnt fully functional
+-- https://gamedev.stackexchange.com/questions/69649/using-atan2-to-calculate-angle-between-two-vectors
+M.dirAngle = function(dir_vec1, dir_vec2)
+	--return math.acos(dir_vec1:dot(dir_vec2))
+	return math.abs(math.atan2(dir_vec1.y, dir_vec1.x) - math.atan2(dir_vec2.y, dir_vec2.x))
+	--return math.acos(dir_vec1:dot(dir_vec2) / (dir_vec1:length() * dir_vec2:length()))
 end
 
 return M

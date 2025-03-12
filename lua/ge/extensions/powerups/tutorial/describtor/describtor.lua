@@ -1,5 +1,5 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable, Ui = Extender.defaultImports(1)
 local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 
 --[[
@@ -117,7 +117,7 @@ M.whileActive = function(data, origin_id, dt)
 			
 			whileActive.StopAfterExec(
 				target_info = table{any}, - optional
-				target_hits = vtable{vehicle_id_1, vehicle_id_n} - optional
+				target_hits = vtable{vehicle_id_1, vehicle_id_n} - optional. will only stop if given
 			)
 			
 			whileActive.TargetInfo(
@@ -132,7 +132,7 @@ M.whileActive = function(data, origin_id, dt)
 end
 
 -- When the powerup selected one or multiple targets or just shared target_info
-M.onTargetSelect = function(data, target_info) end
+M.onTargetSelect = function(data, target_info, origin_id) end
 
 -- When a target was hit, only called on players spectating origin_id
 M.onTargetHit = function(data, origin_id, target_id) end
@@ -148,5 +148,43 @@ M.onUnload = function(data) end
 
 M.onLoad = function(data) end
 
+-- Hotkeys
+--[[
+	Available hotkeys and states are defined in /libs/extender/Hotkeys.lua
+		Hotkey.Fire
+		Hotkey.TargetChange
+		Hotkey.Cancel
+		Hotkey.Camera
+		Hotkey.Action1
+		Hotkey.Action2
+		Hotkey.Action3
+		Hotkey.Action4
+		Hotkey.Action5
+]]
+M[Hotkey.Fire] = function(data, origin_id, state)
+	--[[
+		HKeyState.Down
+		HKeyState.Up
+	]]
+	if state ~= HKeyState.Down then return end
+	
+	--[[
+		Returns are defined in /libs/extender/PowerupReturns.lua
+			onHKey.Stop()
+			
+			onHKey.StopAfterExec(
+				target_info = table{any}, - optional
+				target_hits = vtable{vehicle_id_1, vehicle_id_n} - optional. will only stop if given
+			)
+			
+			onHKey.TargetInfo(
+				target_info = table{any}
+			)
+			
+			onHKey.TargetHits(
+				target_hits = vtable{vehicle_id_1, vehicle_id_n}
+			)
+	]]
+end
 
 return M

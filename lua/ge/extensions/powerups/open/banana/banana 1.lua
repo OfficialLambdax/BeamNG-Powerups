@@ -108,32 +108,33 @@ M.onTargetSelect = function(data, target_info)
 				data.target_dir = vehicle:getDirectionVector()
 				data.act_timer = Timer.new()
 				
-				-- attach a routine to the trigger
-				self:delete()
-				--[[
-				self:attach(
-					function(self, data)
-						if data.act_timer:stop() < 200 then return end -- after this
-						local vehicle = be:getObjectByID(data.target_id)
-						
-						-- check if vehicle is back to original rotation
-						local target_dir = vehicle:getDirectionVector()
-						if MathUtil.isDirInRange(target_dir, data.target_dir, 0.1) then
+				if MathUtil.velocity(reduced_vel) < 10 then
+					self:delete()
+				else
+					-- attach a routine to the trigger for counterspin
+					self:attach(
+						function(self, data)
+							if data.act_timer:stop() < 200 then return end -- after this
+							local vehicle = be:getObjectByID(data.target_id)
 							
-							-- if so, perform counter spin
-							local spin = vehicle:getDirectionVectorUp():normalized() * -6
-							vehicle:queueLuaCommand(
-								string.format(
-									"PowerUpExtender.addAngularVelocity(0, 0, 0, %d, %d, %d)",
-									spin.x, spin.y, spin.z
+							-- check if vehicle is back to original rotation
+							local target_dir = vehicle:getDirectionVector()
+							if MathUtil.dirAngle(target_dir, data.target_dir) < 0.1 then
+								
+								-- if so, perform counter spin
+								local spin = vehicle:getDirectionVectorUp():normalized() * -6
+								vehicle:queueLuaCommand(
+									string.format(
+										"PowerUpExtender.addAngularVelocity(0, 0, 0, %d, %d, %d)",
+										spin.x, spin.y, spin.z
+									)
 								)
-							)
-							
-							self:delete()
+								
+								self:delete()
+							end
 						end
-					end
-				)
-				]]
+					)
+				end
 			end
 		)
 end

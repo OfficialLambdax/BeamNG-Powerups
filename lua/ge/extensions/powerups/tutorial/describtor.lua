@@ -1,5 +1,5 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable, Ui = Extender.defaultImports(1)
 local Type, onPickup, createObject, Default = Extender.defaultGroupVars(1)
 
 local M = {
@@ -53,8 +53,15 @@ M.onVehicleInit = function(game_vehicle_id) end
 
 -- Trigger: lua trigger
 M.onCreate = function(trigger, is_rendered)
+	--[[
+		Can return
+			any
+		
+		As such creation cannot be aborted.
+		Return what you need to render this powerup while it is spawned in a location and then later picked up by a vehicle.
+	]]
 	return {
-		marker = Extender.defaultPowerupCreator(
+		marker = Default.powerupCreator(
 			trigger,
 			"art/shapes/collectible/s_collect_machine_part.cdae",
 			Point4F(0, 1, 0, 1),
@@ -65,7 +72,7 @@ end
 
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, dt)
-	Extender.defaultPowerupRender(data.marker, dt)
+	Default.powerupRender(data.marker, dt)
 end
 
 -- Vehicle that wants to pick this powerup up
@@ -85,7 +92,7 @@ end
 M.whilePickup = function(data, origin_id, dt) end
 
 M.onDespawn = function(data)
-	data.marker = Extender.defaultPowerupDelete(data.marker)
+	data.marker = Default.powerupDelete(data.marker)
 end
 
 -- When the vehicle drops the powerup. Eg because it picked up another

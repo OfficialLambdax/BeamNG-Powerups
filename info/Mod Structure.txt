@@ -1,5 +1,5 @@
 
-For version 0.4
+For version 0.5
 
 /lua/ge/extensions/*
 	PowerUps.lua
@@ -29,9 +29,18 @@ For version 0.4
 				
 			ObjectWrapper.lua
 				Wraps around the game own createObject function and safe guards otherwise game crashing object interactions
+				
+			ObjectWrapperCleaner.lua
+				Keeps track of all objects that have ever been created with the ObjectWrapper. Automatically deletes these objects on mod reload or map unload.
 			
 			Particles.lua
 				A "set and forget" wrapper for the game own particle emitter
+				
+			Placeables.lua
+				Focuses on allowing powerups to place interactive and dynamic objects in the world that have custom logic attached to them.
+				
+			Pot.lua
+				A simple probability based class that allows you to add any kind of an item to a "pot" with X many tickets, to then stir that pot and be "surprised" by what it picks.
 			
 			PowerUps.lua
 				The core of this entire mod. Essentially only provides a definition, trait, sync and event system for powerups to use.
@@ -44,20 +53,29 @@ For version 0.4
 				
 			Sfx.lua
 				A "set and forget" wrapper for the game own sfx emitter
-			
-			TriggerLoad.lua
-				Think of the game own prefab loader, but dedicated to lua triggers only. Is a bare bones library.
+				
+			Sounds.lua
+				A library dedicated to play sounds in and around of vehicles and that can smartly choose to play them in the general environment, in the vehicle or as a sfx emitter depending on the distance between the vehicle and the spectator camera.
 
 			TimedTriggers.lua
 				Is a library that can run in VE, GE and on the BeamMP lua server.
 				Its essentially a high performance job library that allows queing rudimentary tasks and time sensitive executions.
 			
+			TriggerLoad.lua
+				Think of the game own prefab loader, but dedicated to lua triggers only. Is a bare bones library.
+			
 			Util.lua
 				Think of additional table functions, a better math.random etc
 			
 			/extender/*
+				Defaults.lua
+					Provides default methods for powerups, such as default powerup renderers.
+					
 				GroupReturns.lua
 					Defines the powerup group return enums
+					
+				Hotkeys.lua
+					Defines all hotkeys that can be passed to a powerup
 				
 				PowerupReturns.lua
 					Defines the active powerup return enums
@@ -68,11 +86,14 @@ For version 0.4
 				Types.lua
 					Defines powerup group types
 				
+				Ui.lua
+					Provides methods for displaying information the players UI, all depending on what vehicle the player is spectating
+				
 		/mp_libs/*
 			colors.lua
 				Essentially a converter to display beammp chat color codes colored for a CUI (eg a beammp server cui)
 				
-			compileLua.lua
+			CompileLua.lua
 				Adds a server only wrapper for luas load() mechanism. DISABLED at the moment.
 			
 			MPClientRuntime.lua
@@ -107,6 +128,9 @@ For version 0.4
 				The current default powerup set that is auto loaded if a map has a locations prefab available.
 				
 				Every .lua file in this folder represents a group of powerups. The folders the powerups of each group.
+			
+			/tutorial/*
+				The tutorial powerup set ment to teach how to make powerups
 
 		/prefabs/*
 			Directory containing location prefabs.
@@ -129,7 +153,7 @@ For version 0.4
 				local M = {
 					-- [...]
 					
-					mass_bridge = Bridge("vehicle_mass" [[
+					mass_bridge = Bridge("vehicle_mass", [[
 						local total_vehicle_mass = 0
 						-- calc vehicle mass
 						

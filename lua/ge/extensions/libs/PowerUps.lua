@@ -118,6 +118,7 @@ local LOCATIONS = {}
 		[last_pickup] = hptimer
 		[stop_after_exec] = bool (will prevent whileActive calls)
 		[stop_block] = bool (set to true after target_info was given for a short period of time)
+		[hotkey_block] = hptimer (prevents hotkey exec for a very short time after a powerup has been activated)
 ]]
 local VEHICLES = {}
 
@@ -453,7 +454,8 @@ onVehicleSpawned = function(game_vehicle_id)
 		player_name = MPUtil.getPlayerName(game_vehicle_id) or SUBJECT_SINGLEPLAYER,
 		last_pickup = PauseTimer.new(),
 		stop_after_exec = false,
-		stop_block = false
+		stop_block = false,
+		hotkey_block = PauseTimer.new()
 	}
 	
 	if not IS_BEAMMP_SERVER then
@@ -730,6 +732,7 @@ activatePowerup = function(game_vehicle_id, from_server, charge_overwrite) -- ch
 	if Extender.isSpectating(game_vehicle_id) then
 		simpleDisplayHotkeyRequirement(powerup_active.hotkeys)
 	end
+	vehicle.hotkey_block:stopAndReset()
 	
 	vehicle.powerup_active = powerup_active
 	vehicle.powerup_data = response.data -- can be nil
@@ -1051,7 +1054,7 @@ function onCustomActivePowerUpHotkey(hotkey_id, state)
 	if spectated_vehicle == nil then return end 
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		if vehicle.player_name == search_for and game_vehicle_id == spectated_vehicle:getId() then
-			if vehicle.powerup_active and vehicle.powerup_active[event] then
+			if vehicle.powerup_active and vehicle.powerup_active[event] and vehicle.hotkey_block:stop() > 100 then
 				local response, err = pcall(vehicle.powerup_active[event], vehicle.powerup_data, game_vehicle_id, state)
 				if err then
 					removeActivePowerup(game_vehicle_id)
