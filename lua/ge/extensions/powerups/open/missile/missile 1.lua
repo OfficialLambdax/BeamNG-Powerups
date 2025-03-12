@@ -501,9 +501,9 @@ M.onHit = function(data, origin_id, target_id)
 	local pos2 = target_vehicle:getPosition()
 	local dist = Util.dist3d(pos2, pos1)
 	
-	local push = (pos2 - pos1):normalized() * (math.min(M.effect_radius, M.effect_radius - dist) * 1.5)
+	local push = (pos2 - pos1):normalized() * (math.min(M.effect_radius, M.effect_radius - dist) * 1.2)
 	target_vehicle:applyClusterVelocityScaleAdd(target_vehicle:getRefNodeId(), 1, push.x, push.y, push.z)
-	--target_vehicle:queueLuaCommand("PowerUpExtender.addAngularVelocity(0, 0, 3, 0, 10, 0)")
+	target_vehicle:queueLuaCommand("PowerUpExtender.addAngularVelocity(0, 0, 3, 0, 10, 0)")
 	
 	if dist < M.effect_radius_inner then
 		local exec = [[
