@@ -280,6 +280,10 @@ M.whileActive = function(data, origin_id, dt)
 		M.reload_sound:smart(origin_id)
 	end
 	
+	if data.ammo > 0 then
+		Ui.target(origin_id).Msg.send(data.ammo .. ' rounds left', 'sniper', 1)
+	end
+	
 	local origin_vehicle = be:getObjectByID(origin_id)
 	if MathUtil.velocity(origin_vehicle:getVelocity()) > 3 then
 		Ui.target(origin_id).Toast.info('Must stand still', nil, 1000)

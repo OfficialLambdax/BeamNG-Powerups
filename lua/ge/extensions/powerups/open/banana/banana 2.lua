@@ -1,5 +1,5 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable, Ui = Extender.defaultImports(1)
 local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 
 local M = {
@@ -51,7 +51,7 @@ M.onActivate = function(vehicle)
 	local origin_pos = vehicle:getPosition()
 	local origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
 	
-	return onActivate.TargetInfo({ammo = 3}, {origin_pos = origin_pos})
+	return onActivate.TargetInfo({ammo = 2}, {origin_pos = origin_pos})
 end
 
 M[Hotkey.Fire] = function(data, origin_id, state)
@@ -68,7 +68,11 @@ end
 
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, origin_id, dt)
-	if data.ammo == 0 then return whileActive.Stop() end
+	if data.ammo == 0 then
+		Ui.target(origin_id).Msg.send('All placed!', 'banana', 1)
+		return whileActive.Stop()
+	end
+	Ui.target(origin_id).Msg.send(data.ammo .. ' Bananas to place left', 'banana', 1)
 	return whileActive.Continue()
 end
 
@@ -121,32 +125,33 @@ M.onTargetSelect = function(data, target_info)
 				data.target_dir = vehicle:getDirectionVector()
 				data.act_timer = Timer.new()
 				
-				-- attach a routine to the trigger
-				self:delete()
-				--[[
-				self:attach(
-					function(self, data)
-						if data.act_timer:stop() < 200 then return end -- after this
-						local vehicle = be:getObjectByID(data.target_id)
-						
-						-- check if vehicle is back to original rotation
-						local target_dir = vehicle:getDirectionVector()
-						if MathUtil.isDirInRange(target_dir, data.target_dir, 0.1) then
+				if MathUtil.velocity(reduced_vel) < 10 then
+					self:delete()
+				else
+					-- attach a routine to the trigger for counterspin
+					self:attach(
+						function(self, data)
+							if data.act_timer:stop() < 200 then return end -- after this
+							local vehicle = be:getObjectByID(data.target_id)
 							
-							-- if so, perform counter spin
-							local spin = vehicle:getDirectionVectorUp():normalized() * -6
-							vehicle:queueLuaCommand(
-								string.format(
-									"PowerUpExtender.addAngularVelocity(0, 0, 0, %d, %d, %d)",
-									spin.x, spin.y, spin.z
+							-- check if vehicle is back to original rotation
+							local target_dir = vehicle:getDirectionVector()
+							if MathUtil.dirAngle(target_dir, data.target_dir) < 0.1 then
+								
+								-- if so, perform counter spin
+								local spin = vehicle:getDirectionVectorUp():normalized() * -6
+								vehicle:queueLuaCommand(
+									string.format(
+										"PowerUpExtender.addAngularVelocity(0, 0, 0, %d, %d, %d)",
+										spin.x, spin.y, spin.z
+									)
 								)
-							)
-							
-							self:delete()
+								
+								self:delete()
+							end
 						end
-					end
-				)
-				]]
+					)
+				end
 			end
 		)
 end

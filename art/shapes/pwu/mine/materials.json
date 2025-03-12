@@ -1,0 +1,16 @@
+{
+  "PWU_Mine_001": {
+    "name": "PWU_Mine_001",
+    "mapTo": "PWU_Mine.001",
+    "class": "Material",
+    "Stages": [
+      {
+        "colorMap": "Mine_BaseColor.jpg.001.jog"
+      },
+      {},
+      {},
+      {}
+    ],
+    "translucentBlendOp": "None"
+  }
+}
