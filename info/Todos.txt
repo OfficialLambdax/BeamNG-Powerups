@@ -14,6 +14,11 @@ PowerupExtender
 	- Add hasTraitButNot(target_id, has, butnot) variants for multi targets, hastraits and butnottraits
 
 PowerupsLib
+	- When a negative is activated it should only show "You ???", not "???" and "You ???" in two tooltips
+	- When a powerup enlists a hotkey it should show
+		Fire - Keybind
+		TargetChange - Keybind
+		... etc
 	- Auto remove undefined Traits
 	- make "respect_traits" var necessary for trait call sync
 	- Implement a "default" set, that only contains powerup defs. Is used when a group defines powerups but doesnt include any or all powerups
