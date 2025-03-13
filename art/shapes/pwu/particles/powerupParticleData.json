@@ -4,7 +4,7 @@
     "class": "ParticleData",
     "persistentId": "9afa19f8-a05d-4220-aba9-fa9dac60d613",
     "__parent": "DataBlockGroup",
-    "animTexName": "/art/shapes/pwu/particles/part.png",
+    "animTexName": "/art/shapes/pwu/particles/textures/part.png",
     "colors": [
       [
         0.103153706,
@@ -41,7 +41,7 @@
     "spinRandomMax": 360,
     "spinRandomMin": -360,
     "spinSpeed": 0.300000012,
-    "textureName": "/art/shapes/pwu/particles/part.png",
+    "textureName": "/art/shapes/pwu/particles/textures/part.png",
     "useInvAlpha": true
   },
   "PWU_ShadyPickupParticle": {
@@ -49,7 +49,7 @@
     "class": "ParticleData",
     "persistentId": "9afa19f8-a05d-4220-aba9-fa9dac60d613",
     "__parent": "DataBlockGroup",
-    "animTexName": "/art/shapes/pwu/particles/part.png",
+    "animTexName": "/art/shapes/pwu/particles/textures/part.png",
     "colors": [
       [
         0.291363597,
@@ -85,7 +85,7 @@
     "spinRandomMax": 360,
     "spinRandomMin": -360,
     "spinSpeed": 0.399999917,
-    "textureName": "/art/shapes/pwu/particles/part.png",
+    "textureName": "/art/shapes/pwu/particles/textures/part.png",
     "useInvAlpha": true
   },
   "PWU_StarFallParticle": {

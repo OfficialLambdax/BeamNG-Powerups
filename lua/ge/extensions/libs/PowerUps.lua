@@ -19,6 +19,7 @@ local PauseTimer = require("mp_libs/PauseTimer")
 local Log = require("libs/Log")
 local Sound = require("libs/Sounds")
 local Pot = require("libs/Pot")
+local Ui = require("libs/extender/Ui")
 
 local M = {
 	_VERSION = 0.5, -- 26.02.2025 DD.MM.YYYY
@@ -158,7 +159,9 @@ end
 simplePowerUpDisplay = function()
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		local powerup = vehicle.powerup
-		if Extender.isSpectating(game_vehicle_id) and powerup then
+		local powerup_active = vehicle.powerup_active
+		local is_spectating = Extender.isSpectating(game_vehicle_id)
+		if is_spectating and powerup then
 			local powerup_active = powerup.powerups[math.min(vehicle.charge, powerup.max_levels)]
 			if powerup_active == nil then return end
 			
@@ -176,6 +179,9 @@ simplePowerUpDisplay = function()
 					--extendedTimeOut = 0, -- ??
 				},
 			})
+		end
+		if is_spectating and powerup_active then
+			simpleDisplayHotkeyRequirement(powerup_active.hotkeys)
 		end
 	end
 end
@@ -219,24 +225,13 @@ end
 
 simpleDisplayHotkeyRequirement = function(hotkeys)
 	if not Util.tableHasContent(hotkeys) then return end
-	
-	local str = 'This powerup makes use of special hotkeys: '
+	local str = 'This Powerup has hotkeys\n'
 	for _, clear_name in pairs(hotkeys) do
-		str = str .. clear_name .. ', '
+		str = str .. '- ' .. clear_name .. '\n'
 	end
-	str = str:sub(1, -3)
+	str = str:sub(1, -2)
 	
-	guihooks.trigger('toastrMsg', {
-		type = "info",
-		--label = "", -- ??
-		--context = "", -- ??
-		title = "",
-		msg = str,
-		config = {
-			timeOut = 8000,
-			--extendedTimeOut = 0, -- ??
-		},
-	})
+	guihooks.message({txt = str}, 6, 'powerup_hotkeys')
 end
 
 -- ------------------------------------------------------------------------------------------------

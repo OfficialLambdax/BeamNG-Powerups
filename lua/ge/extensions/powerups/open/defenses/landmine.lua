@@ -171,10 +171,10 @@ M.onTargetSelect = function(data, target_info, origin_id)
 					:selfDestruct(10000)
 					:spawnIn(100)
 					
-				Particle("BNGP_37", mine_pos)
+				Particle("PWU_ExplosionSmall", mine_pos)
 					:active(true)
-					:selfDisable(1000)
-					:selfDestruct(5000)
+					:selfDisable(200)
+					:selfDestruct(25000)
 				
 				self:delete()
 			end
