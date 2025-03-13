@@ -18,7 +18,7 @@ local M = {
 	
 	-- Define spawn chance between 0 and 10. Where 0 is none and 10 max.
 	-- Default is 5
-	probability = 3,
+	probability = 1,
 	
 	-- Must match the libs version name. If it doesnt, this powerup group is considered out of date
 	-- dump(Lib.getLibVersion())

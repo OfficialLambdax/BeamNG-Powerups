@@ -2,6 +2,11 @@ local Extender = require("libs/PowerUpsExtender")
 local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable, Ui = Extender.defaultImports(1)
 local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 
+--[[
+	This missile blows either by direct hit, proximity or static collision.
+	This code would like a refactor or even better a total rewrite.
+]]
+
 local M = {
 	-- Shown to the user
 	clear_name = "Missile",
@@ -34,6 +39,7 @@ local M = {
 	
 	effect_radius = 80,
 	effect_radius_inner = 40,
+	proximity_radius = 20,
 	
 	-- Add extra variables here if needed. Constants only!
 	lockon_sound = Sound('art/sounds/ext/missile/missile_lockon.ogg', 1.5),
@@ -309,7 +315,7 @@ M.whileActive = function(data, origin_id, dt)
 	
 	if rocket.fuel == 0 then
 		-- gravity influence. this is unrealistic on purpose
-		-- allows us to make the missile slower and more playfull
+		-- allows us to make the missile ALOT slower and more playfull
 		rocket.vel.z = rocket.vel.z - (9.81 * dt)
 	end
 	--print(MathUtil.velocity(vel))
@@ -326,28 +332,44 @@ M.whileActive = function(data, origin_id, dt)
 	rocket.trail2:setRotation(rot)--:active(rocket.fuel > 0)
 	rocket.pos = pre_pos
 	
-	local targets = MathUtil.getCollisionsAlongSideLine(pos, pre_pos, 3, origin_id)
-	if #targets == 0 and rocket.launch_timer:stop() > 4000 then
-		-- if not targets from direct collision then try proximity trigger
-		targets = MathUtil.getVehiclesInsideRadius(pre_pos, M.effect_radius_inner * 0.8, origin_id)
-	end
-	local impact_dist = MathUtil.raycastAlongSideLine(pos, pre_pos)
-	if impact_dist or #targets > 0 then
-		local impact_pos
-		if impact_dist then
-			impact_pos = MathUtil.getPosInFront(pos, rocket.dir, impact_dist - 5)
-		else
-			impact_pos = be:getObjectByID(targets[1]):getPosition()
-		end
+	local impact_pos, targets
+	
+	-- check for direct hits
+	targets = MathUtil.getCollisionsAlongSideLine(pos, pre_pos, 3)
+	if #targets > 0 then
+		impact_pos = be:getObjectByID(targets[1]):getPosition()
 		
-		-- get all targets inside a bigger radius and cleanse whoes behind a static
-		local targets = MathUtil.getVehiclesInsideRadius(impact_pos, M.effect_radius)
+	elseif rocket.launch_timer:stop() > 4000 then -- check for proximity hit
+		targets = MathUtil.getVehiclesInsideRadius(pre_pos, M.proximity_radius, origin_id)
+		targets = Extender.cleanseTargetsBehindStatics(pre_pos, targets)
 		if #targets > 0 then
-			targets = Extender.cleanseTargetsBehindStatics(impact_pos, targets)
+			impact_pos = vec3(pre_pos.x, pre_pos.y, pre_pos.z)
+			local impact_dist = MathUtil.raycastAlongSideLine(
+				pre_pos,
+				MathUtil.getPosInFront(pre_pos, rocket.facing_dir, 100)
+			)
+			if impact_dist then
+				impact_pos = MathUtil.getPosInFront(impact_pos, rocket.dir, impact_dist)
+			end
+			
+			impact_pos = MathUtil.getPosInFront(impact_pos, rocket.dir, -3)
 		end
+	end
+	
+	-- check for statics hit
+	local impact_dist = MathUtil.raycastAlongSideLine(pos, pre_pos)
+	if impact_dist then
+		impact_pos = MathUtil.getPosInFront(pos, rocket.dir, impact_dist - 3)
+	end
+	
+	-- if hit anything
+	if impact_pos then
+		-- get all targets inside the effect radius and cleanse whoes behind a static
+		targets = MathUtil.getVehiclesInsideRadius(impact_pos, M.effect_radius)
+		targets = Extender.cleanseTargetsBehindStatics(impact_pos, targets)
 		
 		if rocket.target_id then
-			M.lockon_sound:stopVE(data.rocket.target_id)
+			M.lockon_sound:stopVE(rocket.target_id)
 		end
 		
 		Ui.target(origin_id).Toast.info(#targets .. ' targets hit')
