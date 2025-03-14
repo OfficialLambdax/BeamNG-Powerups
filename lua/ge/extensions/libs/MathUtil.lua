@@ -404,4 +404,12 @@ M.dirAngle = function(dir_vec1, dir_vec2)
 	--return math.acos(dir_vec1:dot(dir_vec2) / (dir_vec1:length() * dir_vec2:length()))
 end
 
+-- checks if any of the given positions are to close to org_pos
+M.anyPosToClose = function(org_pos, tar_poses, min)
+	for _, tar_pos in ipairs(tar_poses) do
+		if Util.dist3d(org_pos, tar_pos) < min then return true end
+	end
+	return false
+end
+
 return M

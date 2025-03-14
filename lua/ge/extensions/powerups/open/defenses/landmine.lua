@@ -96,23 +96,31 @@ M.onVehicleInit = function(game_vehicle_id) end
 -- Called once the powerup is activated by a vehicle
 -- Vehicle = game vehicle
 M.onActivate = function(vehicle)
-	Ui.target(vehicle:getId()).Toast.info("This powerup is Work in progress")
-	local origin_pos = vehicle:getPosition()
-	local origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
-	
-	return onActivate.TargetInfo({ammo = 2}, {origin_pos = MathUtil.alignToSurfaceZ(origin_pos, 3) or origin_pos})
+	return onActivate.Success({ammo = 3, positions = {}})
 end
 
 M[Hotkey.Fire] = function(data, origin_id, state)
 	if state ~= HKeyState.Down then return end
 	
 	local vehicle = be:getObjectByID(origin_id)
+	if MathUtil.velocity(vehicle:getVelocity()) > 1 then
+		Ui.target(origin_id).Toast.info('Must stand still', nil, 2)
+		return
+	end
+	
 	local origin_pos = vehicle:getPosition()
-	local origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
+	origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
+	origin_pos = MathUtil.alignToSurfaceZ(origin_pos, 3) or origin_pos
+	
+	if MathUtil.anyPosToClose(origin_pos, data.positions, 8) then
+		Ui.target(origin_id).Toast.info('Too close to other mines', nil, 2)
+		return
+	end
+	table.insert(data.positions, origin_pos)
 	
 	data.ammo = data.ammo - 1
 	
-	return onHKey.TargetInfo({origin_pos = MathUtil.alignToSurfaceZ(origin_pos, 3) or origin_pos})
+	return onHKey.TargetInfo({origin_pos = origin_pos})
 end
 
 -- Hooked to the onPreRender tick

@@ -67,7 +67,7 @@ M.onTargetSelect = function(data, target_info)
 	marker.shapeName = "art/shapes/pwu/banana/banana_peel.cdae"
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 0, 0, 1)
-	marker:setPosRot(origin_pos.x, origin_pos.y, origin_pos.z + 0.2, 0, 0, 0, 1)
+	marker:setPosRot(origin_pos.x, origin_pos.y, origin_pos.z + 0.31, 0, 0, 0, 1)
 	marker.scale = vec3(8, 8, 8)
 	marker:registerObject("banana_" .. Util.randomName())
 	
