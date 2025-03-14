@@ -49,9 +49,13 @@ M.onVehicleInit = function(game_vehicle_id) end
 -- Vehicle = game vehicle
 M.onActivate = function(vehicle)
 	local origin_pos = vehicle:getPosition()
-	local origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
+	origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
+	origin_pos = MathUtil.alignToSurfaceZ(origin_pos, 3) or origin_pos
 	
-	return onActivate.TargetInfo({ammo = 2}, {origin_pos = MathUtil.alignToSurfaceZ(origin_pos, 3) or origin_pos})
+	local positions = {}
+	table.insert(positions, origin_pos)
+	
+	return onActivate.TargetInfo({ammo = 2, positions = positions}, {origin_pos = origin_pos})
 end
 
 M[Hotkey.Fire] = function(data, origin_id, state)
@@ -59,11 +63,18 @@ M[Hotkey.Fire] = function(data, origin_id, state)
 	
 	local vehicle = be:getObjectByID(origin_id)
 	local origin_pos = vehicle:getPosition()
-	local origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
+	origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
+	origin_pos = MathUtil.alignToSurfaceZ(origin_pos, 3) or origin_pos
+	
+	if MathUtil.anyPosToClose(origin_pos, data.positions, 8) then
+		Ui.target(origin_id).Toast.info('Too close to other bananas', nil, 2)
+		return
+	end
+	table.insert(data.positions, origin_pos)
 	
 	data.ammo = data.ammo - 1
 	
-	return onHKey.TargetInfo({origin_pos = MathUtil.alignToSurfaceZ(origin_pos, 3) or origin_pos})
+	return onHKey.TargetInfo({origin_pos = origin_pos})
 end
 
 -- Hooked to the onPreRender tick
@@ -84,7 +95,7 @@ M.onTargetSelect = function(data, target_info)
 	marker.shapeName = "art/shapes/pwu/banana/banana_peel.cdae"
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 0, 0, 1)
-	marker:setPosRot(origin_pos.x, origin_pos.y, origin_pos.z + 0.2, 0, 0, 0, 1)
+	marker:setPosRot(origin_pos.x, origin_pos.y, origin_pos.z + 0.31, 0, 0, 0, 1)
 	marker.scale = vec3(8, 8, 8)
 	marker:registerObject("banana_" .. Util.randomName())
 	
