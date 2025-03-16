@@ -1,5 +1,5 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable, Ui, Reuse = Extender.defaultImports(2)
 local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 
 local M = {
@@ -39,6 +39,43 @@ local M = {
 	max_projectiles = 5,
 	shoot_downtime = 500,
 	follow_sound = 'art/sounds/ext/cannon/cannonball_flying.ogg',
+
+	bullets = Reuse()
+		:onCreate(
+			function()
+				local marker = createObject("TSStatic")
+				marker.shapeName = "art/shapes/pwu/cannonball/cannonball.cdae"
+				marker.useInstanceRenderData = 1
+				marker.instanceColor = Point4F(0, 0, 0, 1)
+				--marker:setPosRot(0, 0, 0, 0, 0, 0, 1)
+				marker.scale = vec3(2.5, 2.5, 2.5)
+				marker:registerObject("cannon_ball_" .. Util.randomName())
+				
+				Sfx('art/sounds/ext/cannon/cannonball_flying.ogg', vec3(0, 0, 0))
+					:is3D(true)
+					:volume(1)
+					:minDistance(30)
+					:maxDistance(100)
+					:isLooping(true)
+					:follow(marker)
+					:bind(marker)
+					:spawn()
+				
+				return marker
+			end
+		)
+		:onPut(
+			function(obj)
+				obj:setHidden(true)
+				obj:setPosition(vec3(0, 0, 0))
+			end
+		)
+		:onTake(
+			function(obj, pos_vec)
+				obj:setHidden(false)
+				obj:setPosition(pos_vec)
+			end
+		)
 }
 
 
@@ -127,14 +164,16 @@ M.whileActive = function(data, origin_id, dt)
 		local try = Extender.cleanseTargetsBehindStatics(proj_pos, try)
 			
 		if MathUtil.raycastAlongSideLine(proj_pos, new_pos) or #try > 0 then
-			projectile.projectile:delete()
+			--projectile.projectile:delete()
+			M.bullets:put(projectile.projectile)
 			data.projectiles[index] = nil
 			
 			if #try > 0 then
 				Util.tableArrayMerge(target_hits, try)
 			end
 		elseif projectile.life_time:stop() > 2500 then
-			projectile.projectile:delete()
+			--projectile.projectile:delete()
+			M.bullets:put(projectile.projectile)
 			data.projectiles[index] = nil
 		end
 	end
@@ -157,6 +196,7 @@ M.onTargetSelect = function(data, target_info)
 	target_info.life_time = hptimer()
 	target_info.target_dir = vec3(target_info.target_dir)
 	
+	--[[
 	-- spawn projectile
 	local marker = createObject("TSStatic")
 	marker.shapeName = "art/shapes/pwu/cannonball/cannonball.cdae"
@@ -167,6 +207,8 @@ M.onTargetSelect = function(data, target_info)
 	
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)
+	]]
+	local marker = M.bullets:take(target_info.start_pos)
 	
 	local blast_dir = quatFromDir(
 		data.vehicle:getDirectionVectorUp(),
@@ -193,6 +235,7 @@ M.onTargetSelect = function(data, target_info)
 		:selfDisable(life_time)
 		:selfDestruct(life_time + 500)
 	
+	--[[
 	Sfx(M.follow_sound, target_info.start_pos)
 		:is3D(true)
 		:volume(1)
@@ -202,6 +245,7 @@ M.onTargetSelect = function(data, target_info)
 		:follow(marker)
 		:bind(marker)
 		:spawn()
+	]]
 	
 	target_info.projectile = marker
 	table.insert(data.projectiles, target_info)
@@ -237,7 +281,8 @@ end
 -- When the powerup is destroyed. eg when the vehicle is deleted or the powerup ended
 M.onDeactivate = function(data)
 	for _, projectile in pairs(data.projectiles) do
-		projectile.projectile:delete()
+		--projectile.projectile:delete()
+		M.bullets:put(projectile.projectile)
 	end
 end
 

@@ -77,6 +77,7 @@ package.loaded["libs/Pot"] = nil
 package.loaded["libs/ObjectWrapper"] = nil
 --package.loaded["libs/ObjectWrapperCleaner"] = nil
 package.loaded["libs/Placeables"] = nil
+package.loaded["libs/Reuse"] = nil
 package.loaded["mp_libs/MPUtil"] = nil
 package.loaded["mp_libs/MPClientRuntime"] = nil
 
