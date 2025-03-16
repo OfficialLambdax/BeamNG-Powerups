@@ -1,5 +1,5 @@
 local Extender = require("libs/PowerUpsExtender")
-local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable = Extender.defaultImports()
+local Lib, Util, Sets, Sound, MathUtil, Pot, Log, TimedTrigger, Collision, MPUtil, Timer, Particle, Sfx, Placeable, Ui, Reuse = Extender.defaultImports(2)
 local Trait, Type, onActivate, whileActive, getAllVehicles, createObject, Hotkey, HKeyState, onHKey = Extender.defaultPowerupVars(1)
 
 local M = {
@@ -36,6 +36,42 @@ local M = {
 	activate_sound = nil,
 	hit_sound = nil,
 	follow_sound = 'art/sounds/ext/cannon/cannonball_flying.ogg',
+	
+	bullets = Reuse()
+		:onCreate(
+			function()
+				local marker = createObject("TSStatic")
+				marker.shapeName = "art/shapes/pwu/cannonball/cannonball.cdae"
+				marker.useInstanceRenderData = 1
+				marker.instanceColor = Point4F(0, 0, 0, 1)
+				marker:setPosRot(0, 0, 0, 0, 0, 0, 1)
+				marker.scale = vec3(2.5, 2.5, 2.5)
+				marker:registerObject("cannon_ball_" .. Util.randomName())
+				
+				Sfx('art/sounds/ext/cannon/cannonball_flying.ogg', vec3(0, 0, 0))
+					:is3D(true)
+					:volume(1)
+					:minDistance(30)
+					:maxDistance(100)
+					:isLooping(true)
+					:follow(marker)
+					:bind(marker)
+					:spawn()
+				
+				return marker
+			end
+		)
+		:onPut(
+			function(obj)
+				obj:setHidden(true)
+				obj:setPosition(vec3(0, 0, 0))
+			end
+		)
+		:onTake(
+			function(obj)
+				obj:setHidden(false)
+			end
+		)
 }
 
 
@@ -113,7 +149,7 @@ end
 
 -- While the powerup is active. Update its render here, detect if it hit something. that kinda stuff
 M.whileActive = function(data, origin_id, dt)
-	if not data.projectile or data.projectile:isDeleted() then return nil end
+	if not data.projectile or data.projectile:isHidden() then return nil end
 	
 	local proj_pos = data.projectile:getPosition()
 	local new_pos = MathUtil.getPosInFront(proj_pos, data.target_dir, data.init_vel * dt)
@@ -125,16 +161,18 @@ M.whileActive = function(data, origin_id, dt)
 	local target_hits = Extender.cleanseTargetsBehindStatics(proj_pos, target_hits)
 		
 	if MathUtil.raycastAlongSideLine(proj_pos, new_pos) or #target_hits > 0 then
-		data.projectile:delete()
+		--data.projectile:delete()
+		M.bullets:put(data.projectile)
 			
 		if #target_hits > 0 then
 			return whileActive.StopAfterExec(nil, target_hits)
 		end
 	elseif data.life_time:stop() > 2500 then
-		data.projectile:delete()
+		--data.projectile:delete()
+		M.bullets:put(data.projectile)
 	end
 	
-	if data.projectile:isDeleted() then
+	if data.projectile:isHidden() then
 		return whileActive.Stop()
 	else
 		return whileActive.Continue()
@@ -149,6 +187,7 @@ M.onTargetSelect = function(data, target_info)
 	data.target_dir = vec3(data.target_dir)
 	data.life_time = hptimer()
 	
+	--[[
 	-- spawn projectile
 	local marker = createObject("TSStatic")
 	marker.shapeName = "art/shapes/pwu/cannonball/cannonball.cdae"
@@ -159,6 +198,9 @@ M.onTargetSelect = function(data, target_info)
 	
 	local test = "my_powerup_" .. Util.randomName()
 	marker:registerObject(test)
+	]]
+	local marker = M.bullets:take()
+	marker:setPosRot(data.start_pos.x, data.start_pos.y, data.start_pos.z, 0, 0, 0, 1)
 	
 	local blast_dir = quatFromDir(
 		data.vehicle:getDirectionVectorUp(),
@@ -184,8 +226,9 @@ M.onTargetSelect = function(data, target_info)
 		:bind(marker, 500)
 		:selfDisable(life_time)
 		:selfDestruct(life_time + 500)
-	
-	Sfx(M.follow_sound, data.start_pos)
+		
+	--[[
+	Sfx(M.follow_sound, target_info.start_pos)
 		:is3D(true)
 		:volume(1)
 		:minDistance(30)
@@ -194,6 +237,7 @@ M.onTargetSelect = function(data, target_info)
 		:follow(marker)
 		:bind(marker)
 		:spawn()
+	]]
 	
 	data.projectile = marker
 end
@@ -226,12 +270,9 @@ end
 
 -- When the powerup is destroyed. eg when the vehicle is deleted or the powerup ended
 M.onDeactivate = function(data)
-	-- is better to let sets run out as left over trigger may not trigger otherwise.
-	-- eg. you turn the screen black and have a trigger that unblacks it. But if you remove the set then also the unblack trigger. Aka screen stays black.
-	--Sets.getSet("powerup_template"):revert(data.id)
-	
 	if data.projectile then
-		data.projectile:delete()
+		--data.projectile:delete()
+		M.bullets:put(data.projectile)
 	end
 end
 
