@@ -7,7 +7,7 @@ local function playSound(sound)
 end
 
 local function spawnConfetti(target_id)
-	local vehicle = be:getObjectByID(target_id)
+	local vehicle = getObjectByID(target_id)
 	if vehicle == nil then return end
 	
 	Particle("BNGP_confetti", vehicle:getPosition())

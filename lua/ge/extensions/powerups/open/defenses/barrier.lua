@@ -76,7 +76,7 @@ end
 
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, origin_id, dt)
-	local vehicle = be:getObjectByID(origin_id)
+	local vehicle = getObjectByID(origin_id)
 	if data.placing == nil then 
 		if MathUtil.velocity(vehicle:getVelocity()) > 1 then
 			Ui.target(origin_id).Toast.info('Must stand still', nil, 1000)

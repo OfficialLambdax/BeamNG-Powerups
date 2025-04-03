@@ -155,7 +155,7 @@ local function remLock(game_vehicle_id)
 end
 
 local function unghost(game_vehicle_id, timer, max_time)
-	local veh = be:getObjectByID(game_vehicle_id)
+	local veh = getObjectByID(game_vehicle_id)
 	if veh == nil then return 1 end
 	
 	if timer:stop() < max_time then return end
@@ -444,7 +444,7 @@ local function newSet(name, set_array)
 			return
 		end
 		
-		local veh = be:getObjectByID(ve_target)
+		local veh = getObjectByID(ve_target)
 		veh:queueLuaCommand("obj:setGhostEnabled(true)")
 		veh:setMeshAlpha(0.5, "", false)
 		

@@ -88,8 +88,8 @@ M.onTargetHit = function(data, origin_id, target_id) end
 M.onHit = function(data, origin_id, target_id)
 	if Extender.hasTraitCall(target_id, Trait.StrongConsuming, origin_id) then return end
 	-- push vehicle away from us
-	local origin_vehicle = be:getObjectByID(origin_id)
-	local target_vehicle = be:getObjectByID(target_id)
+	local origin_vehicle = getObjectByID(origin_id)
+	local target_vehicle = getObjectByID(target_id)
 	
 	local vel1 = origin_vehicle:getVelocity()
 	local vel2 = target_vehicle:getVelocity()

@@ -83,14 +83,14 @@ end
 -- While the powerup is in someones inventory. Can have it hover above the vehicle or play sounds.
 M.whilePickup = function(data, origin_id, dt)
 	--[[
-	local origin_vehicle = be:getObjectByID(origin_id)
+	local origin_vehicle = getObjectByID(origin_id)
 	local pos = origin_vehicle:getSpawnWorldOOBB():getCenter()
 	pos.z = pos.z + 1
 	data.marker:setPosition(pos)
 	
 	if true then return end
 	
-	local origin_vehicle = be:getObjectByID(origin_id)
+	local origin_vehicle = getObjectByID(origin_id)
 	local up_dir = origin_vehicle:getDirectionVectorUp()
 	local for_dir = origin_vehicle:getDirectionVector()
 	local next_dir = MathUtil.rotateVectorByDegrees(for_dir, up_dir, data.degrees)

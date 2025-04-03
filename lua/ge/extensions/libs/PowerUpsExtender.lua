@@ -210,7 +210,7 @@ end
 M.cleanseTargetsBehindStatics = function(origin_pos, targets)
 	local new_targets = {}
 	for _, target_id in ipairs(targets) do
-		local target_pos = be:getObjectByID(target_id):getPosition()
+		local target_pos = getObjectByID(target_id):getPosition()
 		if not MathUtil.raycastAlongSideLine(origin_pos, target_pos) then
 			table.insert(new_targets, target_id)
 		end
@@ -236,7 +236,7 @@ end
 
 M.isActive = function(...)
 	for _, vehicle_id in pairs({...}) do
-		if not be:getObjectByID(vehicle_id):getActive() then return false end
+		if not getObjectByID(vehicle_id):getActive() then return false end
 	end
 	return true
 end
@@ -371,7 +371,7 @@ M.getVehicleOwner = function(game_vehicle_id)
 	if player_name == SUBJECT_SINGLEPLAYER then
 		return "You"
 	elseif player_name == SUBJECT_TRAFFIC then
-		return be:getObjectByID(game_vehicle_id):getJBeamFilename() -- there must be a way to get the clear name
+		return getObjectByID(game_vehicle_id):getJBeamFilename() -- there must be a way to get the clear name
 	elseif player_name == SUBJECT_UNKNOWN then
 		return "Unknown"
 	else

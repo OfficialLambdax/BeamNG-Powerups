@@ -6,7 +6,7 @@ local function playSound(sound)
 end
 
 local function spawnTrail(target_id)
-	local vehicle = be:getObjectByID(target_id)
+	local vehicle = getObjectByID(target_id)
 	if vehicle == nil then return end
 	
 	Particle("BNGP_Fire_Huge", vehicle:getPosition())
@@ -25,7 +25,7 @@ local function spawnTrail(target_id)
 end
 
 local function spawnMini(target_id)
-	local vehicle = be:getObjectByID(target_id)
+	local vehicle = getObjectByID(target_id)
 	if vehicle == nil then return end
 	
 	Particle("BNGP_29", vehicle:getPosition())
@@ -37,7 +37,7 @@ local function spawnMini(target_id)
 end
 
 local function finalSmoke(target_id)
-	local vehicle = be:getObjectByID(target_id)
+	local vehicle = getObjectByID(target_id)
 	if vehicle == nil then return end
 	
 	Particle("BNGP_32", vehicle:getPosition())

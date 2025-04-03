@@ -80,7 +80,7 @@ end
 -- While the powerup is active. Update its render here, detect if it hit something. that kinda stuff
 M.whileActive = function(data, origin_id, dt)
 	if data.start_timer:stop() > 1500 and data.shot_projectiles < M.max_projectiles and #data.projectiles < M.max_projectiles and data.shoot_timer:stop() > M.shoot_downtime then
-		local origin_vehicle = be:getObjectByID(origin_id)
+		local origin_vehicle = getObjectByID(origin_id)
 		
 		local up_dir = origin_vehicle:getDirectionVectorUp()
 		local for_dir = origin_vehicle:getDirectionVector()
@@ -181,11 +181,11 @@ end
 -- We are target_id
 M.onHit = function(data, origin_id, target_id)
 	-- everything in here is executed on our and the remote end
-	local target_vehicle = be:getObjectByID(target_id)
+	local target_vehicle = getObjectByID(target_id)
 	M.hit_sound:playVE(target_id)
 	if Extender.hasTraitCalls(target_id, origin_id, Trait.Consuming) then return end
 
-	local origin_vehicle = be:getObjectByID(origin_id)
+	local origin_vehicle = getObjectByID(origin_id)
 	local position = target_vehicle:getPosition()
 	
 	local origin_pos = origin_vehicle:getPosition()

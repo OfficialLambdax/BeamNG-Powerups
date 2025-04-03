@@ -99,7 +99,7 @@ M[Hotkey.TargetChange] = function(data, origin_id, state)
 end
 
 local function whileSelecting(data, origin_id, dt)
-	local origin_vehicle = be:getObjectByID(origin_id)
+	local origin_vehicle = getObjectByID(origin_id)
 	local veh_dir = origin_vehicle:getDirectionVector()
 	local veh_pos = origin_vehicle:getSpawnWorldOOBB():getCenter()
 	local start_pos = MathUtil.getPosInFront(veh_pos, veh_dir, 2)
@@ -113,7 +113,7 @@ local function whileSelecting(data, origin_id, dt)
 	
 	if Extender.isSpectating(origin_id) then
 		if data.selected_id then
-			local target_vehicle = be:getObjectByID(data.selected_id)
+			local target_vehicle = getObjectByID(data.selected_id)
 			if target_vehicle == nil then
 				data.selected_id = nil
 				return
@@ -144,7 +144,7 @@ end
 M[Hotkey.Fire] = function(data, origin_id, state)
 	if state ~= HKeyState.Down then return end
 	
-	local origin_vehicle = be:getObjectByID(origin_id)
+	local origin_vehicle = getObjectByID(origin_id)
 	if data.charging_timer:stop() < 2000 or data.ammo == 0 or data.stand_still_timer:stop() < 1000 then
 		return
 	end
@@ -155,7 +155,7 @@ M[Hotkey.Fire] = function(data, origin_id, state)
 	local start_pos = MathUtil.getPosInFront(origin_pos, target_dir, 2)
 	
 	if data.selected_id and data.is_valid_target then
-		local target_vehicle = be:getObjectByID(data.selected_id)
+		local target_vehicle = getObjectByID(data.selected_id)
 		target_dir = MathUtil.getPredictedPosition(origin_vehicle, target_vehicle, M.projectile_speed) - origin_pos
 	end
 	
@@ -289,7 +289,7 @@ M.whileActive = function(data, origin_id, dt)
 		Ui.target(origin_id).Msg.send(data.ammo .. ' rounds left', 'sniper', 1)
 	end
 	
-	local origin_vehicle = be:getObjectByID(origin_id)
+	local origin_vehicle = getObjectByID(origin_id)
 	if MathUtil.velocity(origin_vehicle:getVelocity()) > 3 then
 		Ui.target(origin_id).Toast.info('Must stand still', nil, 1000)
 		data.stand_still_timer:stopAndReset()
@@ -312,7 +312,7 @@ end
 -- When a target was hit, called on every client
 M.onHit = function(data, origin_id, target_id)
 	if Extender.hasTraitCalls(target_id, origin_id, Trait.Consuming) then return end
-	local target_vehicle = be:getObjectByID(target_id)
+	local target_vehicle = getObjectByID(target_id)
 	target_vehicle:queueLuaCommand('beamstate.deflateRandomTire()')
 end
 

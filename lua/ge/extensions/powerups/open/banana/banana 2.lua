@@ -61,7 +61,7 @@ end
 M[Hotkey.Fire] = function(data, origin_id, state)
 	if state ~= HKeyState.Down then return end
 	
-	local vehicle = be:getObjectByID(origin_id)
+	local vehicle = getObjectByID(origin_id)
 	local origin_pos = vehicle:getPosition()
 	origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
 	origin_pos = MathUtil.alignToSurfaceZ(origin_pos, 3) or origin_pos
@@ -143,7 +143,7 @@ M.onTargetSelect = function(data, target_info)
 					self:attach(
 						function(self, data)
 							if data.act_timer:stop() < 200 then return end -- after this
-							local vehicle = be:getObjectByID(data.target_id)
+							local vehicle = getObjectByID(data.target_id)
 							
 							-- check if vehicle is back to original rotation
 							local target_dir = vehicle:getDirectionVector()

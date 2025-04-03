@@ -94,7 +94,7 @@ M.whileActive = function(data, origin_id, dt)
 				set_def.sound:play()
 				
 			else
-				local origin_vehicle = be:getObjectByID(origin_id)
+				local origin_vehicle = getObjectByID(origin_id)
 				Sfx(set_def.sound:getFilePath(), origin_vehicle:getPosition())
 					:minDistance(set_def.minDistance)
 					:maxDistance(set_def.maxDistance)

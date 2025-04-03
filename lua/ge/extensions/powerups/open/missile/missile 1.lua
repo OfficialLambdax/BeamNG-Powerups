@@ -193,7 +193,7 @@ M.whileActive = function(data, origin_id, dt)
 		
 	elseif rocket.target_id then
 		-- see if target is still valid
-		local tar_veh = be:getObjectByID(rocket.target_id)
+		local tar_veh = getObjectByID(rocket.target_id)
 		if not tar_veh or not tar_veh:getActive() then
 			return whileActive.TargetInfo({target = {}})
 			
@@ -337,7 +337,7 @@ M.whileActive = function(data, origin_id, dt)
 	-- check for direct hits
 	targets = MathUtil.getCollisionsAlongSideLine(pos, pre_pos, 3)
 	if #targets > 0 then
-		impact_pos = be:getObjectByID(targets[1]):getPosition()
+		impact_pos = getObjectByID(targets[1]):getPosition()
 		
 	elseif rocket.launch_timer:stop() > 4000 then -- check for proximity hit
 		targets = MathUtil.getVehiclesInsideRadius(pre_pos, M.proximity_radius, origin_id)
@@ -518,7 +518,7 @@ M.onTargetHit = function(data, origin_id, target_id) end
 -- When a target was hit, called on every client
 M.onHit = function(data, origin_id, target_id)
 	if Extender.hasTraitCalls(target_id, origin_id, Trait.Consuming, Trait.Breaking) then return end
-	local target_vehicle = be:getObjectByID(target_id)
+	local target_vehicle = getObjectByID(target_id)
 	local pos1 = data.impact_pos
 	local pos2 = target_vehicle:getPosition()
 	local dist = Util.dist3d(pos2, pos1)

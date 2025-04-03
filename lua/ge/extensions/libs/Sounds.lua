@@ -53,7 +53,7 @@ return function(file_path, volume, pitch)
 		(Util.dist3d(spectated:getPosition(), core_camera:getPosition()) < 30) then
 			self:play(volume or self.int.volume)
 		else
-			local target_vehicle = be:getObjectByID(target_id)
+			local target_vehicle = getObjectByID(target_id)
 			Sfx(self.int.file_path, target_vehicle:getPosition())
 				:minDistance(distance or 50)
 				:maxDistance((distance or 150) + 100)
@@ -72,7 +72,7 @@ return function(file_path, volume, pitch)
 		(Util.dist3d(spectated:getPosition(), core_camera:getPosition()) < 30) then
 			self:play(volume or self.int.volume)
 		else
-			local target_vehicle = be:getObjectByID(target_id)
+			local target_vehicle = getObjectByID(target_id)
 			Sfx(self.int.file_path, target_vehicle:getPosition())
 				:minDistance(min_distance or 50)
 				:maxDistance(max_distance or 250)
@@ -97,7 +97,7 @@ return function(file_path, volume, pitch)
 	end
 	
 	function sound:playVE(target_id, volume, pitch)
-		local veh = be:getObjectByID(target_id)
+		local veh = getObjectByID(target_id)
 		if not veh then return end
 		veh:queueLuaCommand(
 			string.format(
@@ -123,7 +123,7 @@ return function(file_path, volume, pitch)
 	end
 	
 	function sound:stopVE(target_id)
-		local veh = be:getObjectByID(target_id)
+		local veh = getObjectByID(target_id)
 		if not veh then return end
 		veh:queueLuaCommand(
 			string.format(

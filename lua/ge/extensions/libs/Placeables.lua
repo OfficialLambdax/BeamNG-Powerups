@@ -169,7 +169,7 @@ return function(pos_vec, scale_vec)
 		end
 		
 		if self.int.on_enter then
-			self.int.on_enter(self, be:getObjectByID(data.subjectID), self.int.data)
+			self.int.on_enter(self, getObjectByID(data.subjectID), self.int.data)
 		end
 	end
 	
@@ -181,14 +181,14 @@ return function(pos_vec, scale_vec)
 		end
 		
 		if self.int.on_exit then
-			self.int.on_exit(self, be:getObjectByID(data.subjectID), self.int.data)
+			self.int.on_exit(self, getObjectByID(data.subjectID), self.int.data)
 		end
 	end
 	
 	function placeable:_whileInside()
 		if self.int.while_inside then
 			for vehicle_id, _ in pairs(self.int.vehicles) do
-				local vehicle = be:getObjectByID(vehicle_id)
+				local vehicle = getObjectByID(vehicle_id)
 				if vehicle == nil then
 					self.int.vehicles[vehicle_id] = nil
 				
