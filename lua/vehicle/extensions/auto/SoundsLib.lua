@@ -51,6 +51,7 @@ end
 
 M.onReset = function()
 	for _, id in pairs(SOUNDS) do
+		obj:setVolumePitch(id, 0, 1)
 		obj:cutSFX(id)
 	end
 end
