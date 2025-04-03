@@ -49,6 +49,16 @@ local function bind(trigger_name, self, obj, delete_after)
 		else
 			self:delete()
 		end
+	--elseif obj:isHidden() then
+	--	if not self.int.hidden then
+	--		self.int.hidden = true
+	--		self:stop()
+	--	end
+	--elseif not obj:isHidden() then
+	--	if self.int.hidden then
+	--		self.int.hidden = false
+	--		self:play()
+	--	end
 	end
 end
 
@@ -72,7 +82,8 @@ return function(file_path, pos_vec)
 	
 	local sfx = {int = {
 			obj = obj,
-			name = Util.fileName(file_path)
+			name = Util.fileName(file_path),
+			--hidden = false
 		}
 	}
 	

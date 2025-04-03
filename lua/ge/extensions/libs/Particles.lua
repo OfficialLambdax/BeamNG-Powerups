@@ -43,6 +43,16 @@ local function bind(trigger_name, self, obj, delete_after)
 		else
 			self:delete()
 		end
+	--elseif obj:isHidden() then
+	--	if not self.int.hidden then
+	--		self.int.hidden = true
+	--		self:active(false)
+	--	end
+	--elseif not obj:isHidden() then
+	--	if self.int.hidden then
+	--		self.int.hidden = false
+	--		self:active(true)
+	--	end
 	end
 end
 
@@ -79,7 +89,8 @@ return function(emitter_name, pos_vec, rot_quat)
 	local particle = {int = {
 			obj = obj,
 			name = emitter_name,
-			dbg = obj_name
+			dbg = obj_name,
+			--hidden = false
 		}
 	}
 	
