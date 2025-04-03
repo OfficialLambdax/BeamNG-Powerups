@@ -65,7 +65,7 @@ M.onLoad = function(data) end
 M.whileActive = function(data, origin_id)
 	if data.end_timer:stop() < M.effect_length then return whileActive.Continue() end
 	
-	local vehicle = be:getObjectByID(origin_id)
+	local vehicle = getObjectByID(origin_id)
 	if #MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), 5, origin_id) > 0 then return whileActive.Continue() end
 	
 	return whileActive.Stop()
@@ -85,7 +85,7 @@ M.onHit = function(data, origin_id, target_id) end
 
 -- When the powerup is destroyed. eg when the vehicle is deleted or the powerup ended
 M.onDeactivate = function(data, origin_id)
-	local vehicle = be:getObjectByID(origin_id)
+	local vehicle = getObjectByID(origin_id)
 	vehicle:setMeshAlpha(1, "", false)
 	vehicle:queueLuaCommand("obj:setGhostEnabled(false)")
 end

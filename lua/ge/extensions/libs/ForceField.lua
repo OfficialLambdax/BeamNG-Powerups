@@ -224,7 +224,7 @@ local function addVehicle(game_vehicle_id, radius, settings, on_callback, off_ca
 	
 	settings.inside = {}
 	settings.radius = radius or 5
-	settings.marker = settings.marker_create_callback(settings.radius, be:getObjectByID(game_vehicle_id))
+	settings.marker = settings.marker_create_callback(settings.radius, getObjectByID(game_vehicle_id))
 	
 	VEHICLES[game_vehicle_id] = settings
 	ACTIVE = true
@@ -245,7 +245,7 @@ local function tick()
 	
 	local all_vehicles = getAllVehicles()
 	for game_vehicle_id, settings in pairs(VEHICLES) do
-		local origin_vehicle = be:getObjectByID(game_vehicle_id)
+		local origin_vehicle = getObjectByID(game_vehicle_id)
 		if origin_vehicle == nil then
 			remVehicle(game_vehicle_id) -- vehicle disappeared
 			

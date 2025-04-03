@@ -102,7 +102,7 @@ end
 M[Hotkey.Fire] = function(data, origin_id, state)
 	if state ~= HKeyState.Down then return end
 	
-	local vehicle = be:getObjectByID(origin_id)
+	local vehicle = getObjectByID(origin_id)
 	if MathUtil.velocity(vehicle:getVelocity()) > 1 then
 		Ui.target(origin_id).Toast.info('Must stand still', nil, 2)
 		return
@@ -160,7 +160,7 @@ M.onTargetSelect = function(data, target_info, origin_id)
 				local targets = MathUtil.getVehiclesInsideRadius(mine_pos, M.effect_range)
 				
 				for _, target_id in ipairs(targets) do
-					local vehicle = be:getObjectByID(target_id)
+					local vehicle = getObjectByID(target_id)
 					local dist = Util.dist3d(vehicle:getPosition(), mine_pos)
 					local push = (vehicle:getPosition() - mine_pos):normalized() * (math.min(M.effect_range, M.effect_range - dist) * 1.2)
 					

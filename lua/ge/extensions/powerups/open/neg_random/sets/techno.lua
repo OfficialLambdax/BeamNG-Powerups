@@ -26,7 +26,7 @@ local function disableRGB()
 end
 
 local function color(target_id, color)
-	local vehicle = be:getObjectByID(target_id)
+	local vehicle = getObjectByID(target_id)
 	if vehicle == nil then return end
 	
 	local spectator = core_camera:getPosition()
@@ -42,7 +42,7 @@ local function color(target_id, color)
 end
 
 local function onJump(target_id)
-	local target_vehicle = be:getObjectByID(target_id)
+	local target_vehicle = getObjectByID(target_id)
 	if target_vehicle == nil then return end
 	
 	for _, vehicle in ipairs(Extender.getAllVehicles()) do

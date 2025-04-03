@@ -299,7 +299,7 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 		end
 		
 		if target_env.target_env > 0 then
-			if type(target_env.ve_target) ~= "number" or be:getObjectByID(target_env.ve_target) == nil then
+			if type(target_env.ve_target) ~= "number" or getObjectByID(target_env.ve_target) == nil then
 				return nil, "Given vehicle target doesnt exist"
 			end
 		end
@@ -401,7 +401,7 @@ local function newTriggerClass() -- name, target_env, trigger_every, trigger_for
 			return r
 			
 		elseif self.int.target_env == 1 then
-			local veh = be:getObjectByID(self.int.ve_target)
+			local veh = getObjectByID(self.int.ve_target)
 			if not veh then
 				Log.error("Vehicle target doesnt exist")
 				return
