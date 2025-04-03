@@ -110,7 +110,7 @@ end
 -- While the powerup is active. Update its render here, detect if it hit something. that kinda stuff
 M.whileActive = function(data, origin_id, dt)
 	if data.shot_projectiles < M.max_projectiles and #data.projectiles < M.max_projectiles and data.shoot_timer:stop() > M.shoot_downtime then
-		local origin_vehicle = be:getObjectByID(origin_id)
+		local origin_vehicle = getObjectByID(origin_id)
 		local veh_dir = origin_vehicle:getDirectionVector()
 		veh_dir.z = veh_dir.z + 0.01
 		
@@ -129,7 +129,7 @@ M.whileActive = function(data, origin_id, dt)
 		local target_dir = veh_dir
 		local _, target_id = Util.tablePickRandom(targets)
 		if target_id then
-			local target_vehicle = be:getObjectByID(target_id)
+			local target_vehicle = getObjectByID(target_id)
 			local pos1 = origin_vehicle:getPosition()
 			local pos2 = MathUtil.getPredictedPosition(origin_vehicle, target_vehicle, projectile_speed)
 			
@@ -264,8 +264,8 @@ M.onHit = function(data, origin_id, target_id)
 	-- everything in here is executed on our and the remote end
 	if Extender.hasTraitCalls(target_id, origin_id, Trait.Consuming, Trait.Breaking) then return end
 
-	local origin_vehicle = be:getObjectByID(origin_id)
-	local target_vehicle = be:getObjectByID(target_id)
+	local origin_vehicle = getObjectByID(origin_id)
+	local target_vehicle = getObjectByID(target_id)
 	
 	local origin_pos = origin_vehicle:getPosition()
 	local target_pos = target_vehicle:getPosition()

@@ -379,7 +379,7 @@ checkRenderDistance = function()
 	for game_vehicle_id, vehicle in pairs(VEHICLES) do
 		if (vehicle.powerup and not vehicle.powerup.do_not_unload) or (vehicle.powerup_active and not vehicle.powerup_active.do_not_unload) then
 			
-			local veh = be:getObjectByID(game_vehicle_id)
+			local veh = getObjectByID(game_vehicle_id)
 			if veh then
 				if dist3d(veh:getPosition(), camera_position) < RENDER_DISTANCE or not Extender.isActive(game_vehicle_id) then
 					if not vehicle.is_rendered then
@@ -422,7 +422,7 @@ end
 -- ------------------------------------------------------------------------------------------------
 -- Vehicles
 function onPowerUpVehicleInit(game_vehicle_id)
-	local vehicle = be:getObjectByID(game_vehicle_id)
+	local vehicle = getObjectByID(game_vehicle_id)
 	if vehicle == nil then
 		-- vehicle disappeared before we could init it
 		TimedTrigger.remove('powerup_vehicle_initer_' .. game_vehicle_id)
@@ -717,7 +717,7 @@ activatePowerup = function(game_vehicle_id, from_server, charge_overwrite) -- ch
 	vehicle.powerup = nil
 	vehicle.data = nil
 	
-	local response, err = pcall(powerup_active.onActivate, be:getObjectByID(game_vehicle_id))
+	local response, err = pcall(powerup_active.onActivate, getObjectByID(game_vehicle_id))
 	if err then return end
 	if response.IsError then
 		Log.error('Powerup "' .. powerup_active.internal_name .. '" failed to activate "' .. response.reason .. '"')
@@ -767,7 +767,7 @@ end
 
 vehicleAddPowerup = function(game_vehicle_id, powerup, location)
 	-- is the case when a player joins a server where vehicles already have powerups, in that case there is no powerup to inherit from a location
-	local origin_vehicle = be:getObjectByID(game_vehicle_id)
+	local origin_vehicle = getObjectByID(game_vehicle_id)
 	local is_fake_location = false
 	if location == nil then
 		local fake_location = {int = {pos = origin_vehicle:getPosition()}}
@@ -1243,7 +1243,7 @@ end
 -- ------------------------------------------------------------------------------------------------
 -- Development
 M.testExec = function(game_vehicle_id, group, charge)
-	if be:getObjectByID(game_vehicle_id) == nil then
+	if getObjectByID(game_vehicle_id) == nil then
 		Log.error('Unknown vehicle')
 		return
 	end
@@ -1256,7 +1256,7 @@ M.testExec = function(game_vehicle_id, group, charge)
 		return nil
 	end
 	
-	local data, err = pcall(powerup.onCreate, be:getObjectByID(game_vehicle_id), false)
+	local data, err = pcall(powerup.onCreate, getObjectByID(game_vehicle_id), false)
 	if err then return end
 	
 	-- create fake location

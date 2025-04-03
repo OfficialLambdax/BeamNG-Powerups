@@ -57,7 +57,7 @@ end
 
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, origin_id, dt)
-	local vehicle = be:getObjectByID(origin_id)
+	local vehicle = getObjectByID(origin_id)
 	
 	if not data.selected then
 		if MathUtil.velocity(vehicle:getVelocity()) > 1 then

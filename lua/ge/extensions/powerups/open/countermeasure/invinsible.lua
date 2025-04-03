@@ -56,7 +56,7 @@ end
 -- Hooked to the onPreRender tick
 M.whileActive = function(data, origin_id, dt)
 	if data.timer:stop() < M.max_len then
-		local origin_vehicle = be:getObjectByID(origin_id)
+		local origin_vehicle = getObjectByID(origin_id)
 		if Extender.isSpectating(origin_id) then
 			origin_vehicle:setMeshAlpha(0.5, "", false)
 		else
@@ -80,7 +80,7 @@ M.onHit = function(data, origin_id, target_id) end
 
 -- When the powerup has ended or is destroyed by any means
 M.onDeactivate = function(data, origin_id)
-	local origin_vehicle = be:getObjectByID(origin_id)
+	local origin_vehicle = getObjectByID(origin_id)
 	if origin_vehicle == nil then return end
 	
 	origin_vehicle:setMeshAlpha(1, "", false)

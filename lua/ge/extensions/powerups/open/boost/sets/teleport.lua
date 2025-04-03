@@ -3,7 +3,7 @@ local function playSound(game_vehicle_id, sound)
 end
 
 local function launch(game_vehicle_id)
-	local vehicle = be:getObjectByID(game_vehicle_id)
+	local vehicle = getObjectByID(game_vehicle_id)
 	if vehicle == nil then return end
 	
 	local towards = vehicle:getDirectionVector():normalized() + vec3(0, 0, 20)
@@ -11,7 +11,7 @@ local function launch(game_vehicle_id)
 end
 
 local function launchForward(game_vehicle_id)
-	local vehicle = be:getObjectByID(game_vehicle_id)
+	local vehicle = getObjectByID(game_vehicle_id)
 	if vehicle == nil then return end
 	
 	local towards = vehicle:getDirectionVector():normalized() * 7
@@ -19,7 +19,7 @@ local function launchForward(game_vehicle_id)
 end
 
 local function throwUp(game_vehicle_id)
-	local vehicle = be:getObjectByID(game_vehicle_id)
+	local vehicle = getObjectByID(game_vehicle_id)
 	if vehicle == nil then return end
 
 	local towards = vehicle:getDirectionVector():normalized() + vec3(0, 0, 100)
@@ -34,7 +34,7 @@ local function initScreenFade()
 end
 
 local function tpSafe(game_vehicle_id)
-	local vehicle = be:getObjectByID(game_vehicle_id)
+	local vehicle = getObjectByID(game_vehicle_id)
 	if vehicle == nil then return end
 	
 	local veh_pos = vehicle:getPosition()

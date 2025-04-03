@@ -108,7 +108,7 @@ M.onActivate = function(vehicle)
 	local target_dir = veh_dir
 	local _, target_id = Util.tablePickRandom(targets)
 	if target_id then
-		local target_vehicle = be:getObjectByID(target_id)
+		local target_vehicle = getObjectByID(target_id)
 		local pos1 = vehicle:getPosition()
 		local pos2 = MathUtil.getPredictedPosition(vehicle, target_vehicle, projectile_speed)
 		
@@ -253,8 +253,8 @@ M.onHit = function(data, origin_id, target_id)
 	-- everything in here is executed on our and the remote end
 	if Extender.hasTraitCalls(target_id, origin_id, Trait.Consuming, Trait.Breaking) then return end
 
-	local origin_vehicle = be:getObjectByID(origin_id)
-	local target_vehicle = be:getObjectByID(target_id)
+	local origin_vehicle = getObjectByID(origin_id)
+	local target_vehicle = getObjectByID(target_id)
 	
 	local origin_pos = origin_vehicle:getPosition()
 	local target_pos = target_vehicle:getPosition()
