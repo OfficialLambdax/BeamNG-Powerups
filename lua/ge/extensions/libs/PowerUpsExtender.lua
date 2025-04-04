@@ -309,8 +309,13 @@ M.ghostVehicleAutoUnghost = function(vehicle, time)
 		trigger_name,
 		time,
 		0,
-		function(vehicle, trigger_name)
-			if #MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), 5, vehicle:getId()) > 0 then
+		function(veh_id, trigger_name)
+			local vehicle = getObjectByID(veh_id)
+			if not vehicle then -- vehicle vanished
+				TimedTrigger.remove(trigger_name)
+				return
+			end
+			if #MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), 5, veh_id) > 0 then
 				TimedTrigger.updateTriggerEvery(trigger_name, 100)
 				return
 			end
@@ -320,7 +325,7 @@ M.ghostVehicleAutoUnghost = function(vehicle, time)
 			
 			TimedTrigger.remove(trigger_name)
 		end,
-		vehicle,
+		vehicle:getId(),
 		trigger_name
 	)
 end
