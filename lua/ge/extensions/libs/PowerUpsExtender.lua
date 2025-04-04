@@ -314,6 +314,8 @@ M.ghostVehicleAutoUnghost = function(vehicle, time)
 			if not vehicle then -- vehicle vanished
 				TimedTrigger.remove(trigger_name)
 				return
+			elseif not vehicle:getActive() then
+				return
 			end
 			if #MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), 5, veh_id) > 0 then
 				TimedTrigger.updateTriggerEvery(trigger_name, 100)
