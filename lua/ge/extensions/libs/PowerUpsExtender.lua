@@ -228,6 +228,13 @@ M.isPlayerVehicle = function(game_vehicle_id)
 	end
 end
 
+M.isTraffic = function(game_vehicle_id)
+	local vehicle = PowerUps.vehicles[game_vehicle_id]
+	if vehicle then
+		return vehicle.player_name == SUBJECT_TRAFFIC
+	end
+end
+
 M.isSpectating = function(game_vehicle_id)
 	local vehicle = getPlayerVehicle(0)
 	if vehicle == nil then return end

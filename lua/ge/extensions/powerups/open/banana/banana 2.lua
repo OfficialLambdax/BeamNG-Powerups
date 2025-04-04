@@ -48,6 +48,7 @@ M.onVehicleInit = function(game_vehicle_id) end
 -- Called once the powerup is activated by a vehicle
 -- Vehicle = game vehicle
 M.onActivate = function(vehicle)
+	if Extender.isTraffic(vehicle:getId()) then return onActivate.Error('Traffic is not supported yet') end
 	local origin_pos = vehicle:getPosition()
 	origin_pos = MathUtil.getPosInFront(origin_pos, vehicle:getDirectionVector(), -7)
 	origin_pos = MathUtil.alignToSurfaceZ(origin_pos, 3) or origin_pos
