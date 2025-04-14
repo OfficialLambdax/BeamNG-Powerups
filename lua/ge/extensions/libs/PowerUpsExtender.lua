@@ -407,4 +407,22 @@ M.safeIdTransfer = function(game_vehicle_id, server_vehicle_id)
 	end
 end
 
+M.vehicleMoveToPosition = function(vehicle, tar_pos, max_speed)
+	local v_pos = vehicle:getPosition()
+	local v_vel = vehicle:getVelocity()
+	local t_dir = (tar_pos - v_pos):normalized()
+	
+	local dist = Util.dist3d(v_pos, tar_pos)
+	local strength = math.min(max_speed, (dist / 40) * max_speed)
+	local t_vel = t_dir * strength -- intended velocity towards target
+	
+	local force = (t_vel - v_vel) * 0.8
+	if dist > 0.3 and force:length() > 0.1 then
+		--dump("dist", dist, "vel", v_vel:length())
+		if force:length() < 500 then -- force spikes can happen when the vehicle was just reset
+			vehicle:applyClusterVelocityScaleAdd(vehicle:getRefNodeId(), 1, force.x, force.y, force.z)
+		end
+	end
+end
+
 return M
