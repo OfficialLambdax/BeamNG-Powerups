@@ -232,6 +232,13 @@ M.isPlayerVehicle = function(game_vehicle_id)
 	end
 end
 
+M.isTraffic = function(game_vehicle_id)
+	local vehicle = PowerUps.vehicles[game_vehicle_id]
+	if vehicle then
+		return vehicle.player_name == SUBJECT_TRAFFIC
+	end
+end
+
 M.isSpectating = function(game_vehicle_id)
 	local vehicle = getPlayerVehicle(0)
 	if vehicle == nil then return end
@@ -306,8 +313,15 @@ M.ghostVehicleAutoUnghost = function(vehicle, time)
 		trigger_name,
 		time,
 		0,
-		function(vehicle, trigger_name)
-			if #MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), 5, vehicle:getId()) > 0 then
+		function(veh_id, trigger_name)
+			local vehicle = getObjectByID(veh_id)
+			if not vehicle then -- vehicle vanished
+				TimedTrigger.remove(trigger_name)
+				return
+			elseif not vehicle:getActive() then
+				return
+			end
+			if #MathUtil.getVehiclesInsideRadius(vehicle:getPosition(), 5, veh_id) > 0 then
 				TimedTrigger.updateTriggerEvery(trigger_name, 100)
 				return
 			end
@@ -317,7 +331,7 @@ M.ghostVehicleAutoUnghost = function(vehicle, time)
 			
 			TimedTrigger.remove(trigger_name)
 		end,
-		vehicle,
+		vehicle:getId(),
 		trigger_name
 	)
 end
@@ -390,6 +404,24 @@ M.safeIdTransfer = function(game_vehicle_id, server_vehicle_id)
 	elseif server_vehicle_id then
 		if not MPUtil.isBeamMPSession() then return server_vehicle_id end
 		return MPUtil.serverVehicleIDToGameVehicleID(server_vehicle_id)
+	end
+end
+
+M.vehicleMoveToPosition = function(vehicle, tar_pos, max_speed)
+	local v_pos = vehicle:getPosition()
+	local v_vel = vehicle:getVelocity()
+	local t_dir = (tar_pos - v_pos):normalized()
+	
+	local dist = Util.dist3d(v_pos, tar_pos)
+	local strength = math.min(max_speed, (dist / 40) * max_speed)
+	local t_vel = t_dir * strength -- intended velocity towards target
+	
+	local force = (t_vel - v_vel) * 0.8
+	if dist > 0.3 and force:length() > 0.1 then
+		--dump("dist", dist, "vel", v_vel:length())
+		if force:length() < 500 then -- force spikes can happen when the vehicle was just reset
+			vehicle:applyClusterVelocityScaleAdd(vehicle:getRefNodeId(), 1, force.x, force.y, force.z)
+		end
 	end
 end
 

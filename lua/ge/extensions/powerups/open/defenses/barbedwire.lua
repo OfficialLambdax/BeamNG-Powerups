@@ -48,6 +48,7 @@ M.onVehicleInit = function(game_vehicle_id) end
 -- Called once the powerup is activated by a vehicle
 -- Vehicle = game vehicle
 M.onActivate = function(vehicle)
+	if Extender.isTraffic(vehicle:getId()) then return onActivate.Error('Traffic is not supported yet') end
 	return onActivate.Success({
 		selected = false,
 		building = false,
