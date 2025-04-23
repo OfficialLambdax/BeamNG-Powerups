@@ -130,6 +130,7 @@ M.onTargetSelect = function(data, target_info)
 	-- spawn bollard in the ground
 	local marker = createObject("TSStatic")
 	marker.shapeName = "art/shapes/pwu/bollard/bollard.cdae"
+	marker.dynamic = true
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 0, 0, 1)
 	marker:setPosRot(pos.x, pos.y, pos.z - 2, 0, 0, 0, 1)

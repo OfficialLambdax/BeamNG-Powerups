@@ -11,6 +11,7 @@ local function createMarker(radius, origin_vehicle)
 	
 	local marker = createObject("TSStatic")
 	marker.shapeName = "art/shapes/interface/checkpoint_marker.cdae"
+	marker.dynamic = true
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 1, 0, 1)
 	marker:setPosRot(0, 0, 0, 0, 0, 0, 1)

@@ -94,6 +94,7 @@ M.onTargetSelect = function(data, target_info)
 	
 	local marker = createObject("TSStatic")
 	marker.shapeName = "art/shapes/pwu/barbedwire/barbedwire_2.cdae"
+	marker.dynamic = true
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 0, 0, 1)
 	marker:setPosRot(pos.x, pos.y, pos.z + 0.35, dir.x, dir.y, dir.z, dir.w)
