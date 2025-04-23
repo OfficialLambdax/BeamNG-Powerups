@@ -56,6 +56,7 @@ M.powerupCreator = function(trigger_obj, shape_path, color_point, is_rendered)
 	local marker = createObject("TSStatic")
 	marker.shapeName = shape_path
 	marker.useInstanceRenderData = 1
+	marker.dynamic = true
 	marker.instanceColor = color_point
 	local rot = QuatF(0, 0, 0, 0)
 	rot:setFromEuler(vec3(math.random(), math.random(), math.random()))
@@ -115,6 +116,7 @@ M.powerupChargeCreator = function(trigger_obj, is_rendered)
 	
 	local marker = createObject("TSStatic")
 	marker.shapeName = "art/shapes/collectible/s_marker_BNG.cdae"
+	marker.dynamic = true
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(
 		math.random(),
@@ -243,6 +245,7 @@ M.powerupNegativeCreator = function(trigger_obj, is_rendered)
 	
 	local marker = createObject("TSStatic")
 	marker.shapeName = shape_path or "art/shapes/collectible/s_marker_BNG.cdae"
+	marker.dynamic = true
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = color_point
 	local rot = QuatF(0, 0, 0, 0)

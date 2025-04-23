@@ -261,8 +261,10 @@ M.whileActive = function(data, origin_id, dt)
 					)
 				
 				if is_spectating then
-					debugDrawer:drawText(tar_pos, "x", ColorF(0,0,0,1))
-					debugDrawer:drawText(MathUtil.getPosInFront(rocket.pos, rocket.dir, dist), "x", ColorF(1,1,1,1))
+					debugDrawer:drawText(tar_pos, "x", ColorF(0, 0, 0, 1))
+					local dir = MathUtil.getPosInFront(rocket.pos, rocket.dir, dist)
+					debugDrawer:drawText(dir, "x Aim", ColorF(1, 1, 1, 1))
+					debugDrawer:drawLine(tar_pos, dir, ColorF(1, 1, 1, 1))
 				end
 				
 				Ui.target(rocket.target_id)
@@ -325,9 +327,13 @@ M.whileActive = function(data, origin_id, dt)
 	local pre_pos = pos + (rocket.vel * dt)
 	--debugDrawer:drawSphere(pre_pos, 1, ColorF(1,1,1,1))
 	
-	local rot = MathUtil.quatFromQuatAndDir(rocket.obj:getRotation(), rocket.facing_dir)
+	--local rot = MathUtil.quatFromQuatAndDir(rocket.obj:getRotation(), rocket.facing_dir)
+	local up_vec = vec3(0, 0, 1)
+	if rocket.facing_dir.z < 0 then up_vec.z = up_vec.z * -1 end
+	local rot = quatFromDir(rocket.facing_dir:cross(vec3(0, 0, 1)):cross(rocket.facing_dir), up_vec)
 	rocket.obj:setPosRot(pre_pos.x, pre_pos.y, pre_pos.z, rot.x, rot.y, rot.z, rot.w)
 	--rocket.obj:setPosRot(0, 0, 10, rot.x, rot.y, rot.z, rot.w)
+	--rocket.obj:setPosRot(-716, 101, 130, rot.x, rot.y, rot.z, rot.w)
 	rocket.trail:setRotation(rot):active(rocket.fuel > 0)
 	rocket.trail2:setRotation(rot)--:active(rocket.fuel > 0)
 	rocket.pos = pre_pos
@@ -378,6 +384,7 @@ M.whileActive = function(data, origin_id, dt)
 	
 	if core_camera.getActiveCamName() == "missile" and is_spectating then
 		local pos = MathUtil.getPosInFront(rocket.pos, rocket.facing_dir, 3)
+		--local pos = MathUtil.getPosInFront(rocket.pos, rocket.facing_dir, 1) + vec3(0, 0, 1)
 		core_camera:setPosition(pos)
 	end
 	
@@ -398,6 +405,7 @@ M.onTargetSelect = function(data, target_info, origin_id)
 		local pos = target_info.spawn.start_pos
 		local marker = createObject("TSStatic")
 		marker.shapeName = "art/shapes/pwu/missile/missile.cdae"
+		marker.dynamic = true
 		marker.useInstanceRenderData = 1
 		marker.instanceColor = Point4F(0, 0, 0, 1)
 		marker:setPosRot(pos.x, pos.y, pos.z + 1, 0, 0, 0, 1)

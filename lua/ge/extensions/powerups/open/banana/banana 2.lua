@@ -94,6 +94,7 @@ M.onTargetSelect = function(data, target_info)
 	
 	local marker = createObject("TSStatic")
 	marker.shapeName = "art/shapes/pwu/banana/banana_peel.cdae"
+	marker.dynamic = true
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(0, 0, 0, 1)
 	marker:setPosRot(origin_pos.x, origin_pos.y, origin_pos.z + 0.31, 0, 0, 0, 1)

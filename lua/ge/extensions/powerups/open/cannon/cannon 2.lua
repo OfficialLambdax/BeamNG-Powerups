@@ -45,6 +45,7 @@ local M = {
 			function()
 				local marker = createObject("TSStatic")
 				marker.shapeName = "art/shapes/pwu/cannonball/cannonball.cdae"
+				marker.dynamic = true
 				marker.useInstanceRenderData = 1
 				marker.instanceColor = Point4F(0, 0, 0, 1)
 				--marker:setPosRot(0, 0, 0, 0, 0, 0, 1)
