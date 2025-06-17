@@ -46,7 +46,7 @@ M.onCreate = function(trigger, is_rendered)
 	return {
 		marker = Extender.defaultPowerupCreator(
 			trigger,
-			"art/shapes/collectible/s_collect_money_sack.dae",
+			"art/shapes/pwu/bng/s_collect_money_sack.dae",
 			Point4F(1, 0, 0, 1),
 			is_rendered
 		)

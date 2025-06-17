@@ -22,7 +22,7 @@ local Pot = require("libs/Pot")
 local Ui = require("libs/extender/Ui")
 
 local M = {
-	_VERSION = 0.6, -- 16.03.2025 DD.MM.YYYY
+	_VERSION = "0.5.3", -- 17.06.2025 DD.MM.YYYY
 	_BRANCH = "alpha",
 	_NAME = "enums"
 }

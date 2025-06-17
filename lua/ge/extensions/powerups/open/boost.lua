@@ -45,7 +45,7 @@ M.onVehicleInit = function(game_vehicle_id) end
 M.onCreate = function(trigger, is_rendered)
 	-- Whatever you return here is given to all other callbacks too. So if you need the trigger, then also add that.
 	return {
-		marker = Extender.defaultPowerupCreator(trigger, "art/shapes/collectible/s_collect_machine_part.cdae", Point4F(0, 1, 0, 1), is_rendered)
+		marker = Extender.defaultPowerupCreator(trigger, "art/shapes/pwu/bng/s_collect_machine_part.cdae", Point4F(0, 1, 0, 1), is_rendered)
 	}
 end
 

@@ -65,7 +65,7 @@ local M = {
 		:onPut(
 			function(obj)
 				obj:setHidden(true)
-				obj:setPosition(vec3(0, 0, 0))
+				obj:setPosition(vec3(0, 0, -1000))
 			end
 		)
 		:onTake(
