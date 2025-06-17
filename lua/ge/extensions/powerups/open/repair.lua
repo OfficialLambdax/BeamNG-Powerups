@@ -46,7 +46,7 @@ M.onCreate = function(trigger, is_rendered)
 	return {
 		marker = Extender.defaultPowerupCreator(
 			trigger,
-			"art/shapes/collectible/s_collect_medikit.cdae",
+			"art/shapes/pwu/bng/s_collect_medikit.cdae",
 			Point4F(0, 1, 0, 1),
 			is_rendered
 		)

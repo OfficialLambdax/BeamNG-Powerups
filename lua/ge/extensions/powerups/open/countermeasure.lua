@@ -51,7 +51,7 @@ M.onCreate = function(trigger, is_rendered)
 	return {
 		marker = Extender.defaultPowerupCreator(
 			trigger,
-			"art/shapes/collectible/s_collect_wrenchkit.cdae",
+			"art/shapes/pwu/bng/s_collect_wrenchkit.cdae",
 			Point4F(1, 0, 1, 1),
 			is_rendered
 		)

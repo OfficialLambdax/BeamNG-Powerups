@@ -115,7 +115,7 @@ M.powerupChargeCreator = function(trigger_obj, is_rendered)
 	local pos = trigger_obj:getPosition()
 	
 	local marker = createObject("TSStatic")
-	marker.shapeName = "art/shapes/collectible/s_marker_BNG.cdae"
+	marker.shapeName = "art/shapes/pwu/bng/s_marker_BNG.cdae"
 	marker.dynamic = true
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = Point4F(
@@ -244,7 +244,7 @@ M.powerupNegativeCreator = function(trigger_obj, is_rendered)
 	local _, color_point = Util.tablePickRandom(colors or {Point4F(1, 0, 0, 1)})
 	
 	local marker = createObject("TSStatic")
-	marker.shapeName = shape_path or "art/shapes/collectible/s_marker_BNG.cdae"
+	marker.shapeName = shape_path or "art/shapes/pwu/bng/s_marker_BNG.cdae"
 	marker.dynamic = true
 	marker.useInstanceRenderData = 1
 	marker.instanceColor = color_point
