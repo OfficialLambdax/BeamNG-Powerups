@@ -29,7 +29,7 @@ local function color(target_id, color)
 	local vehicle = getObjectByID(target_id)
 	if vehicle == nil then return end
 	
-	local spectator = core_camera:getPosition()
+	local spectator = core_camera.getPosition()
 	local dist = Util.dist3d(vehicle:getPosition(), spectator)
 	if dist > 30 then return
 		disableRGB()

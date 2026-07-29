@@ -2,7 +2,7 @@
 	Adds a wrapper for the sfx emitter object of the game (SFXEmitter)
 ]]
 
--- package.loaded["libs/Sfx"] = nil; TEST = require("libs/Sfx")("/lua/ge/extensions/powerups/open/boost/sounds/carrevving.ogg", core_camera:getPosition()):minMaxDistance(300):isLooping(true):is3D(false):spawn()
+-- package.loaded["libs/Sfx"] = nil; TEST = require("libs/Sfx")("/lua/ge/extensions/powerups/open/boost/sounds/carrevving.ogg", core_camera.getPosition()):minMaxDistance(300):isLooping(true):is3D(false):spawn()
 
 local Util = require("libs/Util")
 local Log = require("libs/Log")
@@ -74,7 +74,7 @@ return function(file_path, pos_vec)
 	obj.playOnAdd = true
 	obj.isLooping = false
 	obj.isStreaming = true
-	obj.volume = 1
+	obj.volume = 0.5 -- fix for 0.39
 	obj.is3D = true
 	obj:setField("sourceGroup", 0, "AudioChannelMaster")
 	
@@ -138,7 +138,7 @@ return function(file_path, pos_vec)
 	-- ------------------------------------------------------------------
 	-- Can be set any time
 	function sfx:volume(float)
-		self.int.obj.volume = float
+		self.int.obj.volume = float / 2 -- fix for 0.39
 		return self
 	end
 	

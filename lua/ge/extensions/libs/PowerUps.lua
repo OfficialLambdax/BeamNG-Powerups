@@ -22,7 +22,7 @@ local Pot = require("libs/Pot")
 local Ui = require("libs/extender/Ui")
 
 local M = {
-	_VERSION = "0.5.3", -- 17.06.2025 DD.MM.YYYY
+	_VERSION = "0.5.4", -- 29.07.2026 DD.MM.YYYY
 	_BRANCH = "alpha",
 	_NAME = "enums"
 }
@@ -332,7 +332,7 @@ end
 -- Testing dynamic render distance checking based on user behaviour
 -- Someone flying over the map should have more frequent updates then someone just chilling
 dynamicRenderDistance = function()
-	local camera_position = core_camera:getPosition()
+	local camera_position = core_camera.getPosition()
 	local dist = Util.dist3d(CORE_CAMERA_LAST_POSITION, camera_position) -- meters per second (if the trigger is called on time, which it isnt, but then this doesnt need to be exact)
 	CORE_CAMERA_LAST_POSITION = camera_position
 	

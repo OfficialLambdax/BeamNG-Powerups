@@ -39,7 +39,7 @@ return function(file_path, volume, pitch)
 	function sound:smart(target_id, volume, pitch)
 		local spectated = getPlayerVehicle(0)
 		if (spectated and spectated:getId() == target_id) and
-		(Util.dist3d(spectated:getPosition(), core_camera:getPosition()) < 30) then
+		(Util.dist3d(spectated:getPosition(), core_camera.getPosition()) < 30) then
 			self:play(volume)
 		else
 			self:playVE(target_id, volume, pitch)
@@ -50,7 +50,7 @@ return function(file_path, volume, pitch)
 	function sound:smartSFX(target_id, volume, distance, max_time)
 		local spectated = getPlayerVehicle(0)
 		if (spectated and spectated:getId() == target_id) and
-		(Util.dist3d(spectated:getPosition(), core_camera:getPosition()) < 30) then
+		(Util.dist3d(spectated:getPosition(), core_camera.getPosition()) < 30) then
 			self:play(volume or self.int.volume)
 		else
 			local target_vehicle = getObjectByID(target_id)
@@ -69,7 +69,7 @@ return function(file_path, volume, pitch)
 	function sound:smartSFX2(target_id, volume, max_time, min_distance, max_distance)
 		local spectated = getPlayerVehicle(0)
 		if (spectated and spectated:getId() == target_id) and
-		(Util.dist3d(spectated:getPosition(), core_camera:getPosition()) < 30) then
+		(Util.dist3d(spectated:getPosition(), core_camera.getPosition()) < 30) then
 			self:play(volume or self.int.volume)
 		else
 			local target_vehicle = getObjectByID(target_id)
@@ -90,7 +90,7 @@ return function(file_path, volume, pitch)
 			'AudioMaster',
 			self.int.file_path,
 			{
-				volume = volume or self.int.volume,
+				volume = (volume or self.int.volume) / 10, -- fix for 0.39
 				channel = 'Other'
 			}
 		)

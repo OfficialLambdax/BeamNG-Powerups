@@ -95,7 +95,7 @@ M.powerupRender = function(marker_obj, dt, is_wip)
 	marker_obj:setPosRot(pos.x, pos.y, pos.z, new_rot.x, new_rot.y, new_rot.z, new_rot.w)
 	
 	if is_wip then
-		local cam_pos = core_camera:getPosition()
+		local cam_pos = core_camera.getPosition()
 		local dist = Util.dist3d(pos, cam_pos)
 		if dist < 30 then
 			debugDrawer:drawText(vec3(pos.x, pos.y, pos.z + 1.5), "WIP", marker_obj.instanceColor)
