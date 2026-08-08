@@ -74,7 +74,7 @@ return function(file_path, pos_vec)
 	obj.playOnAdd = true
 	obj.isLooping = false
 	obj.isStreaming = true
-	obj.volume = 0.5 -- fix for 0.39
+	obj.volume = 1
 	obj.is3D = true
 	obj:setField("sourceGroup", 0, "AudioChannelMaster")
 	
@@ -138,7 +138,7 @@ return function(file_path, pos_vec)
 	-- ------------------------------------------------------------------
 	-- Can be set any time
 	function sfx:volume(float)
-		self.int.obj.volume = float / 2 -- fix for 0.39
+		self.int.obj.volume = float
 		return self
 	end
 	

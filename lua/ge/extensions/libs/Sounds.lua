@@ -90,7 +90,7 @@ return function(file_path, volume, pitch)
 			'AudioMaster',
 			self.int.file_path,
 			{
-				volume = (volume or self.int.volume) / 10, -- fix for 0.39
+				volume = volume or self.int.volume,
 				channel = 'Other'
 			}
 		)
